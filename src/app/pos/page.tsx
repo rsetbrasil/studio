@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { ListOrdered, PlusCircle, Search, ShoppingCart, X, Minus } from "lucide-react";
+import { ListOrdered, PlusCircle, Search, ShoppingCart, X } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -43,10 +44,8 @@ const allProducts = [
   { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energético" },
 ];
 
-type CartItem = {
-  id: number;
-  name: string;
-  price: number;
+type Product = typeof allProducts[0];
+type CartItem = Product & {
   quantity: number;
 };
 
@@ -59,22 +58,25 @@ export default function PosPage() {
   const { addSale } = useSales();
   const { addOrder } = useOrders();
   const isMobile = useIsMobile();
-  const [productQuantities, setProductQuantities] = useState<Record<number, string>>({});
+  
+  const [isQuantityDialogOpen, setQuantityDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState('1');
 
-  const addToCart = (product: typeof allProducts[0], quantityStr: string | undefined) => {
-    const quantity = parseInt(quantityStr || '1', 10);
-    if (isNaN(quantity) || quantity <= 0) return;
+  const addToCart = (product: Product, quantityStr: string | undefined) => {
+    const quantityToAdd = parseInt(quantityStr || '1', 10);
+    if (isNaN(quantityToAdd) || quantityToAdd <= 0) return;
 
     setCart((currentCart) => {
       const existingItem = currentCart.find((item) => item.id === product.id);
       if (existingItem) {
         return currentCart.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: item.quantity + quantityToAdd }
             : item
         );
       }
-      return [...currentCart, { ...product, quantity }];
+      return [...currentCart, { ...product, quantity: quantityToAdd }];
     });
   };
 
@@ -96,12 +98,18 @@ export default function PosPage() {
     }
   };
   
-  const handleQuantityChange = (productId: number, change: number) => {
-    setProductQuantities(prev => {
-        const currentQty = parseInt(prev[productId] || '1', 10);
-        const newQty = Math.max(1, currentQty + change);
-        return { ...prev, [productId]: newQty.toString() };
-    });
+  const handleOpenQuantityDialog = (product: Product) => {
+    setSelectedProduct(product);
+    setQuantity('1');
+    setQuantityDialogOpen(true);
+  };
+  
+  const handleConfirmQuantity = () => {
+    if (selectedProduct) {
+      addToCart(selectedProduct, quantity);
+    }
+    setQuantityDialogOpen(false);
+    setSelectedProduct(null);
   };
 
   const filteredProducts = useMemo(() => {
@@ -199,46 +207,10 @@ export default function PosPage() {
                     product.price
                   )}</p>
                 </CardContent>
-                <CardFooter className="p-2 flex-col gap-2 mt-auto">
-                    <div className="flex items-center gap-2 w-full">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            onClick={() => handleQuantityChange(product.id, -1)}
-                        >
-                            <Minus className="h-4 w-4" />
-                        </Button>
-                        <Input
-                            type="text"
-                            inputMode="numeric"
-                            value={productQuantities[product.id] ?? '1'}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                if (/^\d*$/.test(value)) { 
-                                    setProductQuantities(prev => ({ ...prev, [product.id]: value }));
-                                }
-                            }}
-                            onBlur={(e) => {
-                                const value = e.target.value;
-                                if (value === '' || parseInt(value, 10) < 1) {
-                                    setProductQuantities(prev => ({ ...prev, [product.id]: '1' }));
-                                }
-                            }}
-                            className="h-8 w-full text-center"
-                        />
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-8 w-8 shrink-0"
-                            onClick={() => handleQuantityChange(product.id, 1)}
-                        >
-                            <PlusCircle className="h-4 w-4" />
-                        </Button>
-                    </div>
+                <CardFooter className="p-2 mt-auto">
                   <Button
                     className="w-full"
-                    onClick={() => addToCart(product, productQuantities[product.id])}
+                    onClick={() => handleOpenQuantityDialog(product)}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
                   </Button>
@@ -403,6 +375,35 @@ export default function PosPage() {
                     onConfirmSale={handleConfirmSale}
                 />
             )}
+             {isQuantityDialogOpen && selectedProduct && (
+              <Dialog open={isQuantityDialogOpen} onOpenChange={setQuantityDialogOpen}>
+                <DialogContent className="sm:max-w-xs">
+                  <DialogHeader>
+                    <DialogTitle>Adicionar {selectedProduct.name}</DialogTitle>
+                    <DialogDescription>
+                      Digite a quantidade desejada para adicionar ao carrinho.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <Label htmlFor="quantity" className="sr-only">Quantidade</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      className="mt-2 text-center text-lg"
+                      autoFocus
+                      onFocus={(e) => e.target.select()}
+                      min="1"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setQuantityDialogOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleConfirmQuantity}>Confirmar</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
         </AppShell>
     );
   }
@@ -426,6 +427,37 @@ export default function PosPage() {
           onConfirmSale={handleConfirmSale}
         />
       )}
+      {isQuantityDialogOpen && selectedProduct && (
+        <Dialog open={isQuantityDialogOpen} onOpenChange={setQuantityDialogOpen}>
+          <DialogContent className="sm:max-w-xs">
+            <DialogHeader>
+              <DialogTitle>Adicionar {selectedProduct.name}</DialogTitle>
+              <DialogDescription>
+                Digite a quantidade desejada para adicionar ao carrinho.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="quantity-desktop" className='sr-only'>Quantidade</Label>
+              <Input
+                id="quantity-desktop"
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="mt-2 text-center text-lg"
+                autoFocus
+                onFocus={(e) => e.target.select()}
+                min="1"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setQuantityDialogOpen(false)}>Cancelar</Button>
+              <Button onClick={handleConfirmQuantity}>Confirmar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </AppShell>
   );
 }
+
+    
