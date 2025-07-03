@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { PlusCircle, Search, X } from "lucide-react";
+import { Banknote, CreditCard, Landmark, PlusCircle, Search, X } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
@@ -22,7 +26,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -43,6 +46,7 @@ type CartItem = {
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("dinheiro");
   const { toast } = useToast();
 
   const addToCart = (product: typeof allProducts[0]) => {
@@ -102,7 +106,7 @@ export default function PosPage() {
     
     toast({
       title: "Venda Finalizada!",
-      description: "A venda foi registrada com sucesso.",
+      description: `A venda foi registrada com sucesso no ${paymentMethod}.`,
     });
 
     setCart([]);
@@ -197,7 +201,7 @@ export default function PosPage() {
                 </Table>
               </ScrollArea>
             </CardContent>
-            <CardFooter className="flex flex-col gap-2 border-t p-6">
+            <CardFooter className="flex flex-col gap-4 border-t p-6">
               <div className="w-full flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
                 <span>{`R$${subtotal.toFixed(2)}`}</span>
@@ -206,11 +210,75 @@ export default function PosPage() {
                 <span>Impostos (5%)</span>
                 <span>{`R$${tax.toFixed(2)}`}</span>
               </div>
+              <Separator className="my-1" />
               <div className="w-full flex justify-between font-semibold text-lg">
                 <span>Total</span>
                 <span>{`R$${total.toFixed(2)}`}</span>
               </div>
-              <Button size="lg" className="w-full mt-4" onClick={handleFinishSale}>
+              <Separator className="my-1" />
+              <div className="grid gap-4 w-full">
+                <Label className="text-base">Forma de Pagamento</Label>
+                <RadioGroup 
+                  defaultValue="dinheiro" 
+                  className="grid grid-cols-2 gap-4"
+                  value={paymentMethod}
+                  onValueChange={setPaymentMethod}
+                >
+                  <div>
+                    <RadioGroupItem value="Dinheiro" id="dinheiro" className="peer sr-only" />
+                    <Label
+                      htmlFor="dinheiro"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Banknote className="mb-3 h-6 w-6" />
+                      Dinheiro
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem
+                      value="Débito"
+                      id="cartao-debito"
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor="cartao-debito"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <CreditCard className="mb-3 h-6 w-6" />
+                      Débito
+                    </Label>
+                  </div>
+                   <div>
+                    <RadioGroupItem
+                      value="Crédito"
+                      id="cartao-credito"
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor="cartao-credito"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <CreditCard className="mb-3 h-6 w-6" />
+                      Crédito
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem
+                      value="PIX"
+                      id="pix"
+                      className="peer sr-only"
+                    />
+                    <Label
+                      htmlFor="pix"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                    >
+                      <Landmark className="mb-3 h-6 w-6" />
+                      PIX
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <Button size="lg" className="w-full mt-2" onClick={handleFinishSale}>
                 Finalizar Venda
               </Button>
             </CardFooter>
