@@ -37,6 +37,9 @@ const allProducts = [
   { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energético" },
 ];
 
+const CREDIT_FEE_RATE = 0.03; // 3%
+const DEBIT_FEE_RATE = 0.015; // 1.5%
+
 type CartItem = {
   id: number;
   name: string;
@@ -102,7 +105,22 @@ export default function PosPage() {
   }, [cart]);
 
   const tax = subtotal * 0.05; // 5% tax
-  const total = subtotal + tax;
+
+  const cardFee = useMemo(() => {
+    let fee = 0;
+    const paymentMethods = Object.keys(paymentAmounts);
+
+    if (paymentMethods.includes("Crédito")) {
+      fee = Math.max(fee, subtotal * CREDIT_FEE_RATE);
+    }
+    if (paymentMethods.includes("Débito")) {
+      fee = Math.max(fee, subtotal * DEBIT_FEE_RATE);
+    }
+    
+    return fee;
+  }, [paymentAmounts, subtotal]);
+
+  const total = subtotal + tax + cardFee;
 
   const totalPaid = useMemo(() => {
     return Object.values(paymentAmounts).reduce((acc, amount) => acc + (amount || 0), 0);
@@ -149,22 +167,35 @@ export default function PosPage() {
   };
 
   const paymentOptions = [
-    { value: "Dinheiro", label: "Dinheiro", icon: Banknote },
-    { value: "Débito", label: "Débito", icon: CreditCard },
-    { value: "Crédito", label: "Crédito", icon: CreditCard },
-    { value: "PIX", label: "PIX", icon: Landmark },
+    { value: "Dinheiro", label: "Dinheiro", icon: Banknote, fee: 0 },
+    { value: "Débito", label: "Débito", icon: CreditCard, fee: DEBIT_FEE_RATE },
+    { value: "Crédito", label: "Crédito", icon: CreditCard, fee: CREDIT_FEE_RATE },
+    { value: "PIX", label: "PIX", icon: Landmark, fee: 0 },
   ];
 
   const handlePaymentMethodChange = (method: string, checked: boolean | 'indeterminate') => {
     setPaymentAmounts(prev => {
         const newAmounts = { ...prev };
+        
+        let finalMethods: string[];
         if (checked) {
-            const currentPaid = Object.values(newAmounts).reduce((sum, amt) => sum + amt, 0);
-            const remaining = total - currentPaid;
-            newAmounts[method] = Math.round(Math.max(0, remaining) * 100) / 100;
+            finalMethods = [...Object.keys(prev), method];
         } else {
             delete newAmounts[method];
+            finalMethods = Object.keys(newAmounts);
         }
+
+        let fee = 0;
+        if (finalMethods.includes("Crédito")) fee = Math.max(fee, subtotal * CREDIT_FEE_RATE);
+        if (finalMethods.includes("Débito")) fee = Math.max(fee, subtotal * DEBIT_FEE_RATE);
+        const finalTotal = subtotal + tax + fee;
+
+        if (checked) {
+            const paidSoFar = Object.values(prev).reduce((sum, amt) => sum + amt, 0);
+            const remaining = finalTotal - paidSoFar;
+            newAmounts[method] = Math.round(Math.max(0, remaining) * 100) / 100;
+        } 
+        
         return newAmounts;
     });
   };
@@ -284,6 +315,12 @@ export default function PosPage() {
                 <span>Impostos (5%)</span>
                 <span>{`R$${formatBRL(tax)}`}</span>
               </div>
+              {cardFee > 0.001 && (
+                 <div className="w-full flex justify-between text-sm text-muted-foreground">
+                    <span>Taxa do Cartão</span>
+                    <span>{`R$${formatBRL(cardFee)}`}</span>
+                </div>
+              )}
               <Separator className="my-1" />
               <div className="w-full flex justify-between font-semibold text-lg">
                 <span>Total</span>
@@ -308,7 +345,7 @@ export default function PosPage() {
               <div className="grid gap-4 w-full">
                 <Label className="text-base">Forma de Pagamento</Label>
                 <div className="grid grid-cols-2 gap-4">
-                  {paymentOptions.map(({ value, label, icon: Icon }) => {
+                  {paymentOptions.map(({ value, label, icon: Icon, fee }) => {
                     const isChecked = paymentAmounts[value] !== undefined;
                     return (
                       <div key={value}>
@@ -323,7 +360,14 @@ export default function PosPage() {
                           className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                         >
                           <Icon className="mb-3 h-6 w-6" />
-                          {label}
+                          <div className="flex flex-col items-center gap-1">
+                            <span>{label}</span>
+                            {fee > 0 && (
+                                <span className="text-xs font-normal text-muted-foreground">
+                                (taxa {(fee * 100).toFixed(1).replace('.',',')}%)
+                                </span>
+                            )}
+                          </div>
                         </Label>
                         {isChecked && (
                           <Input
