@@ -61,89 +61,91 @@ export default function ReportsPage() {
 
   return (
     <AppShell>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-                <CardTitle>Relatórios de Vendas</CardTitle>
-                <CardDescription>
-                Visualize e exporte relatórios de vendas para um período selecionado.
-                </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn(
-                        "w-[300px] justify-start text-left font-normal",
-                        !date && "text-muted-foreground"
-                        )}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date?.from ? (
-                        date.to ? (
-                            <>
-                            {format(date.from, "LLL dd, y", { locale: ptBR })} -{" "}
-                            {format(date.to, "LLL dd, y", { locale: ptBR })}
-                            </>
-                        ) : (
-                            format(date.from, "LLL dd, y", { locale: ptBR })
-                        )
-                        ) : (
-                        <span>Escolha uma data</span>
-                        )}
-                    </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="end">
-                    <Calendar
-                        initialFocus
-                        mode="range"
-                        defaultMonth={date?.from}
-                        selected={date}
-                        onSelect={setDate}
-                        numberOfMonths={2}
-                        locale={ptBR}
-                    />
-                    </PopoverContent>
-                </Popover>
-                <Button>
-                    <File className="mr-2 h-4 w-4" />
-                    Exportar
-                </Button>
-            </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Fatura</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {salesData.map((sale) => (
-                <TableRow key={sale.invoice}>
-                  <TableCell className="font-medium">{sale.invoice}</TableCell>
-                  <TableCell>{sale.customer}</TableCell>
-                  <TableCell>{sale.product}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(sale.status) as any}>
-                        {sale.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{sale.date}</TableCell>
-                  <TableCell className="text-right">{`R$${sale.amount.toFixed(2)}`}</TableCell>
+      <div className="p-4 sm:px-6 sm:py-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                  <CardTitle>Relatórios de Vendas</CardTitle>
+                  <CardDescription>
+                  Visualize e exporte relatórios de vendas para um período selecionado.
+                  </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                  <Popover>
+                      <PopoverTrigger asChild>
+                      <Button
+                          id="date"
+                          variant={"outline"}
+                          className={cn(
+                          "w-[300px] justify-start text-left font-normal",
+                          !date && "text-muted-foreground"
+                          )}
+                      >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date?.from ? (
+                          date.to ? (
+                              <>
+                              {format(date.from, "LLL dd, y", { locale: ptBR })} -{" "}
+                              {format(date.to, "LLL dd, y", { locale: ptBR })}
+                              </>
+                          ) : (
+                              format(date.from, "LLL dd, y", { locale: ptBR })
+                          )
+                          ) : (
+                          <span>Escolha uma data</span>
+                          )}
+                      </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                          initialFocus
+                          mode="range"
+                          defaultMonth={date?.from}
+                          selected={date}
+                          onSelect={setDate}
+                          numberOfMonths={2}
+                          locale={ptBR}
+                      />
+                      </PopoverContent>
+                  </Popover>
+                  <Button>
+                      <File className="mr-2 h-4 w-4" />
+                      Exportar
+                  </Button>
+              </div>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fatura</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {salesData.map((sale) => (
+                  <TableRow key={sale.invoice}>
+                    <TableCell className="font-medium">{sale.invoice}</TableCell>
+                    <TableCell>{sale.customer}</TableCell>
+                    <TableCell>{sale.product}</TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusVariant(sale.status) as any}>
+                          {sale.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{sale.date}</TableCell>
+                    <TableCell className="text-right">{`R$${sale.amount.toFixed(2)}`}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </AppShell>
   )
 }

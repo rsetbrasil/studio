@@ -30,7 +30,7 @@ import { OverviewChart } from "@/components/dashboard/overview";
 export default function DashboardPage() {
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
+      <div className="p-4 sm:px-6 sm:py-4 space-y-4 md:space-y-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

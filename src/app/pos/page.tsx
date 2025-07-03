@@ -221,9 +221,9 @@ export default function PosPage() {
 
   return (
     <AppShell>
-      <div className="grid flex-1 gap-4 md:grid-cols-2 lg:grid-cols-3 h-full">
-        <div className="flex flex-col gap-4 lg:col-span-2 h-full">
-          <Card className="flex h-full flex-col">
+      <div className="grid h-full gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 md:p-6">
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          <Card className="flex flex-1 flex-col overflow-hidden">
             <CardHeader>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -268,8 +268,8 @@ export default function PosPage() {
             </CardContent>
           </Card>
         </div>
-        <div className="flex flex-col gap-4 h-full">
-          <Card className="flex h-full flex-col">
+        <div className="flex flex-col gap-4">
+          <Card className="flex flex-1 flex-col overflow-hidden">
             <CardHeader>
               <CardTitle>Pedido Atual</CardTitle>
               <div className="mt-4 grid gap-2">

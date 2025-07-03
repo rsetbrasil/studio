@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 export default function AccountPage() {
   return (
     <AppShell>
-      <div className="grid gap-6">
+      <div className="p-4 sm:px-6 sm:py-4 space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Meu Perfil</CardTitle>

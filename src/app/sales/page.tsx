@@ -24,52 +24,54 @@ export default function SalesPage() {
 
   return (
     <AppShell>
-      <Card>
-        <CardHeader>
-          <CardTitle>Vendas Finalizadas</CardTitle>
-          <CardDescription>
-            Consulte o histórico de todas as vendas finalizadas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID da Venda</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Produto Principal</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sales.length > 0 ? (
-                sales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.id}</TableCell>
-                    <TableCell>{sale.customer}</TableCell>
-                    <TableCell>{sale.product}</TableCell>
-                    <TableCell>{sale.date}</TableCell>
-                    <TableCell>
-                      <Badge variant="default">{sale.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R$ {sale.amount.toFixed(2)}
+      <div className="p-4 sm:px-6 sm:py-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Vendas Finalizadas</CardTitle>
+            <CardDescription>
+              Consulte o histórico de todas as vendas finalizadas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID da Venda</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Produto Principal</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sales.length > 0 ? (
+                  sales.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell className="font-medium">{sale.id}</TableCell>
+                      <TableCell>{sale.customer}</TableCell>
+                      <TableCell>{sale.product}</TableCell>
+                      <TableCell>{sale.date}</TableCell>
+                      <TableCell>
+                        <Badge variant="default">{sale.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        R$ {sale.amount.toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Nenhuma venda registrada.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    Nenhuma venda registrada.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </AppShell>
   );
 }
