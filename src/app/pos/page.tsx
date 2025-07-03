@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { PlusCircle, Search, X } from "lucide-react";
+import { ListOrdered, PlusCircle, Search, ShoppingCart, X } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,11 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { useSales } from "@/context/SalesContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrders } from "@/context/OrdersContext";
-import { PaymentDialog } from "@/components/pos/payment-dialog";
+import { useSales } from "@/context/SalesContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
+import { PaymentDialog } from "@/components/pos/payment-dialog";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -54,6 +57,7 @@ export default function PosPage() {
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder } = useOrders();
+  const isMobile = useIsMobile();
 
   const addToCart = (product: typeof allProducts[0]) => {
     setCart((currentCart) => {
@@ -151,162 +155,217 @@ export default function PosPage() {
     setCustomerName("Cliente Balcão");
   };
 
+  const ProductListView = (
+    <Card className="flex flex-1 flex-col overflow-hidden">
+      <CardHeader>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar produtos..."
+            className="w-full rounded-lg bg-background pl-8"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 p-6">
+        <ScrollArea className="h-full">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
+            {filteredProducts.map((product) => (
+              <Card key={product.id} className="overflow-hidden">
+                <CardContent className="flex flex-col items-center justify-center p-4 text-center">
+                  <img
+                    src={`https://placehold.co/100x100.png`}
+                    alt={product.name}
+                    className="mb-2 rounded-md"
+                    data-ai-hint="beverage drink"
+                  />
+                  <h3 className="text-sm font-semibold">{product.name}</h3>
+                  <p className="text-xs text-muted-foreground">{formatBRL(
+                    product.price
+                  )}</p>
+                </CardContent>
+                <CardFooter className="p-0">
+                  <Button
+                    className="w-full rounded-t-none"
+                    onClick={() => addToCart(product)}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+
+  const CartView = (
+    <Card className="flex flex-1 flex-col overflow-hidden">
+      <CardHeader>
+        <CardTitle>Pedido Atual</CardTitle>
+        <div className="mt-4 grid gap-2">
+          <Label htmlFor="customer-name">Cliente</Label>
+          <Input
+            id="customer-name"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="Nome do Cliente"
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="flex-1 p-0 overflow-hidden">
+        <ScrollArea className="h-full">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Produto</TableHead>
+                <TableHead>Qtd</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cart.length > 0 ? (
+                cart.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">
+                      {item.name}
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateQuantity(
+                            item.id,
+                            parseInt(e.target.value, 10)
+                          )
+                        }
+                        className="h-8 w-16"
+                      />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatBRL(item.price * item.quantity)}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFromCart(item.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="h-24 text-center text-muted-foreground"
+                  >
+                    Seu carrinho está vazio
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </ScrollArea>
+      </CardContent>
+      <CardFooter className="flex flex-col gap-4 border-t p-6">
+        <div className="flex w-full justify-between text-sm text-muted-foreground">
+          <span>Subtotal</span>
+          <span>{formatBRL(subtotal)}</span>
+        </div>
+        <div className="flex w-full justify-between text-sm text-muted-foreground">
+          <span>Impostos (5%)</span>
+          <span>{formatBRL(tax)}</span>
+        </div>
+        <Separator className="my-1" />
+        <div className="flex w-full justify-between text-lg font-semibold">
+          <span>Total</span>
+          <span>{formatBRL(total)}</span>
+        </div>
+
+        <div className="mt-2 grid w-full grid-cols-2 gap-2">
+          <Button
+            size="lg"
+            variant="outline"
+            onClick={handleCreateOrder}
+            disabled={cart.length === 0}
+          >
+            Criar Pedido
+          </Button>
+          <Button
+            size="lg"
+            onClick={() => setPaymentModalOpen(true)}
+            disabled={cart.length === 0}
+          >
+            Finalizar Venda
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  );
+  
+  if (isMobile === undefined) {
+    return null; 
+  }
+
+  if (isMobile) {
+    return (
+        <AppShell>
+            <Tabs defaultValue="products" className="flex flex-col h-full w-full">
+                <div className="flex-1 overflow-hidden p-4">
+                  <TabsContent value="products" className="h-full mt-0">
+                      {ProductListView}
+                  </TabsContent>
+                  <TabsContent value="order" className="h-full mt-0">
+                      {CartView}
+                  </TabsContent>
+                </div>
+                <div className="border-t bg-background p-4">
+                    <TabsList className="grid w-full grid-cols-2 h-12">
+                        <TabsTrigger value="products" className="text-base">
+                            <ShoppingCart className="mr-2 h-5 w-5" />
+                            Produtos
+                        </TabsTrigger>
+                        <TabsTrigger value="order" className="relative text-base">
+                            <ListOrdered className="mr-2 h-5 w-5" />
+                            Pedido
+                            {cart.length > 0 && (
+                                <Badge className="absolute -top-2 -right-2 h-6 w-6 justify-center rounded-full p-0">
+                                    {cart.length}
+                                </Badge>
+                            )}
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
+            </Tabs>
+            {isPaymentModalOpen && (
+                <PaymentDialog
+                    isOpen={isPaymentModalOpen}
+                    onClose={() => setPaymentModalOpen(false)}
+                    subtotal={subtotal}
+                    tax={tax}
+                    onConfirmSale={handleConfirmSale}
+                />
+            )}
+        </AppShell>
+    );
+  }
+
   return (
     <AppShell>
       <div className="grid h-full flex-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 md:p-6">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <Card className="flex flex-1 flex-col overflow-hidden">
-            <CardHeader>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Buscar produtos..."
-                  className="w-full rounded-lg bg-background pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 p-6">
-              <ScrollArea className="h-full">
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                  {filteredProducts.map((product) => (
-                    <Card key={product.id} className="overflow-hidden">
-                      <CardContent className="flex flex-col items-center justify-center p-4 text-center">
-                        <img
-                          src={`https://placehold.co/100x100.png`}
-                          alt={product.name}
-                          className="mb-2 rounded-md"
-                          data-ai-hint="beverage drink"
-                        />
-                        <h3 className="text-sm font-semibold">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground">{formatBRL(
-                          product.price
-                        )}</p>
-                      </CardContent>
-                      <CardFooter className="p-0">
-                        <Button
-                          className="w-full rounded-t-none"
-                          onClick={() => addToCart(product)}
-                        >
-                          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          {ProductListView}
         </div>
         <div className="flex flex-col gap-4">
-          <Card className="flex flex-1 flex-col overflow-hidden">
-            <CardHeader>
-              <CardTitle>Pedido Atual</CardTitle>
-              <div className="mt-4 grid gap-2">
-                <Label htmlFor="customer-name">Cliente</Label>
-                <Input
-                  id="customer-name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Nome do Cliente"
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 p-0">
-              <ScrollArea className="h-[calc(100vh-22rem)]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Qtd</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {cart.length > 0 ? (
-                      cart.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">
-                            {item.name}
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) =>
-                                updateQuantity(
-                                  item.id,
-                                  parseInt(e.target.value, 10)
-                                )
-                              }
-                              className="h-8 w-16"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatBRL(item.price * item.quantity)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeFromCart(item.id)}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={4}
-                          className="h-24 text-center text-muted-foreground"
-                        >
-                          Seu carrinho está vazio
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4 border-t p-6">
-              <div className="flex w-full justify-between text-sm text-muted-foreground">
-                <span>Subtotal</span>
-                <span>{formatBRL(subtotal)}</span>
-              </div>
-              <div className="flex w-full justify-between text-sm text-muted-foreground">
-                <span>Impostos (5%)</span>
-                <span>{formatBRL(tax)}</span>
-              </div>
-              <Separator className="my-1" />
-              <div className="flex w-full justify-between text-lg font-semibold">
-                <span>Total</span>
-                <span>{formatBRL(total)}</span>
-              </div>
-
-              <div className="mt-2 grid w-full grid-cols-2 gap-2">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleCreateOrder}
-                  disabled={cart.length === 0}
-                >
-                  Criar Pedido
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={() => setPaymentModalOpen(true)}
-                  disabled={cart.length === 0}
-                >
-                  Finalizar Venda
-                </Button>
-              </div>
-            </CardFooter>
-          </Card>
+          {CartView}
         </div>
       </div>
       {isPaymentModalOpen && (
