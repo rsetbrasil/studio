@@ -35,6 +35,7 @@ type PaymentDialogProps = {
 
 export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }: PaymentDialogProps) {
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
+  const [paymentAmountStrings, setPaymentAmountStrings] = useState<Record<string, string>>({});
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const { toast } = useToast();
 
@@ -63,23 +64,27 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
 
   useEffect(() => {
     if (isOpen) {
-      const initialTotal = subtotal + tax;
-      setPaymentAmounts({ 'Dinheiro': initialTotal });
+      setPaymentAmounts({ 'Dinheiro': total });
+      setPaymentAmountStrings({ 'Dinheiro': total.toFixed(2).replace('.', ',') });
     }
-  }, [isOpen, subtotal, tax]);
+  }, [isOpen, total]);
 
   useEffect(() => {
-    if (Object.keys(paymentAmounts).length === 1) {
-      const singleMethod = Object.keys(paymentAmounts)[0];
+    if (!isOpen) return;
+
+    const methods = Object.keys(paymentAmounts);
+    if (methods.length === 1) {
+      const singleMethod = methods[0];
       if (paymentAmounts[singleMethod] !== total) {
-         setPaymentAmounts({ [singleMethod]: total });
+        setPaymentAmounts({ [singleMethod]: total });
+        setPaymentAmountStrings({ [singleMethod]: total.toFixed(2).replace('.', ',') });
       }
     }
-  }, [total, paymentAmounts]);
+  }, [total, isOpen, paymentAmounts]);
 
   const handleSelectPaymentMethod = (method: string) => {
-    setPaymentAmounts(prev => {
-        const newAmounts = { ...prev };
+    setPaymentAmounts(prevAmounts => {
+        const newAmounts = { ...prevAmounts };
         const isSelected = newAmounts[method] !== undefined;
 
         if (isSelected) {
@@ -87,15 +92,21 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
               delete newAmounts[method];
             }
         } else {
-            const paidSoFar = Object.values(newAmounts).reduce((sum, amt) => sum + amt, 0);
+            const paidSoFar = Object.values(newAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
             const remaining = total - paidSoFar;
-            newAmounts[method] = Math.round(Math.max(0, remaining) * 100) / 100;
+            newAmounts[method] = Math.max(0, remaining);
         }
 
         if (Object.keys(newAmounts).length === 1) {
             const singleMethod = Object.keys(newAmounts)[0];
             newAmounts[singleMethod] = total;
         }
+
+        const newStrings: Record<string, string> = {};
+        for (const key in newAmounts) {
+            newStrings[key] = (newAmounts[key] || 0).toFixed(2).replace('.', ',');
+        }
+        setPaymentAmountStrings(newStrings);
         
         return newAmounts;
     });
@@ -109,14 +120,29 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     }, 100);
   };
 
-  const handlePaymentAmountChange = (method: string, amountStr: string) => {
-      const sanitized = amountStr.replace(/[^0-9,]/g, '');
-      const parsable = sanitized.replace(',', '.');
-      const amount = parseFloat(parsable) || 0;
+  const handlePaymentAmountChange = (method: string, value: string) => {
+    setPaymentAmountStrings(prev => ({
+      ...prev,
+      [method]: value,
+    }));
+
+    const parsableValue = value.replace(/\./g, '').replace(',', '.');
+    const numericValue = parseFloat(parsableValue);
+
+    if (!isNaN(numericValue)) {
       setPaymentAmounts(prev => ({
-          ...prev,
-          [method]: amount
+        ...prev,
+        [method]: numericValue,
       }));
+    }
+  };
+
+  const handleInputBlur = (method: string) => {
+    const numericValue = paymentAmounts[method] || 0;
+    setPaymentAmountStrings(prev => ({
+      ...prev,
+      [method]: numericValue.toFixed(2).replace('.', ',')
+    }));
   };
 
   const handleFinish = () => {
@@ -162,8 +188,9 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                                     ref={(el) => { paymentInputRefs.current[value] = el; }}
                                     type="text"
                                     inputMode="decimal"
-                                    value={(paymentAmounts[value] || 0).toFixed(2).replace('.', ',')}
+                                    value={paymentAmountStrings[value] ?? ''}
                                     onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
+                                    onBlur={() => handleInputBlur(value)}
                                     className="h-9 text-right font-bold text-base pr-3"
                                     onClick={(e) => {
                                         e.stopPropagation();
