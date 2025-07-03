@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSales } from "@/context/SalesContext";
+import { formatBRL } from "@/lib/utils";
 
 export default function SalesPage() {
   const { sales } = useSales();
@@ -56,7 +57,7 @@ export default function SalesPage() {
                         <Badge variant="default">{sale.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        R$ {sale.amount.toFixed(2)}
+                        {formatBRL(sale.amount)}
                       </TableCell>
                     </TableRow>
                   ))

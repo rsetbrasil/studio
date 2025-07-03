@@ -40,7 +40,7 @@ export default function DashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$45,231.89</div>
+              <div className="text-2xl font-bold">R$ 45.231,89</div>
               <p className="text-xs text-muted-foreground">
                 +20.1% do mês passado
               </p>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
                       olivia.martin@email.com
                     </p>
                   </div>
-                  <div className="ml-auto font-medium">+$1,999.00</div>
+                  <div className="ml-auto font-medium">+R$ 1.999,00</div>
                 </div>
                 <div className="flex items-center">
                   <Avatar className="flex h-9 w-9 items-center justify-center space-y-0 border">
@@ -133,7 +133,7 @@ export default function DashboardPage() {
                       jackson.lee@email.com
                     </p>
                   </div>
-                  <div className="ml-auto font-medium">+$39.00</div>
+                  <div className="ml-auto font-medium">+R$ 39,00</div>
                 </div>
                 <div className="flex items-center">
                   <Avatar className="h-9 w-9">
@@ -148,7 +148,7 @@ export default function DashboardPage() {
                       isabella.nguyen@email.com
                     </p>
                   </div>
-                  <div className="ml-auto font-medium">+$299.00</div>
+                  <div className="ml-auto font-medium">+R$ 299,00</div>
                 </div>
                 <div className="flex items-center">
                   <Avatar className="h-9 w-9">
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                       will@email.com
                     </p>
                   </div>
-                  <div className="ml-auto font-medium">+$99.00</div>
+                  <div className="ml-auto font-medium">+R$ 99,00</div>
                 </div>
                 <div className="flex items-center">
                   <Avatar className="h-9 w-9">
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                       sofia.davis@email.com
                     </p>
                   </div>
-                  <div className="ml-auto font-medium">+$39.00</div>
+                  <div className="ml-auto font-medium">+R$ 39,00</div>
                 </div>
               </div>
             </CardContent>

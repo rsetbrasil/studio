@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { formatBRL } from "@/lib/utils"
 
 const salesData = [
   { invoice: "FAT001", customer: "Liam Johnson", status: "Pago", date: "2023-06-23", amount: 250.00, product: "Coca-Cola 2L" },
@@ -138,7 +139,7 @@ export default function ReportsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{sale.date}</TableCell>
-                    <TableCell className="text-right">{`R$${sale.amount.toFixed(2)}`}</TableCell>
+                    <TableCell className="text-right">{formatBRL(sale.amount)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

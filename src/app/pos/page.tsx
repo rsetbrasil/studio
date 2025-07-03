@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useSales } from "@/context/SalesContext";
 import { useOrders } from "@/context/OrdersContext";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
+import { formatBRL } from "@/lib/utils";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -53,13 +54,6 @@ export default function PosPage() {
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder } = useOrders();
-
-  const formatBRL = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
 
   const addToCart = (product: typeof allProducts[0]) => {
     setCart((currentCart) => {
@@ -123,7 +117,7 @@ export default function PosPage() {
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
     toast({
       title: "Venda Finalizada!",
-      description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: R$${formatBRL(change)}` : ''}`.trim(),
+      description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
     });
 
     setCart([]);
@@ -187,9 +181,9 @@ export default function PosPage() {
                           data-ai-hint="beverage drink"
                         />
                         <h3 className="text-sm font-semibold">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground">{`R$${formatBRL(
+                        <p className="text-xs text-muted-foreground">{formatBRL(
                           product.price
-                        )}`}</p>
+                        )}</p>
                       </CardContent>
                       <CardFooter className="p-0">
                         <Button
@@ -252,7 +246,7 @@ export default function PosPage() {
                             />
                           </TableCell>
                           <TableCell className="text-right">
-                            {`R$${formatBRL(item.price * item.quantity)}`}
+                            {formatBRL(item.price * item.quantity)}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -282,16 +276,16 @@ export default function PosPage() {
             <CardFooter className="flex flex-col gap-4 border-t p-6">
               <div className="flex w-full justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
-                <span>{`R$${formatBRL(subtotal)}`}</span>
+                <span>{formatBRL(subtotal)}</span>
               </div>
               <div className="flex w-full justify-between text-sm text-muted-foreground">
                 <span>Impostos (5%)</span>
-                <span>{`R$${formatBRL(tax)}`}</span>
+                <span>{formatBRL(tax)}</span>
               </div>
               <Separator className="my-1" />
               <div className="flex w-full justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span>{`R$${formatBRL(total)}`}</span>
+                <span>{formatBRL(total)}</span>
               </div>
 
               <div className="mt-2 grid w-full grid-cols-2 gap-2">

@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useOrders } from "@/context/OrdersContext";
+import { formatBRL } from "@/lib/utils";
 
 export default function OrdersPage() {
   const { orders } = useOrders();
@@ -71,7 +72,7 @@ export default function OrdersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        R$ {order.total.toFixed(2)}
+                        {formatBRL(order.total)}
                       </TableCell>
                     </TableRow>
                   ))

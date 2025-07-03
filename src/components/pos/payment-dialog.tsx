@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Banknote, CreditCard, Landmark, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { formatBRL } from '@/lib/utils';
 
 const CREDIT_FEE_RATE = 0.03; // 3%
 const DEBIT_FEE_RATE = 0.015; // 1.5%
@@ -36,13 +37,6 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const { toast } = useToast();
-
-  const formatBRL = (value: number) => {
-    return value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  };
 
   const cardFee = useMemo(() => {
     let fee = 0;
@@ -127,7 +121,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     if (balance > 0.001) {
       toast({
         title: "Pagamento Incompleto",
-        description: `Ainda falta pagar R$${formatBRL(balance)}.`,
+        description: `Ainda falta pagar ${formatBRL(balance)}.`,
         variant: "destructive",
       });
       return;
@@ -140,7 +134,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       <DialogContent className="sm:max-w-md p-0 gap-0">
         <DialogHeader className="p-6 pb-4">
           <DialogTitle className="text-center text-sm font-normal text-muted-foreground tracking-widest">TOTAL A PAGAR</DialogTitle>
-           <div className="text-center text-4xl font-bold">R$ {formatBRL(total)}</div>
+           <div className="text-center text-4xl font-bold">{formatBRL(total)}</div>
         </DialogHeader>
         <button onClick={onClose} className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
             <X className="h-5 w-5" />
@@ -163,7 +157,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                         {isSelected && (
                             <div className="relative w-32">
                                 <Input
-                                    ref={(el) => { paymentInputRefs.current[value] = el; }}
+                                    ref={(el) => { paymentInputrefs.current[value] = el; }}
                                     type="number"
                                     step="0.01"
                                     value={paymentAmounts[value] ?? ''}
@@ -187,7 +181,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                     {change > 0 ? "Troco" : (balance > 0.001 ? "Falta" : "Total Pago")}
                 </div>
                 <div className="font-bold text-primary">
-                    R$ {change > 0 ? formatBRL(change) : (balance > 0.001 ? formatBRL(balance) : formatBRL(totalPaid))}
+                    {change > 0 ? formatBRL(change) : (balance > 0.001 ? formatBRL(balance) : formatBRL(totalPaid))}
                 </div>
             </div>
           <Button 
