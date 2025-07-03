@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -27,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useSales } from "@/context/SalesContext";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -47,7 +47,7 @@ type CartItem = {
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
   const [customerName, setCustomerName] = useState("Cliente Balcão");
   const { toast } = useToast();
   const { addSale } = useSales();
@@ -97,11 +97,26 @@ export default function PosPage() {
   const tax = subtotal * 0.05; // 5% tax
   const total = subtotal + tax;
 
+  const totalPaid = useMemo(() => {
+    return Object.values(paymentAmounts).reduce((acc, amount) => acc + (amount || 0), 0);
+  }, [paymentAmounts]);
+
+  const remainingAmount = total - totalPaid;
+
   const handleFinishSale = () => {
     if (cart.length === 0) {
       toast({
         title: "Carrinho Vazio",
         description: "Adicione produtos ao carrinho antes de finalizar a venda.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (Math.abs(remainingAmount) > 0.001) {
+      toast({
+        title: "Pagamento Incompleto",
+        description: "O valor pago deve ser igual ao total da venda.",
         variant: "destructive",
       });
       return;
@@ -114,13 +129,47 @@ export default function PosPage() {
     };
     addSale(newSale);
     
+    const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
     toast({
       title: "Venda Finalizada!",
-      description: `A venda foi registrada com sucesso no pagamento ${paymentMethod}.`,
+      description: `A venda foi registrada com sucesso no pagamento ${paymentMethodsUsed}.`,
     });
 
     setCart([]);
     setCustomerName("Cliente Balcão");
+    setPaymentAmounts({});
+  };
+
+  const paymentOptions = [
+    { value: "Dinheiro", label: "Dinheiro", icon: Banknote },
+    { value: "Débito", label: "Débito", icon: CreditCard },
+    { value: "Crédito", label: "Crédito", icon: CreditCard },
+    { value: "PIX", label: "PIX", icon: Landmark },
+  ];
+
+  const handlePaymentMethodChange = (method: string, checked: boolean | 'indeterminate') => {
+    setPaymentAmounts(prev => {
+        const newAmounts = { ...prev };
+        if (checked) {
+            const currentlySelectedCount = Object.keys(newAmounts).length;
+            if (currentlySelectedCount === 0) {
+                 newAmounts[method] = total;
+            } else {
+                 newAmounts[method] = 0;
+            }
+        } else {
+            delete newAmounts[method];
+        }
+        return newAmounts;
+    });
+  };
+
+  const handlePaymentAmountChange = (method: string, amountStr: string) => {
+      const amount = parseFloat(amountStr) || 0;
+      setPaymentAmounts(prev => ({
+          ...prev,
+          [method]: amount
+      }));
   };
 
   return (
@@ -235,70 +284,57 @@ export default function PosPage() {
                 <span>Total</span>
                 <span>{`R$${total.toFixed(2)}`}</span>
               </div>
+              <div className="w-full flex justify-between text-sm text-primary">
+                <span>Total Pago</span>
+                <span>{`R$${totalPaid.toFixed(2)}`}</span>
+              </div>
+              <div className={`w-full flex justify-between text-sm ${remainingAmount !== 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                <span>Restante</span>
+                <span>{`R$${remainingAmount.toFixed(2)}`}</span>
+              </div>
+
               <Separator className="my-1" />
               <div className="grid gap-4 w-full">
                 <Label className="text-base">Forma de Pagamento</Label>
-                <RadioGroup 
-                  defaultValue="Dinheiro" 
-                  className="grid grid-cols-2 gap-4"
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                >
-                  <div>
-                    <RadioGroupItem value="Dinheiro" id="dinheiro" className="peer sr-only" />
-                    <Label
-                      htmlFor="dinheiro"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <Banknote className="mb-3 h-6 w-6" />
-                      Dinheiro
-                    </Label>
-                  </div>
-                  <div>
-                    <RadioGroupItem
-                      value="Débito"
-                      id="cartao-debito"
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor="cartao-debito"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <CreditCard className="mb-3 h-6 w-6" />
-                      Débito
-                    </Label>
-                  </div>
-                   <div>
-                    <RadioGroupItem
-                      value="Crédito"
-                      id="cartao-credito"
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor="cartao-credito"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <CreditCard className="mb-3 h-6 w-6" />
-                      Crédito
-                    </Label>
-                  </div>
-                  <div>
-                    <RadioGroupItem
-                      value="PIX"
-                      id="pix"
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor="pix"
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                    >
-                      <Landmark className="mb-3 h-6 w-6" />
-                      PIX
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <div className="grid grid-cols-2 gap-4">
+                  {paymentOptions.map(({ value, label, icon: Icon }) => {
+                    const isChecked = paymentAmounts[value] !== undefined;
+                    return (
+                      <div key={value}>
+                        <Checkbox
+                          id={value}
+                          checked={isChecked}
+                          onCheckedChange={(checked) => handlePaymentMethodChange(value, checked)}
+                          className="peer sr-only"
+                        />
+                        <Label
+                          htmlFor={value}
+                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                        >
+                          <Icon className="mb-3 h-6 w-6" />
+                          {label}
+                        </Label>
+                        {isChecked && (
+                          <Input
+                            type="number"
+                            placeholder="Valor"
+                            value={paymentAmounts[value]}
+                            onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
+                            className="mt-2 h-9"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-              <Button size="lg" className="w-full mt-2" onClick={handleFinishSale}>
+              <Button 
+                size="lg" 
+                className="w-full mt-2" 
+                onClick={handleFinishSale}
+                disabled={cart.length === 0 || Math.abs(remainingAmount) > 0.001}
+              >
                 Finalizar Venda
               </Button>
             </CardFooter>
