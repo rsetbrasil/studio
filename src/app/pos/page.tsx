@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useSales } from "@/context/SalesContext";
+import { useOrders } from "@/context/OrdersContext";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const allProducts = [
@@ -54,6 +55,7 @@ export default function PosPage() {
   const [customerName, setCustomerName] = useState("Cliente Balcão");
   const { toast } = useToast();
   const { addSale } = useSales();
+  const { addOrder } = useOrders();
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const formatBRL = (value: number) => {
@@ -167,6 +169,33 @@ export default function PosPage() {
     setPaymentAmounts({});
   };
 
+  const handleCreateOrder = () => {
+    if (cart.length === 0) {
+      toast({
+        title: "Carrinho Vazio",
+        description: "Adicione produtos ao carrinho antes de criar um pedido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newOrder = {
+      customer: customerName || "Cliente Balcão",
+      items: cart,
+      total: subtotal + tax,
+    };
+    addOrder(newOrder);
+
+    toast({
+      title: "Pedido Criado!",
+      description: `O pedido para ${customerName} foi salvo e pode ser visto na página de Pedidos.`,
+    });
+
+    setCart([]);
+    setCustomerName("Cliente Balcão");
+    setPaymentAmounts({});
+  };
+
   const paymentOptions = [
     { value: "Dinheiro", label: "Dinheiro", icon: Banknote, fee: 0 },
     { value: "Débito", label: "Débito", icon: CreditCard, fee: DEBIT_FEE_RATE },
@@ -221,7 +250,7 @@ export default function PosPage() {
 
   return (
     <AppShell>
-      <div className="grid h-full gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 md:p-6">
+      <div className="grid h-full flex-1 gap-4 p-4 md:grid-cols-2 lg:grid-cols-3 md:p-6">
         <div className="flex flex-col gap-4 lg:col-span-2">
           <Card className="flex flex-1 flex-col overflow-hidden">
             <CardHeader>
@@ -436,14 +465,23 @@ export default function PosPage() {
                   })}
                 </div>
               </div>
-              <Button
-                size="lg"
-                className="mt-2 w-full"
-                onClick={handleFinishSale}
-                disabled={cart.length === 0 || balance > 0.001}
-              >
-                Finalizar Venda
-              </Button>
+              <div className="mt-2 grid w-full grid-cols-2 gap-2">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleCreateOrder}
+                  disabled={cart.length === 0}
+                >
+                  Criar Pedido
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={handleFinishSale}
+                  disabled={cart.length === 0 || balance > 0.001}
+                >
+                  Finalizar Venda
+                </Button>
+              </div>
             </CardFooter>
           </Card>
         </div>

@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SalesProvider } from "@/context/SalesContext";
+import { OrdersProvider } from "@/context/OrdersContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -20,7 +21,9 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <SalesProvider>
-          {children}
+          <OrdersProvider>
+            {children}
+          </OrdersProvider>
         </SalesProvider>
         <Toaster />
       </body>
