@@ -64,23 +64,16 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
 
   useEffect(() => {
     if (isOpen) {
-      setPaymentAmounts({ 'Dinheiro': total });
-      setPaymentAmountStrings({ 'Dinheiro': total.toFixed(2).replace('.', ',') });
+      const initialTotal = subtotal + tax; // We calculate fee based on selection, so start without it.
+      setPaymentAmounts({ 'Dinheiro': initialTotal });
+      setPaymentAmountStrings({ 'Dinheiro': initialTotal.toFixed(2).replace('.', ',') });
+    } else {
+      // Clear state on close
+      setPaymentAmounts({});
+      setPaymentAmountStrings({});
     }
-  }, [isOpen, total]);
+  }, [isOpen, subtotal, tax]);
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const methods = Object.keys(paymentAmounts);
-    if (methods.length === 1) {
-      const singleMethod = methods[0];
-      if (paymentAmounts[singleMethod] !== total) {
-        setPaymentAmounts({ [singleMethod]: total });
-        setPaymentAmountStrings({ [singleMethod]: total.toFixed(2).replace('.', ',') });
-      }
-    }
-  }, [total, isOpen, paymentAmounts]);
 
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
@@ -88,18 +81,16 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
         const isSelected = newAmounts[method] !== undefined;
 
         if (isSelected) {
+            // Prevent removing the last payment method by clicking
             if (Object.keys(newAmounts).length > 1) {
               delete newAmounts[method];
             }
         } else {
+            // Add new payment method, pre-filled with remaining balance
             const paidSoFar = Object.values(newAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
-            const remaining = total - paidSoFar;
-            newAmounts[method] = Math.max(0, remaining);
-        }
-
-        if (Object.keys(newAmounts).length === 1) {
-            const singleMethod = Object.keys(newAmounts)[0];
-            newAmounts[singleMethod] = total;
+            const currentTotal = subtotal + tax + cardFee; // Recalculate total with potential new fees
+            const remaining = currentTotal - paidSoFar;
+            newAmounts[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
         }
 
         const newStrings: Record<string, string> = {};
@@ -125,6 +116,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       ...prev,
       [method]: value,
     }));
+
+    // Allow empty input or just a comma for typing
+    if (value === "" || value === ",") {
+        setPaymentAmounts(prev => ({...prev, [method]: 0}));
+        return;
+    }
 
     const parsableValue = value.replace(/\./g, '').replace(',', '.');
     const numericValue = parseFloat(parsableValue);
