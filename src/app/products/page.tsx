@@ -7,7 +7,7 @@ export default function ProductsPage() {
     <AppShell>
       <Card>
         <CardHeader>
-          <CardTitle>Product Management</CardTitle>
+          <CardTitle>Gestão de Produtos</CardTitle>
           <CardDescription>
             Cadastro de produtos, controle de estoque, categorias e unidades de medida.
           </CardDescription>
@@ -15,7 +15,7 @@ export default function ProductsPage() {
         <CardContent>
            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
               <Package className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">Product management feature is under development.</p>
+              <p className="mt-4 text-muted-foreground">O recurso de gestão de produtos está em desenvolvimento.</p>
           </div>
         </CardContent>
       </Card>

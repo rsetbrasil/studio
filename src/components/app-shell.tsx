@@ -46,15 +46,15 @@ import {
 import { SipStreamLogo } from "./icons";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Dashboard" },
-  { href: "/pos", icon: ShoppingCart, label: "Point of Sale" },
-  { href: "/forecasting", icon: BrainCircuit, label: "Forecasting" },
-  { href: "/reports", icon: FileText, label: "Reports" },
-  { href: "/orders", icon: ListOrdered, label: "Orders" },
-  { href: "/products", icon: Package, label: "Products" },
-  { href: "/suppliers", icon: Truck, label: "Suppliers" },
-  { href: "/financial", icon: DollarSign, label: "Financial" },
-  { href: "/users", icon: Users, label: "Users" },
+  { href: "/dashboard", icon: Home, label: "Painel" },
+  { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda" },
+  { href: "/forecasting", icon: BrainCircuit, label: "Previsão" },
+  { href: "/reports", icon: FileText, label: "Relatórios" },
+  { href: "/orders", icon: ListOrdered, label: "Pedidos" },
+  { href: "/products", icon: Package, label: "Produtos" },
+  { href: "/suppliers", icon: Truck, label: "Fornecedores" },
+  { href: "/financial", icon: DollarSign, label: "Financeiro" },
+  { href: "/users", icon: Users, label: "Usuários" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -105,10 +105,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <Settings className="h-5 w-5" />
-                  <span className="sr-only">Settings</span>
+                  <span className="sr-only">Configurações</span>
                 </Link>
               </TooltipTrigger>
-              <TooltipContent side="right">Settings</TooltipContent>
+              <TooltipContent side="right">Configurações</TooltipContent>
             </Tooltip>
           </nav>
         </aside>
@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <SheetTrigger asChild>
                 <Button size="icon" variant="outline" className="sm:hidden">
                   <PanelLeft className="h-5 w-5" />
-                  <span className="sr-only">Toggle Menu</span>
+                  <span className="sr-only">Alternar Menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="sm:max-w-xs">
@@ -153,7 +153,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     }`}
                   >
                     <Settings className="h-5 w-5" />
-                    Settings
+                    Configurações
                   </Link>
                 </nav>
               </SheetContent>
@@ -162,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <BreadcrumbList>
                 <BreadcrumbItem>
                   <BreadcrumbLink asChild>
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard">Painel</Link>
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
@@ -183,15 +183,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Link href="/account" className="w-full h-full">Settings</Link>
+                  <Link href="/account" className="w-full h-full">Configurações</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>Support</DropdownMenuItem>
+                <DropdownMenuItem>Suporte</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                   <Link href="/" className="w-full h-full">Logout</Link>
+                   <Link href="/" className="w-full h-full">Sair</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

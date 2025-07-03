@@ -13,13 +13,13 @@ export default function LoginPage() {
           <div className="mb-4 flex justify-center">
              <SipStreamLogo className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to SipStream</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-bold">Bem-vindo ao SipStream</CardTitle>
+          <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">E-mail</Label>
               <Input
                 id="email"
                 type="email"
@@ -30,29 +30,29 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">Senha</Label>
                 <Link
                   href="#"
                   className="ml-auto inline-block text-sm underline"
                 >
-                  Forgot your password?
+                  Esqueceu sua senha?
                 </Link>
               </div>
               <Input id="password" type="password" defaultValue="admin123" required />
             </div>
             <Link href="/dashboard" className="w-full">
               <Button className="w-full">
-                Login
+                Entrar
               </Button>
             </Link>
             <Button variant="outline" className="w-full">
-              Login with Google
+              Entrar com o Google
             </Button>
           </div>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            Não tem uma conta?{" "}
             <Link href="#" className="underline">
-              Sign up
+              Cadastre-se
             </Link>
           </div>
         </CardContent>

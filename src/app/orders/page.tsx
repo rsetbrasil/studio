@@ -7,7 +7,7 @@ export default function OrdersPage() {
     <AppShell>
       <Card>
         <CardHeader>
-          <CardTitle>Order Management</CardTitle>
+          <CardTitle>Gestão de Pedidos</CardTitle>
           <CardDescription>
             Registro, consulta e gerenciamento de pedidos realizados.
           </CardDescription>
@@ -15,7 +15,7 @@ export default function OrdersPage() {
         <CardContent>
           <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
               <ListOrdered className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">Order management feature is under development.</p>
+              <p className="mt-4 text-muted-foreground">O recurso de gestão de pedidos está em desenvolvimento.</p>
           </div>
         </CardContent>
       </Card>

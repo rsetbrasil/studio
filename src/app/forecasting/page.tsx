@@ -40,10 +40,10 @@ import { useToast } from "@/hooks/use-toast";
 
 const FormSchema = z.object({
   inventoryData: z.string().min(10, {
-    message: "Inventory data must be at least 10 characters.",
+    message: "Os dados de inventário devem ter pelo menos 10 caracteres.",
   }),
   salesData: z.string().min(10, {
-    message: "Sales data must be at least 10 characters.",
+    message: "Os dados de vendas devem ter pelo menos 10 caracteres.",
   }),
   forecastDays: z.coerce.number().int().positive(),
 });
@@ -62,17 +62,17 @@ export default function ForecastingPage() {
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      inventoryData: `Product Name,Code,Category,Unit,Purchase Price,Sale Price,Stock
-Coca-Cola 2L,CC2L,Soda,UN,4.50,7.00,150
-Guaraná Antarctica 2L,GA2L,Soda,UN,4.20,6.50,120
-Skol 350ml Can,SK350,Beer,UN,2.20,3.50,300
-Brahma 350ml Can,BR350,Beer,UN,2.10,3.40,280
-Heineken 330ml Long Neck,HN330,Beer,UN,3.50,5.50,80
-Red Bull Energy Drink,RB250,Energy Drink,UN,5.50,9.00,45`,
-      salesData: `Product Name,Date,Quantity
+      inventoryData: `Nome do Produto,Código,Categoria,Unidade,Preço de Compra,Preço de Venda,Estoque
+Coca-Cola 2L,CC2L,Refrigerante,UN,4.50,7.00,150
+Guaraná Antarctica 2L,GA2L,Refrigerante,UN,4.20,6.50,120
+Skol 350ml Lata,SK350,Cerveja,UN,2.20,3.50,300
+Brahma 350ml Lata,BR350,Cerveja,UN,2.10,3.40,280
+Heineken 330ml Long Neck,HN330,Cerveja,UN,3.50,5.50,80
+Red Bull Energy Drink,RB250,Energético,UN,5.50,9.00,45`,
+      salesData: `Nome do Produto,Data,Quantidade
 Coca-Cola 2L,2024-07-20,30
 Guaraná Antarctica 2L,2024-07-20,25
-Skol 350ml Can,2024-07-20,72
+Skol 350ml Lata,2024-07-20,72
 Heineken 330ml Long Neck,2024-07-20,48
 Red Bull Energy Drink,2024-07-21,20
 Coca-Cola 2L,2024-07-21,25`,
@@ -93,8 +93,8 @@ Coca-Cola 2L,2024-07-21,25`,
       } else {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Failed to generate forecast.",
+          title: "Erro",
+          description: "Falha ao gerar a previsão.",
         });
       }
     });
@@ -107,9 +107,9 @@ Coca-Cola 2L,2024-07-21,25`,
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <CardHeader>
-                <CardTitle>Ordering Forecast</CardTitle>
+                <CardTitle>Previsão de Pedidos</CardTitle>
                 <CardDescription>
-                  Use AI to forecast ordering needs based on your data.
+                  Use IA para prever as necessidades de pedidos com base nos seus dados.
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid gap-4">
@@ -118,17 +118,17 @@ Coca-Cola 2L,2024-07-21,25`,
                   name="inventoryData"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Inventory Data</FormLabel>
+                      <FormLabel>Dados de Inventário</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Paste your inventory data here (CSV format)."
+                          placeholder="Cole seus dados de inventário aqui (formato CSV)."
                           className="resize-none"
                           rows={7}
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Comma-separated list of your current inventory.
+                        Lista separada por vírgulas do seu inventário atual.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -139,17 +139,17 @@ Coca-Cola 2L,2024-07-21,25`,
                   name="salesData"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Historical Sales Data</FormLabel>
+                      <FormLabel>Dados Históricos de Vendas</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Paste your sales data here (CSV format)."
+                          placeholder="Cole seus dados de vendas aqui (formato CSV)."
                           className="resize-none"
                           rows={7}
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Comma-separated list of your recent sales.
+                        Lista separada por vírgulas de suas vendas recentes.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -160,7 +160,7 @@ Coca-Cola 2L,2024-07-21,25`,
                   name="forecastDays"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Forecast Period (Days)</FormLabel>
+                      <FormLabel>Período de Previsão (Dias)</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
@@ -174,12 +174,12 @@ Coca-Cola 2L,2024-07-21,25`,
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
+                      Gerando...
                     </>
                   ) : (
                     <>
                       <BrainCircuit className="mr-2 h-4 w-4" />
-                      Generate Forecast
+                      Gerar Previsão
                     </>
                   )}
                 </Button>
@@ -189,9 +189,9 @@ Coca-Cola 2L,2024-07-21,25`,
         </Card>
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Forecast Results</CardTitle>
+            <CardTitle>Resultados da Previsão</CardTitle>
             <CardDescription>
-              Products that should be re-ordered soon.
+              Produtos que devem ser pedidos novamente em breve.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -204,9 +204,9 @@ Coca-Cola 2L,2024-07-21,25`,
                <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead>Quantity to Order</TableHead>
-                    <TableHead>Estimated Order Date</TableHead>
+                    <TableHead>Nome do Produto</TableHead>
+                    <TableHead>Quantidade a Pedir</TableHead>
+                    <TableHead>Data Estimada do Pedido</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -223,7 +223,7 @@ Coca-Cola 2L,2024-07-21,25`,
             {!isPending && !forecast && (
                 <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                     <BrainCircuit className="h-12 w-12 text-muted-foreground" />
-                    <p className="mt-4 text-muted-foreground">Your forecast will appear here.</p>
+                    <p className="mt-4 text-muted-foreground">Sua previsão aparecerá aqui.</p>
                 </div>
             )}
           </CardContent>

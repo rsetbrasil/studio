@@ -17,59 +17,59 @@ export default function AccountPage() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>My Profile</CardTitle>
+            <CardTitle>Meu Perfil</CardTitle>
             <CardDescription>
-              Update your personal information here.
+              Atualize suas informações pessoais aqui.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="first-name">First name</Label>
+                  <Label htmlFor="first-name">Primeiro nome</Label>
                   <Input id="first-name" defaultValue="Admin" />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="last-name">Last name</Label>
+                  <Label htmlFor="last-name">Último nome</Label>
                   <Input id="last-name" defaultValue="User" />
                 </div>
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">E-mail</Label>
                 <Input id="email" type="email" defaultValue="admin@sipstream.com" />
               </div>
             </form>
           </CardContent>
           <CardFooter className="border-t px-6 py-4">
-            <Button>Save</Button>
+            <Button>Salvar</Button>
           </CardFooter>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Change Password</CardTitle>
+            <CardTitle>Alterar Senha</CardTitle>
             <CardDescription>
-              Update your password. It's recommended to use a strong, unique password.
+              Atualize sua senha. É recomendado usar uma senha forte e única.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="current-password">Current Password</Label>
+                <Label htmlFor="current-password">Senha Atual</Label>
                 <Input id="current-password" type="password" />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="new-password">New Password</Label>
+                <Label htmlFor="new-password">Nova Senha</Label>
                 <Input id="new-password" type="password" />
               </div>
                <div className="grid gap-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
                 <Input id="confirm-password" type="password" />
               </div>
             </form>
           </CardContent>
           <CardFooter className="border-t px-6 py-4">
-            <Button>Update Password</Button>
+            <Button>Atualizar Senha</Button>
           </CardFooter>
         </Card>
       </div>

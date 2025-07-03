@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { addDays, format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { Calendar as CalendarIcon, File } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
@@ -32,11 +33,11 @@ import {
 import { Badge } from "@/components/ui/badge"
 
 const salesData = [
-  { invoice: "INV001", customer: "Liam Johnson", status: "Paid", date: "2023-06-23", amount: 250.00, product: "Coca-Cola 2L" },
-  { invoice: "INV002", customer: "Olivia Smith", status: "Paid", date: "2023-06-24", amount: 150.00, product: "Skol 350ml Can" },
-  { invoice: "INV003", customer: "Noah Williams", status: "Unpaid", date: "2023-06-25", amount: 350.00, product: "Heineken 330ml" },
-  { invoice: "INV004", customer: "Emma Brown", status: "Paid", date: "2023-06-26", amount: 450.00, product: "Red Bull" },
-  { invoice: "INV005", customer: "Ava Jones", status: "Pending", date: "2023-06-27", amount: 550.00, product: "Guaraná 2L" },
+  { invoice: "FAT001", customer: "Liam Johnson", status: "Pago", date: "2023-06-23", amount: 250.00, product: "Coca-Cola 2L" },
+  { invoice: "FAT002", customer: "Olivia Smith", status: "Pago", date: "2023-06-24", amount: 150.00, product: "Skol 350ml Lata" },
+  { invoice: "FAT003", customer: "Noah Williams", status: "Não Pago", date: "2023-06-25", amount: 350.00, product: "Heineken 330ml" },
+  { invoice: "FAT004", customer: "Emma Brown", status: "Pago", date: "2023-06-26", amount: 450.00, product: "Red Bull" },
+  { invoice: "FAT005", customer: "Ava Jones", status: "Pendente", date: "2023-06-27", amount: 550.00, product: "Guaraná 2L" },
 ]
 
 export default function ReportsPage() {
@@ -45,14 +46,27 @@ export default function ReportsPage() {
     to: new Date(),
   })
 
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+        case "Pago":
+            return "default";
+        case "Não Pago":
+            return "destructive";
+        case "Pendente":
+            return "secondary";
+        default:
+            return "outline";
+    }
+  }
+
   return (
     <AppShell>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>Sales Reports</CardTitle>
+                <CardTitle>Relatórios de Vendas</CardTitle>
                 <CardDescription>
-                View and export sales reports for a selected period.
+                Visualize e exporte relatórios de vendas para um período selecionado.
                 </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -70,14 +84,14 @@ export default function ReportsPage() {
                         {date?.from ? (
                         date.to ? (
                             <>
-                            {format(date.from, "LLL dd, y")} -{" "}
-                            {format(date.to, "LLL dd, y")}
+                            {format(date.from, "LLL dd, y", { locale: ptBR })} -{" "}
+                            {format(date.to, "LLL dd, y", { locale: ptBR })}
                             </>
                         ) : (
-                            format(date.from, "LLL dd, y")
+                            format(date.from, "LLL dd, y", { locale: ptBR })
                         )
                         ) : (
-                        <span>Pick a date</span>
+                        <span>Escolha uma data</span>
                         )}
                     </Button>
                     </PopoverTrigger>
@@ -89,12 +103,13 @@ export default function ReportsPage() {
                         selected={date}
                         onSelect={setDate}
                         numberOfMonths={2}
+                        locale={ptBR}
                     />
                     </PopoverContent>
                 </Popover>
                 <Button>
                     <File className="mr-2 h-4 w-4" />
-                    Export
+                    Exportar
                 </Button>
             </div>
         </CardHeader>
@@ -102,12 +117,12 @@ export default function ReportsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Product</TableHead>
+                <TableHead>Fatura</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Produto</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead className="text-right">Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,12 +132,12 @@ export default function ReportsPage() {
                   <TableCell>{sale.customer}</TableCell>
                   <TableCell>{sale.product}</TableCell>
                   <TableCell>
-                    <Badge variant={sale.status === 'Paid' ? 'default' : sale.status === 'Unpaid' ? 'destructive' : 'secondary'}>
+                    <Badge variant={getStatusVariant(sale.status) as any}>
                         {sale.status}
                     </Badge>
                   </TableCell>
                   <TableCell>{sale.date}</TableCell>
-                  <TableCell className="text-right">${sale.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">R$${sale.amount.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

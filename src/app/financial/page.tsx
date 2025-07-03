@@ -7,7 +7,7 @@ export default function FinancialPage() {
     <AppShell>
       <Card>
         <CardHeader>
-          <CardTitle>Financial Management</CardTitle>
+          <CardTitle>Gestão Financeira</CardTitle>
           <CardDescription>
             Contas a pagar e a receber, fluxo de caixa e controle de movimentações financeiras.
           </CardDescription>
@@ -15,7 +15,7 @@ export default function FinancialPage() {
         <CardContent>
           <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
               <DollarSign className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">Financial management feature is under development.</p>
+              <p className="mt-4 text-muted-foreground">O recurso de gestão financeira está em desenvolvimento.</p>
           </div>
         </CardContent>
       </Card>

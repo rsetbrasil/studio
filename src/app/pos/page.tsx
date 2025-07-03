@@ -24,12 +24,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 const allProducts = [
-  { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Soda" },
-  { id: 2, name: "Guaraná Antarctica 2L", price: 6.5, stock: 120, category: "Soda" },
-  { id: 3, name: "Skol 350ml Can", price: 3.5, stock: 300, category: "Beer" },
-  { id: 4, name: "Brahma 350ml Can", price: 3.4, stock: 280, category: "Beer" },
-  { id: 5, name: "Heineken 330ml Long Neck", price: 5.5, stock: 180, category: "Beer" },
-  { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energy Drink" },
+  { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
+  { id: 2, name: "Guaraná Antarctica 2L", price: 6.5, stock: 120, category: "Refrigerante" },
+  { id: 3, name: "Skol 350ml Lata", price: 3.5, stock: 300, category: "Cerveja" },
+  { id: 4, name: "Brahma 350ml Lata", price: 3.4, stock: 280, category: "Cerveja" },
+  { id: 5, name: "Heineken 330ml Long Neck", price: 5.5, stock: 180, category: "Cerveja" },
+  { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energético" },
 ];
 
 type CartItem = {
@@ -98,7 +98,7 @@ export default function PosPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search products..."
+                  placeholder="Buscar produtos..."
                   className="w-full rounded-lg bg-background pl-8"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -112,11 +112,11 @@ export default function PosPage() {
                     <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                        <img src={`https://placehold.co/100x100.png`} alt={product.name} className="rounded-md mb-2" data-ai-hint="beverage drink"/>
                       <h3 className="font-semibold text-sm">{product.name}</h3>
-                      <p className="text-muted-foreground text-xs">{`$${product.price.toFixed(2)}`}</p>
+                      <p className="text-muted-foreground text-xs">{`R$${product.price.toFixed(2)}`}</p>
                     </CardContent>
                     <CardFooter className="p-0">
                       <Button className="w-full rounded-t-none" onClick={() => addToCart(product)}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add
+                        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
                       </Button>
                     </CardFooter>
                   </Card>
@@ -128,14 +128,14 @@ export default function PosPage() {
         <div className="flex flex-col gap-4">
           <Card>
             <CardHeader>
-              <CardTitle>Current Order</CardTitle>
+              <CardTitle>Pedido Atual</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Qty</TableHead>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Qtd</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -156,7 +156,7 @@ export default function PosPage() {
                           />
                         </TableCell>
                         <TableCell className="text-right">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          R$${(item.price * item.quantity).toFixed(2)}
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
@@ -168,7 +168,7 @@ export default function PosPage() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-muted-foreground">
-                        Your cart is empty
+                        Seu carrinho está vazio
                       </TableCell>
                     </TableRow>
                   )}
@@ -178,18 +178,18 @@ export default function PosPage() {
             <CardFooter className="flex flex-col gap-2">
               <div className="w-full flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>R$${subtotal.toFixed(2)}</span>
               </div>
               <div className="w-full flex justify-between text-sm text-muted-foreground">
-                <span>Taxes (5%)</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>Impostos (5%)</span>
+                <span>R$${tax.toFixed(2)}</span>
               </div>
               <div className="w-full flex justify-between font-semibold text-lg">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>R$${total.toFixed(2)}</span>
               </div>
               <Button size="lg" className="w-full mt-4">
-                Complete Sale
+                Finalizar Venda
               </Button>
             </CardFooter>
           </Card>

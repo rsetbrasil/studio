@@ -7,7 +7,7 @@ export default function UsersPage() {
     <AppShell>
       <Card>
         <CardHeader>
-          <CardTitle>User & Permission Management</CardTitle>
+          <CardTitle>Gestão de Usuários e Permissões</CardTitle>
           <CardDescription>
             Gerenciamento de usuários e perfis de acesso (Administrador, Gerente, Vendedor).
           </CardDescription>
@@ -15,7 +15,7 @@ export default function UsersPage() {
         <CardContent>
           <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
               <Users className="h-12 w-12 text-muted-foreground" />
-              <p className="mt-4 text-muted-foreground">User management feature is under development.</p>
+              <p className="mt-4 text-muted-foreground">O recurso de gestão de usuários está em desenvolvimento.</p>
           </div>
         </CardContent>
       </Card>

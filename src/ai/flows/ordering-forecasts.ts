@@ -2,11 +2,11 @@
 'use server';
 
 /**
- * @fileOverview AI-powered tool for analyzing inventory and sales trends to forecast ordering needs.
+ * @fileOverview Ferramenta com IA para analisar tendências de estoque e vendas para prever necessidades de pedidos.
  *
- * - orderingForecasts - A function that handles the ordering forecasts process.
- * - OrderingForecastsInput - The input type for the orderingForecasts function.
- * - OrderingForecastsOutput - The return type for the orderingForecasts function.
+ * - orderingForecasts - Uma função que lida com o processo de previsão de pedidos.
+ * - OrderingForecastsInput - O tipo de entrada para a função orderingForecasts.
+ * - OrderingForecastsOutput - O tipo de retorno para a função orderingForecasts.
  */
 
 import {ai} from '@/ai/genkit';
@@ -16,16 +16,16 @@ const OrderingForecastsInputSchema = z.object({
   inventoryData: z
     .string()
     .describe(
-      'A list of all products, including product name, code, category, unit of measure, price of purchase and sales, and quantity in stock.  Must be a comma-separated list.'
+      'Uma lista de todos os produtos, incluindo nome do produto, código, categoria, unidade de medida, preço de compra e venda, e quantidade em estoque. Deve ser uma lista separada por vírgulas.'
     ),
   salesData: z
     .string()
     .describe(
-      'Historical sales data, including product name, date of sale, and quantity sold. Must be a comma-separated list.'
+      'Dados históricos de vendas, incluindo nome do produto, data da venda e quantidade vendida. Deve ser uma lista separada por vírgulas.'
     ),
   forecastDays: z
     .number()
-    .describe('The number of days into the future to forecast ordering needs.'),
+    .describe('O número de dias no futuro para prever as necessidades de pedidos.'),
 });
 export type OrderingForecastsInput = z.infer<typeof OrderingForecastsInputSchema>;
 
@@ -33,7 +33,7 @@ const OrderingForecastsOutputSchema = z.object({
   forecast: z
     .string()
     .describe(
-      'A forecast of ordering needs, including product name, quantity to order, and estimated order date.  Must be a comma-separated list.'
+      'Uma previsão das necessidades de pedidos, incluindo nome do produto, quantidade a pedir e data estimada do pedido. Deve ser uma lista separada por vírgulas.'
     ),
 });
 export type OrderingForecastsOutput = z.infer<typeof OrderingForecastsOutputSchema>;
@@ -46,18 +46,18 @@ const prompt = ai.definePrompt({
   name: 'orderingForecastsPrompt',
   input: {schema: OrderingForecastsInputSchema},
   output: {schema: OrderingForecastsOutputSchema},
-  prompt: `You are an expert supply chain manager specializing in forecasting ordering needs for distributors.
+  prompt: `Você é um gerente de cadeia de suprimentos especialista em prever necessidades de pedidos para distribuidores.
 
-You will use inventory and sales data to forecast ordering needs for the next {{{forecastDays}}} days.
+Você usará dados de inventário e vendas para prever as necessidades de pedidos para os próximos {{{forecastDays}}} dias.
 
-Inventory Data: {{{inventoryData}}}
-Sales Data: {{{salesData}}}
+Dados de Inventário: {{{inventoryData}}}
+Dados de Vendas: {{{salesData}}}
 
-Based on the inventory data and sales data, what products need to be ordered, and what quantity of each product needs to be ordered?
+Com base nos dados de inventário e vendas, quais produtos precisam ser pedidos e qual a quantidade de cada produto que precisa ser pedida?
 
-Respond in a comma separated list of product name, quantity to order, and estimated order date.
+Responda em uma lista separada por vírgulas de nome do produto, quantidade a pedir e data estimada do pedido.
 
-Forecast:`,
+Previsão:`,
 });
 
 const orderingForecastsFlow = ai.defineFlow(
