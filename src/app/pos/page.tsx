@@ -101,7 +101,8 @@ export default function PosPage() {
     return Object.values(paymentAmounts).reduce((acc, amount) => acc + (amount || 0), 0);
   }, [paymentAmounts]);
 
-  const remainingAmount = total - totalPaid;
+  const balance = total - totalPaid;
+  const change = balance < -0.001 ? Math.abs(balance) : 0;
 
   const handleFinishSale = () => {
     if (cart.length === 0) {
@@ -113,10 +114,10 @@ export default function PosPage() {
       return;
     }
 
-    if (Math.abs(remainingAmount) > 0.001) {
+    if (balance > 0.001) {
       toast({
         title: "Pagamento Incompleto",
-        description: "O valor pago deve ser igual ao total da venda.",
+        description: `Ainda falta pagar R$${balance.toFixed(2)}.`,
         variant: "destructive",
       });
       return;
@@ -132,7 +133,7 @@ export default function PosPage() {
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
     toast({
       title: "Venda Finalizada!",
-      description: `A venda foi registrada com sucesso no pagamento ${paymentMethodsUsed}.`,
+      description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: R$${change.toFixed(2)}` : ''}`.trim(),
     });
 
     setCart([]);
@@ -151,12 +152,8 @@ export default function PosPage() {
     setPaymentAmounts(prev => {
         const newAmounts = { ...prev };
         if (checked) {
-            const currentlySelectedCount = Object.keys(newAmounts).length;
-            if (currentlySelectedCount === 0) {
-                 newAmounts[method] = total;
-            } else {
-                 newAmounts[method] = 0;
-            }
+            const currentPaid = Object.values(newAmounts).reduce((sum, amt) => sum + amt, 0);
+            newAmounts[method] = Math.max(0, total - currentPaid);
         } else {
             delete newAmounts[method];
         }
@@ -288,10 +285,16 @@ export default function PosPage() {
                 <span>Total Pago</span>
                 <span>{`R$${totalPaid.toFixed(2)}`}</span>
               </div>
-              <div className={`w-full flex justify-between text-sm ${remainingAmount !== 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                <span>Restante</span>
-                <span>{`R$${remainingAmount.toFixed(2)}`}</span>
+              <div className={`w-full flex justify-between text-sm ${balance > 0.001 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                <span>A Pagar</span>
+                <span>{`R$${Math.max(0, balance).toFixed(2)}`}</span>
               </div>
+              {change > 0 && (
+                <div className="w-full flex justify-between text-sm font-semibold text-primary">
+                  <span>Troco</span>
+                  <span>{`R$${change.toFixed(2)}`}</span>
+                </div>
+              )}
 
               <Separator className="my-1" />
               <div className="grid gap-4 w-full">
@@ -333,7 +336,7 @@ export default function PosPage() {
                 size="lg" 
                 className="w-full mt-2" 
                 onClick={handleFinishSale}
-                disabled={cart.length === 0 || Math.abs(remainingAmount) > 0.001}
+                disabled={cart.length === 0 || balance > 0.001}
               >
                 Finalizar Venda
               </Button>
