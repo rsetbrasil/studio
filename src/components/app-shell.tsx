@@ -12,6 +12,7 @@ import {
   PanelLeft,
   Settings,
   ShoppingCart,
+  Tag,
   Truck,
   User,
   Users,
@@ -40,6 +41,7 @@ import { SipStreamLogo } from "./icons";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Painel" },
   { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda" },
+  { href: "/sales", icon: Tag, label: "Vendas" },
   { href: "/reports", icon: FileText, label: "Relatórios" },
   { href: "/orders", icon: ListOrdered, label: "Pedidos" },
   { href: "/products", icon: Package, label: "Produtos" },
