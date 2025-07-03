@@ -45,9 +45,11 @@ export default function LoginPage() {
                 Entrar
               </Button>
             </Link>
-            <Button variant="outline" className="w-full">
-              Entrar com o Google
-            </Button>
+            <Link href="/dashboard" className="w-full">
+              <Button variant="secondary" className="w-full">
+                Acessar Demonstração
+              </Button>
+            </Link>
           </div>
           <div className="mt-4 text-center text-sm">
             Não tem uma conta?{" "}
