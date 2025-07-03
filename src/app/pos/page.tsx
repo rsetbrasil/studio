@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import { Banknote, CreditCard, Landmark, PlusCircle, Search, X } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { PlusCircle, Search, X } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useSales } from "@/context/SalesContext";
 import { useOrders } from "@/context/OrdersContext";
-import { Checkbox } from "@/components/ui/checkbox";
+import { PaymentDialog } from "@/components/pos/payment-dialog";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -37,9 +37,6 @@ const allProducts = [
   { id: 5, name: "Heineken 330ml Long Neck", price: 5.5, stock: 180, category: "Cerveja" },
   { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energético" },
 ];
-
-const CREDIT_FEE_RATE = 0.03; // 3%
-const DEBIT_FEE_RATE = 0.015; // 1.5%
 
 type CartItem = {
   id: number;
@@ -51,12 +48,11 @@ type CartItem = {
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
   const [customerName, setCustomerName] = useState("Cliente Balcão");
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder } = useOrders();
-  const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const formatBRL = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -108,53 +104,19 @@ export default function PosPage() {
   }, [cart]);
 
   const tax = subtotal * 0.05; // 5% tax
+  const total = subtotal + tax;
 
-  const cardFee = useMemo(() => {
-    let fee = 0;
-    const paymentMethods = Object.keys(paymentAmounts);
-
-    if (paymentMethods.includes("Crédito")) {
-      fee = Math.max(fee, subtotal * CREDIT_FEE_RATE);
-    }
-    if (paymentMethods.includes("Débito")) {
-      fee = Math.max(fee, subtotal * DEBIT_FEE_RATE);
-    }
-    
-    return fee;
-  }, [paymentAmounts, subtotal]);
-
-  const total = subtotal + tax + cardFee;
-
-  const totalPaid = useMemo(() => {
-    return Object.values(paymentAmounts).reduce((acc, amount) => acc + (amount || 0), 0);
-  }, [paymentAmounts]);
-
-  const balance = total - totalPaid;
-  const change = balance < -0.001 ? Math.abs(balance) : 0;
-
-  const handleFinishSale = () => {
+  const handleConfirmSale = ({ paymentAmounts, change, cardFee }: { paymentAmounts: Record<string, number>; change: number; cardFee: number }) => {
     if (cart.length === 0) {
-      toast({
-        title: "Carrinho Vazio",
-        description: "Adicione produtos ao carrinho antes de finalizar a venda.",
-        variant: "destructive",
-      });
       return;
     }
 
-    if (balance > 0.001) {
-      toast({
-        title: "Pagamento Incompleto",
-        description: `Ainda falta pagar R$${formatBRL(balance)}.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    const finalTotal = subtotal + tax + cardFee;
 
     const newSale = {
       customer: customerName || "Cliente Balcão",
       product: cart.length > 1 ? `${cart[0].name} e outros` : cart[0].name,
-      amount: total,
+      amount: finalTotal,
     };
     addSale(newSale);
     
@@ -166,7 +128,7 @@ export default function PosPage() {
 
     setCart([]);
     setCustomerName("Cliente Balcão");
-    setPaymentAmounts({});
+    setPaymentModalOpen(false);
   };
 
   const handleCreateOrder = () => {
@@ -193,59 +155,6 @@ export default function PosPage() {
 
     setCart([]);
     setCustomerName("Cliente Balcão");
-    setPaymentAmounts({});
-  };
-
-  const paymentOptions = [
-    { value: "Dinheiro", label: "Dinheiro", icon: Banknote, fee: 0 },
-    { value: "Débito", label: "Débito", icon: CreditCard, fee: DEBIT_FEE_RATE },
-    { value: "Crédito", label: "Crédito", icon: CreditCard, fee: CREDIT_FEE_RATE },
-    { value: "PIX", label: "PIX", icon: Landmark, fee: 0 },
-  ];
-
-  const handlePaymentMethodChange = (method: string, checked: boolean | 'indeterminate') => {
-    setPaymentAmounts(prev => {
-        const newAmounts = { ...prev };
-        
-        let finalMethods: string[];
-        if (checked) {
-            finalMethods = [...Object.keys(prev), method];
-        } else {
-            delete newAmounts[method];
-            finalMethods = Object.keys(newAmounts);
-        }
-
-        let fee = 0;
-        if (finalMethods.includes("Crédito")) fee = Math.max(fee, subtotal * CREDIT_FEE_RATE);
-        if (finalMethods.includes("Débito")) fee = Math.max(fee, subtotal * DEBIT_FEE_RATE);
-        const finalTotal = subtotal + tax + fee;
-
-        if (checked) {
-            const paidSoFar = Object.values(prev).reduce((sum, amt) => sum + amt, 0);
-            const remaining = finalTotal - paidSoFar;
-            newAmounts[method] = Math.round(Math.max(0, remaining) * 100) / 100;
-        } 
-        
-        return newAmounts;
-    });
-
-    if (checked) {
-      setTimeout(() => {
-        const inputElement = paymentInputRefs.current[method];
-        if (inputElement) {
-          inputElement.focus();
-          inputElement.select();
-        }
-      }, 100);
-    }
-  };
-
-  const handlePaymentAmountChange = (method: string, amountStr: string) => {
-      const amount = parseFloat(amountStr) || 0;
-      setPaymentAmounts(prev => ({
-          ...prev,
-          [method]: amount
-      }));
   };
 
   return (
@@ -312,7 +221,7 @@ export default function PosPage() {
               </div>
             </CardHeader>
             <CardContent className="flex-1 p-0">
-              <ScrollArea className="h-full">
+              <ScrollArea className="h-[calc(100vh-22rem)]">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -379,92 +288,12 @@ export default function PosPage() {
                 <span>Impostos (5%)</span>
                 <span>{`R$${formatBRL(tax)}`}</span>
               </div>
-              {cardFee > 0.001 && (
-                <div className="flex w-full justify-between text-sm text-muted-foreground">
-                  <span>Taxa do Cartão</span>
-                  <span>{`R$${formatBRL(cardFee)}`}</span>
-                </div>
-              )}
               <Separator className="my-1" />
               <div className="flex w-full justify-between text-lg font-semibold">
                 <span>Total</span>
                 <span>{`R$${formatBRL(total)}`}</span>
               </div>
-              <div className="flex w-full justify-between text-sm text-primary">
-                <span>Total Pago</span>
-                <span>{`R$${formatBRL(totalPaid)}`}</span>
-              </div>
-              <div
-                className={`flex w-full justify-between text-sm ${
-                  balance > 0.001 ? "text-destructive" : "text-muted-foreground"
-                }`}
-              >
-                <span>A Pagar</span>
-                <span>{`R$${formatBRL(Math.max(0, balance))}`}</span>
-              </div>
-              {change > 0 && (
-                <div className="flex w-full justify-between text-sm font-semibold text-primary">
-                  <span>Troco</span>
-                  <span>{`R$${formatBRL(change)}`}</span>
-                </div>
-              )}
 
-              <Separator className="my-1" />
-              <div className="grid w-full gap-4">
-                <Label className="text-base">Forma de Pagamento</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  {paymentOptions.map(({ value, label, icon: Icon, fee }) => {
-                    const isChecked = paymentAmounts[value] !== undefined;
-                    return (
-                      <div key={value}>
-                        <Checkbox
-                          id={value}
-                          checked={isChecked}
-                          onCheckedChange={(checked) =>
-                            handlePaymentMethodChange(value, checked)
-                          }
-                          className="peer sr-only"
-                        />
-                        <Label
-                          htmlFor={value}
-                          className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
-                        >
-                          <Icon className="mb-3 h-6 w-6" />
-                          <div className="flex flex-col items-center gap-1">
-                            <span>{label}</span>
-                            {fee > 0 && (
-                              <span className="text-xs font-normal text-muted-foreground">
-                                (taxa {(fee * 100).toFixed(1).replace(".", ",")}
-                                %)
-                              </span>
-                            )}
-                          </div>
-                        </Label>
-                        {isChecked && (
-                          <Input
-                            ref={(el) => {
-                              paymentInputRefs.current[value] = el;
-                            }}
-                            type="number"
-                            placeholder="Valor"
-                            value={paymentAmounts[value]}
-                            onChange={(e) =>
-                              handlePaymentAmountChange(value, e.target.value)
-                            }
-                            className="mt-2 h-9"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              (e.target as HTMLInputElement).select();
-                            }}
-                            onFocus={(e) => e.target.select()}
-                            step="0.01"
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
               <div className="mt-2 grid w-full grid-cols-2 gap-2">
                 <Button
                   size="lg"
@@ -476,8 +305,8 @@ export default function PosPage() {
                 </Button>
                 <Button
                   size="lg"
-                  onClick={handleFinishSale}
-                  disabled={cart.length === 0 || balance > 0.001}
+                  onClick={() => setPaymentModalOpen(true)}
+                  disabled={cart.length === 0}
                 >
                   Finalizar Venda
                 </Button>
@@ -486,6 +315,15 @@ export default function PosPage() {
           </Card>
         </div>
       </div>
+      {isPaymentModalOpen && (
+        <PaymentDialog
+          isOpen={isPaymentModalOpen}
+          onClose={() => setPaymentModalOpen(false)}
+          subtotal={subtotal}
+          tax={tax}
+          onConfirmSale={handleConfirmSale}
+        />
+      )}
     </AppShell>
   );
 }
