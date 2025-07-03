@@ -4,12 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BrainCircuit,
   DollarSign,
   FileText,
   Home,
   ListOrdered,
-  LogOut,
   Package,
   PanelLeft,
   Settings,
@@ -42,7 +40,6 @@ import { SipStreamLogo } from "./icons";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Painel" },
   { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda" },
-  { href: "/forecasting", icon: BrainCircuit, label: "Previsão" },
   { href: "/reports", icon: FileText, label: "Relatórios" },
   { href: "/orders", icon: ListOrdered, label: "Pedidos" },
   { href: "/products", icon: Package, label: "Produtos" },
