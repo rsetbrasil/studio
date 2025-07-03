@@ -110,7 +110,9 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   };
 
   const handlePaymentAmountChange = (method: string, amountStr: string) => {
-      const amount = parseFloat(amountStr) || 0;
+      const sanitized = amountStr.replace(/[^0-9,]/g, '');
+      const parsable = sanitized.replace(',', '.');
+      const amount = parseFloat(parsable) || 0;
       setPaymentAmounts(prev => ({
           ...prev,
           [method]: amount
@@ -158,9 +160,9 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                             <div className="relative w-32">
                                 <Input
                                     ref={(el) => { paymentInputRefs.current[value] = el; }}
-                                    type="number"
-                                    step="0.01"
-                                    value={paymentAmounts[value] ?? ''}
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={(paymentAmounts[value] || 0).toFixed(2).replace('.', ',')}
                                     onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
                                     className="h-9 text-right font-bold text-base pr-3"
                                     onClick={(e) => {
