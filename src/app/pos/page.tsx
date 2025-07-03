@@ -52,6 +52,13 @@ export default function PosPage() {
   const { toast } = useToast();
   const { addSale } = useSales();
 
+  const formatBRL = (value: number) => {
+    return value.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   const addToCart = (product: typeof allProducts[0]) => {
     setCart((currentCart) => {
       const existingItem = currentCart.find((item) => item.id === product.id);
@@ -117,7 +124,7 @@ export default function PosPage() {
     if (balance > 0.001) {
       toast({
         title: "Pagamento Incompleto",
-        description: `Ainda falta pagar R$${balance.toFixed(2)}.`,
+        description: `Ainda falta pagar R$${formatBRL(balance)}.`,
         variant: "destructive",
       });
       return;
@@ -133,7 +140,7 @@ export default function PosPage() {
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
     toast({
       title: "Venda Finalizada!",
-      description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: R$${change.toFixed(2)}` : ''}`.trim(),
+      description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: R$${formatBRL(change)}` : ''}`.trim(),
     });
 
     setCart([]);
@@ -153,7 +160,8 @@ export default function PosPage() {
         const newAmounts = { ...prev };
         if (checked) {
             const currentPaid = Object.values(newAmounts).reduce((sum, amt) => sum + amt, 0);
-            newAmounts[method] = Math.max(0, total - currentPaid);
+            const remaining = total - currentPaid;
+            newAmounts[method] = Math.round(Math.max(0, remaining) * 100) / 100;
         } else {
             delete newAmounts[method];
         }
@@ -193,7 +201,7 @@ export default function PosPage() {
                     <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                        <img src={`https://placehold.co/100x100.png`} alt={product.name} className="rounded-md mb-2" data-ai-hint="beverage drink"/>
                       <h3 className="font-semibold text-sm">{product.name}</h3>
-                      <p className="text-muted-foreground text-xs">{`R$${product.price.toFixed(2)}`}</p>
+                      <p className="text-muted-foreground text-xs">{`R$${formatBRL(product.price)}`}</p>
                     </CardContent>
                     <CardFooter className="p-0">
                       <Button className="w-full rounded-t-none" onClick={() => addToCart(product)}>
@@ -247,7 +255,7 @@ export default function PosPage() {
                             />
                           </TableCell>
                           <TableCell className="text-right">
-                            {`R$${(item.price * item.quantity).toFixed(2)}`}
+                            {`R$${formatBRL(item.price * item.quantity)}`}
                           </TableCell>
                           <TableCell>
                             <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
@@ -270,29 +278,29 @@ export default function PosPage() {
             <CardFooter className="flex flex-col gap-4 border-t p-6">
               <div className="w-full flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
-                <span>{`R$${subtotal.toFixed(2)}`}</span>
+                <span>{`R$${formatBRL(subtotal)}`}</span>
               </div>
               <div className="w-full flex justify-between text-sm text-muted-foreground">
                 <span>Impostos (5%)</span>
-                <span>{`R$${tax.toFixed(2)}`}</span>
+                <span>{`R$${formatBRL(tax)}`}</span>
               </div>
               <Separator className="my-1" />
               <div className="w-full flex justify-between font-semibold text-lg">
                 <span>Total</span>
-                <span>{`R$${total.toFixed(2)}`}</span>
+                <span>{`R$${formatBRL(total)}`}</span>
               </div>
               <div className="w-full flex justify-between text-sm text-primary">
                 <span>Total Pago</span>
-                <span>{`R$${totalPaid.toFixed(2)}`}</span>
+                <span>{`R$${formatBRL(totalPaid)}`}</span>
               </div>
               <div className={`w-full flex justify-between text-sm ${balance > 0.001 ? 'text-destructive' : 'text-muted-foreground'}`}>
                 <span>A Pagar</span>
-                <span>{`R$${Math.max(0, balance).toFixed(2)}`}</span>
+                <span>{`R$${formatBRL(Math.max(0, balance))}`}</span>
               </div>
               {change > 0 && (
                 <div className="w-full flex justify-between text-sm font-semibold text-primary">
                   <span>Troco</span>
-                  <span>{`R$${change.toFixed(2)}`}</span>
+                  <span>{`R$${formatBRL(change)}`}</span>
                 </div>
               )}
 
@@ -325,6 +333,7 @@ export default function PosPage() {
                             onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
                             className="mt-2 h-9"
                             onClick={(e) => e.stopPropagation()}
+                            step="0.01"
                           />
                         )}
                       </div>
