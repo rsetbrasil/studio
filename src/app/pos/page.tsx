@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { ListOrdered, PlusCircle, Search, ShoppingCart, X } from "lucide-react";
+import { ListOrdered, PlusCircle, Search, ShoppingCart, X, Minus } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -58,18 +59,22 @@ export default function PosPage() {
   const { addSale } = useSales();
   const { addOrder } = useOrders();
   const isMobile = useIsMobile();
+  const [productQuantities, setProductQuantities] = useState<Record<number, string>>({});
 
-  const addToCart = (product: typeof allProducts[0]) => {
+  const addToCart = (product: typeof allProducts[0], quantityStr: string | undefined) => {
+    const quantity = parseInt(quantityStr || '1', 10);
+    if (isNaN(quantity) || quantity <= 0) return;
+
     setCart((currentCart) => {
       const existingItem = currentCart.find((item) => item.id === product.id);
       if (existingItem) {
         return currentCart.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...currentCart, { ...product, quantity: 1 }];
+      return [...currentCart, { ...product, quantity }];
     });
   };
 
@@ -89,6 +94,14 @@ export default function PosPage() {
         )
       );
     }
+  };
+  
+  const handleQuantityChange = (productId: number, change: number) => {
+    setProductQuantities(prev => {
+        const currentQty = parseInt(prev[productId] || '1', 10);
+        const newQty = Math.max(1, currentQty + change);
+        return { ...prev, [productId]: newQty.toString() };
+    });
   };
 
   const filteredProducts = useMemo(() => {
@@ -173,8 +186,8 @@ export default function PosPage() {
         <ScrollArea className="h-full">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="overflow-hidden">
-                <CardContent className="flex flex-col items-center justify-center p-4 text-center">
+              <Card key={product.id} className="overflow-hidden flex flex-col">
+                <CardContent className="flex flex-col flex-1 items-center justify-center p-4 text-center">
                   <img
                     src={`https://placehold.co/100x100.png`}
                     alt={product.name}
@@ -186,10 +199,46 @@ export default function PosPage() {
                     product.price
                   )}</p>
                 </CardContent>
-                <CardFooter className="p-0">
+                <CardFooter className="p-2 flex-col gap-2 mt-auto">
+                    <div className="flex items-center gap-2 w-full">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => handleQuantityChange(product.id, -1)}
+                        >
+                            <Minus className="h-4 w-4" />
+                        </Button>
+                        <Input
+                            type="text"
+                            inputMode="numeric"
+                            value={productQuantities[product.id] ?? '1'}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (/^\d*$/.test(value)) { 
+                                    setProductQuantities(prev => ({ ...prev, [product.id]: value }));
+                                }
+                            }}
+                            onBlur={(e) => {
+                                const value = e.target.value;
+                                if (value === '' || parseInt(value, 10) < 1) {
+                                    setProductQuantities(prev => ({ ...prev, [product.id]: '1' }));
+                                }
+                            }}
+                            className="h-8 w-full text-center"
+                        />
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 shrink-0"
+                            onClick={() => handleQuantityChange(product.id, 1)}
+                        >
+                            <PlusCircle className="h-4 w-4" />
+                        </Button>
+                    </div>
                   <Button
-                    className="w-full rounded-t-none"
-                    onClick={() => addToCart(product)}
+                    className="w-full"
+                    onClick={() => addToCart(product, productQuantities[product.id])}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
                   </Button>
@@ -338,7 +387,7 @@ export default function PosPage() {
                             Pedido
                             {cart.length > 0 && (
                                 <Badge className="absolute -top-2 -right-2 h-6 w-6 justify-center rounded-full p-0">
-                                    {cart.length}
+                                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
                                 </Badge>
                             )}
                         </TabsTrigger>
