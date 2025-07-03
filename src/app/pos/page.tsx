@@ -48,6 +48,7 @@ export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
+  const [customerName, setCustomerName] = useState("Cliente Balcão");
   const { toast } = useToast();
   const { addSale } = useSales();
 
@@ -107,7 +108,7 @@ export default function PosPage() {
     }
 
     const newSale = {
-      customer: "Cliente Balcão",
+      customer: customerName || "Cliente Balcão",
       product: cart.length > 1 ? `${cart[0].name} e outros` : cart[0].name,
       amount: total,
     };
@@ -119,6 +120,7 @@ export default function PosPage() {
     });
 
     setCart([]);
+    setCustomerName("Cliente Balcão");
   };
 
   return (
@@ -162,6 +164,15 @@ export default function PosPage() {
           <Card>
             <CardHeader>
               <CardTitle>Pedido Atual</CardTitle>
+              <div className="mt-4 grid gap-2">
+                <Label htmlFor="customer-name">Cliente</Label>
+                <Input
+                  id="customer-name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Nome do Cliente"
+                />
+              </div>
             </CardHeader>
             <CardContent className="p-0">
               <ScrollArea className="h-[400px]">
