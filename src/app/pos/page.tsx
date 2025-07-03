@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { Banknote, CreditCard, Landmark, PlusCircle, Search, X } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -54,6 +54,7 @@ export default function PosPage() {
   const [customerName, setCustomerName] = useState("Cliente Balcão");
   const { toast } = useToast();
   const { addSale } = useSales();
+  const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const formatBRL = (value: number) => {
     return value.toLocaleString('pt-BR', {
@@ -198,6 +199,16 @@ export default function PosPage() {
         
         return newAmounts;
     });
+
+    if (checked) {
+      setTimeout(() => {
+        const inputElement = paymentInputRefs.current[method];
+        if (inputElement) {
+          inputElement.focus();
+          inputElement.select();
+        }
+      }, 100);
+    }
   };
 
   const handlePaymentAmountChange = (method: string, amountStr: string) => {
@@ -371,12 +382,19 @@ export default function PosPage() {
                         </Label>
                         {isChecked && (
                           <Input
+                            ref={(el) => {
+                              paymentInputRefs.current[value] = el;
+                            }}
                             type="number"
                             placeholder="Valor"
                             value={paymentAmounts[value]}
                             onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
                             className="mt-2 h-9"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                (e.target as HTMLInputElement).select();
+                            }}
+                            onFocus={(e) => e.target.select()}
                             step="0.01"
                           />
                         )}
