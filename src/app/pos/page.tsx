@@ -223,7 +223,7 @@ export default function PosPage() {
     <AppShell>
       <div className="grid flex-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <Card>
+          <Card className="flex h-full flex-col">
             <CardHeader>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -236,28 +236,40 @@ export default function PosPage() {
                 />
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredProducts.map((product) => (
-                  <Card key={product.id} className="overflow-hidden">
-                    <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                       <img src={`https://placehold.co/100x100.png`} alt={product.name} className="rounded-md mb-2" data-ai-hint="beverage drink"/>
-                      <h3 className="font-semibold text-sm">{product.name}</h3>
-                      <p className="text-muted-foreground text-xs">{`R$${formatBRL(product.price)}`}</p>
-                    </CardContent>
-                    <CardFooter className="p-0">
-                      <Button className="w-full rounded-t-none" onClick={() => addToCart(product)}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
+            <CardContent className="flex-1 p-6">
+              <ScrollArea className="h-full">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  {filteredProducts.map((product) => (
+                    <Card key={product.id} className="overflow-hidden">
+                      <CardContent className="flex flex-col items-center justify-center p-4 text-center">
+                        <img
+                          src={`https://placehold.co/100x100.png`}
+                          alt={product.name}
+                          className="mb-2 rounded-md"
+                          data-ai-hint="beverage drink"
+                        />
+                        <h3 className="text-sm font-semibold">{product.name}</h3>
+                        <p className="text-xs text-muted-foreground">{`R$${formatBRL(
+                          product.price
+                        )}`}</p>
+                      </CardContent>
+                      <CardFooter className="p-0">
+                        <Button
+                          className="w-full rounded-t-none"
+                          onClick={() => addToCart(product)}
+                        >
+                          <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
         <div className="flex flex-col gap-4">
-          <Card>
+          <Card className="flex h-full flex-col">
             <CardHeader>
               <CardTitle>Pedido Atual</CardTitle>
               <div className="mt-4 grid gap-2">
@@ -270,8 +282,8 @@ export default function PosPage() {
                 />
               </div>
             </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[400px]">
+            <CardContent className="flex-1 p-0">
+              <ScrollArea className="h-full">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -285,13 +297,18 @@ export default function PosPage() {
                     {cart.length > 0 ? (
                       cart.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.name}
+                          </TableCell>
                           <TableCell>
                             <Input
                               type="number"
                               value={item.quantity}
                               onChange={(e) =>
-                                updateQuantity(item.id, parseInt(e.target.value, 10))
+                                updateQuantity(
+                                  item.id,
+                                  parseInt(e.target.value, 10)
+                                )
                               }
                               className="h-8 w-16"
                             />
@@ -300,7 +317,11 @@ export default function PosPage() {
                             {`R$${formatBRL(item.price * item.quantity)}`}
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeFromCart(item.id)}
+                            >
                               <X className="h-4 w-4" />
                             </Button>
                           </TableCell>
@@ -308,7 +329,10 @@ export default function PosPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-[400px] text-center text-muted-foreground">
+                        <TableCell
+                          colSpan={4}
+                          className="h-24 text-center text-muted-foreground"
+                        >
                           Seu carrinho está vazio
                         </TableCell>
                       </TableRow>
@@ -318,42 +342,46 @@ export default function PosPage() {
               </ScrollArea>
             </CardContent>
             <CardFooter className="flex flex-col gap-4 border-t p-6">
-              <div className="w-full flex justify-between text-sm text-muted-foreground">
+              <div className="flex w-full justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
                 <span>{`R$${formatBRL(subtotal)}`}</span>
               </div>
-              <div className="w-full flex justify-between text-sm text-muted-foreground">
+              <div className="flex w-full justify-between text-sm text-muted-foreground">
                 <span>Impostos (5%)</span>
                 <span>{`R$${formatBRL(tax)}`}</span>
               </div>
               {cardFee > 0.001 && (
-                 <div className="w-full flex justify-between text-sm text-muted-foreground">
-                    <span>Taxa do Cartão</span>
-                    <span>{`R$${formatBRL(cardFee)}`}</span>
+                <div className="flex w-full justify-between text-sm text-muted-foreground">
+                  <span>Taxa do Cartão</span>
+                  <span>{`R$${formatBRL(cardFee)}`}</span>
                 </div>
               )}
               <Separator className="my-1" />
-              <div className="w-full flex justify-between font-semibold text-lg">
+              <div className="flex w-full justify-between text-lg font-semibold">
                 <span>Total</span>
                 <span>{`R$${formatBRL(total)}`}</span>
               </div>
-              <div className="w-full flex justify-between text-sm text-primary">
+              <div className="flex w-full justify-between text-sm text-primary">
                 <span>Total Pago</span>
                 <span>{`R$${formatBRL(totalPaid)}`}</span>
               </div>
-              <div className={`w-full flex justify-between text-sm ${balance > 0.001 ? 'text-destructive' : 'text-muted-foreground'}`}>
+              <div
+                className={`flex w-full justify-between text-sm ${
+                  balance > 0.001 ? "text-destructive" : "text-muted-foreground"
+                }`}
+              >
                 <span>A Pagar</span>
                 <span>{`R$${formatBRL(Math.max(0, balance))}`}</span>
               </div>
               {change > 0 && (
-                <div className="w-full flex justify-between text-sm font-semibold text-primary">
+                <div className="flex w-full justify-between text-sm font-semibold text-primary">
                   <span>Troco</span>
                   <span>{`R$${formatBRL(change)}`}</span>
                 </div>
               )}
 
               <Separator className="my-1" />
-              <div className="grid gap-4 w-full">
+              <div className="grid w-full gap-4">
                 <Label className="text-base">Forma de Pagamento</Label>
                 <div className="grid grid-cols-2 gap-4">
                   {paymentOptions.map(({ value, label, icon: Icon, fee }) => {
@@ -363,20 +391,23 @@ export default function PosPage() {
                         <Checkbox
                           id={value}
                           checked={isChecked}
-                          onCheckedChange={(checked) => handlePaymentMethodChange(value, checked)}
+                          onCheckedChange={(checked) =>
+                            handlePaymentMethodChange(value, checked)
+                          }
                           className="peer sr-only"
                         />
                         <Label
                           htmlFor={value}
-                          className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                          className="flex cursor-pointer flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                         >
                           <Icon className="mb-3 h-6 w-6" />
                           <div className="flex flex-col items-center gap-1">
                             <span>{label}</span>
                             {fee > 0 && (
-                                <span className="text-xs font-normal text-muted-foreground">
-                                (taxa {(fee * 100).toFixed(1).replace('.',',')}%)
-                                </span>
+                              <span className="text-xs font-normal text-muted-foreground">
+                                (taxa {(fee * 100).toFixed(1).replace(".", ",")}
+                                %)
+                              </span>
                             )}
                           </div>
                         </Label>
@@ -388,24 +419,26 @@ export default function PosPage() {
                             type="number"
                             placeholder="Valor"
                             value={paymentAmounts[value]}
-                            onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
+                            onChange={(e) =>
+                              handlePaymentAmountChange(value, e.target.value)
+                            }
                             className="mt-2 h-9"
                             onClick={(e) => {
-                                e.stopPropagation();
-                                (e.target as HTMLInputElement).select();
+                              e.stopPropagation();
+                              (e.target as HTMLInputElement).select();
                             }}
                             onFocus={(e) => e.target.select()}
                             step="0.01"
                           />
                         )}
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
-              <Button 
-                size="lg" 
-                className="w-full mt-2" 
+              <Button
+                size="lg"
+                className="mt-2 w-full"
                 onClick={handleFinishSale}
                 disabled={cart.length === 0 || balance > 0.001}
               >
