@@ -26,6 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { useSales } from "@/context/SalesContext";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -46,8 +47,9 @@ type CartItem = {
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("dinheiro");
+  const [paymentMethod, setPaymentMethod] = useState("Dinheiro");
   const { toast } = useToast();
+  const { addSale } = useSales();
 
   const addToCart = (product: typeof allProducts[0]) => {
     setCart((currentCart) => {
@@ -103,10 +105,17 @@ export default function PosPage() {
       });
       return;
     }
+
+    const newSale = {
+      customer: "Cliente Balcão",
+      product: cart.length > 1 ? `${cart[0].name} e outros` : cart[0].name,
+      amount: total,
+    };
+    addSale(newSale);
     
     toast({
       title: "Venda Finalizada!",
-      description: `A venda foi registrada com sucesso no ${paymentMethod}.`,
+      description: `A venda foi registrada com sucesso no pagamento ${paymentMethod}.`,
     });
 
     setCart([]);
@@ -219,7 +228,7 @@ export default function PosPage() {
               <div className="grid gap-4 w-full">
                 <Label className="text-base">Forma de Pagamento</Label>
                 <RadioGroup 
-                  defaultValue="dinheiro" 
+                  defaultValue="Dinheiro" 
                   className="grid grid-cols-2 gap-4"
                   value={paymentMethod}
                   onValueChange={setPaymentMethod}
