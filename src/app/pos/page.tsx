@@ -175,7 +175,7 @@ export default function PosPage() {
                           />
                         </TableCell>
                         <TableCell className="text-right">
-                          R$${(item.price * item.quantity).toFixed(2)}
+                          {`R$${(item.price * item.quantity).toFixed(2)}`}
                         </TableCell>
                         <TableCell>
                           <Button variant="ghost" size="icon" onClick={() => removeFromCart(item.id)}>
@@ -197,15 +197,15 @@ export default function PosPage() {
             <CardFooter className="flex flex-col gap-2">
               <div className="w-full flex justify-between text-sm text-muted-foreground">
                 <span>Subtotal</span>
-                <span>R$${subtotal.toFixed(2)}</span>
+                <span>{`R$${subtotal.toFixed(2)}`}</span>
               </div>
               <div className="w-full flex justify-between text-sm text-muted-foreground">
                 <span>Impostos (5%)</span>
-                <span>R$${tax.toFixed(2)}</span>
+                <span>{`R$${tax.toFixed(2)}`}</span>
               </div>
               <div className="w-full flex justify-between font-semibold text-lg">
                 <span>Total</span>
-                <span>R$${total.toFixed(2)}</span>
+                <span>{`R$${total.toFixed(2)}`}</span>
               </div>
               <Button size="lg" className="w-full mt-4" onClick={handleFinishSale}>
                 Finalizar Venda

@@ -137,7 +137,7 @@ export default function ReportsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>{sale.date}</TableCell>
-                  <TableCell className="text-right">R$${sale.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{`R$${sale.amount.toFixed(2)}`}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
