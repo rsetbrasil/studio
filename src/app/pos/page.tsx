@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
 
 const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
@@ -42,6 +42,7 @@ type CartItem = {
 export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
   const addToCart = (product: typeof allProducts[0]) => {
     setCart((currentCart) => {
@@ -87,6 +88,24 @@ export default function PosPage() {
 
   const tax = subtotal * 0.05; // 5% tax
   const total = subtotal + tax;
+
+  const handleFinishSale = () => {
+    if (cart.length === 0) {
+      toast({
+        title: "Carrinho Vazio",
+        description: "Adicione produtos ao carrinho antes de finalizar a venda.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "Venda Finalizada!",
+      description: "A venda foi registrada com sucesso.",
+    });
+
+    setCart([]);
+  };
 
   return (
     <AppShell>
@@ -188,7 +207,7 @@ export default function PosPage() {
                 <span>Total</span>
                 <span>R$${total.toFixed(2)}</span>
               </div>
-              <Button size="lg" className="w-full mt-4">
+              <Button size="lg" className="w-full mt-4" onClick={handleFinishSale}>
                 Finalizar Venda
               </Button>
             </CardFooter>
