@@ -157,7 +157,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                         {isSelected && (
                             <div className="relative w-32">
                                 <Input
-                                    ref={(el) => { paymentInputrefs.current[value] = el; }}
+                                    ref={(el) => { paymentInputRefs.current[value] = el; }}
                                     type="number"
                                     step="0.01"
                                     value={paymentAmounts[value] ?? ''}
