@@ -39,7 +39,7 @@ const allProducts = [
   { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
   { id: 2, name: "Guaraná Antarctica 2L", price: 6.5, stock: 120, category: "Refrigerante" },
   { id: 3, name: "Skol 350ml Lata", price: 3.5, stock: 300, category: "Cerveja" },
-  { id: 4, name: "Brahma 350ml Lata", price: 3.4, stock: 280, category: "Cerveja" },
+  { id: 4, name: "Brahma 350ml Lata", price: 3.4, stock: 8, category: "Cerveja" },
   { id: 5, name: "Heineken 330ml Long Neck", price: 5.5, stock: 180, category: "Cerveja" },
   { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energético" },
 ];
@@ -89,13 +89,26 @@ export default function PosPage() {
   const updateQuantity = (productId: number, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
-    } else {
-      setCart((currentCart) =>
-        currentCart.map((item) =>
-          item.id === productId ? { ...item, quantity: newQuantity } : item
-        )
-      );
+      return;
     }
+
+    const product = allProducts.find((p) => p.id === productId);
+    if (!product) return;
+
+    if (newQuantity > product.stock) {
+      toast({
+        title: "Estoque Insuficiente",
+        description: `A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        item.id === productId ? { ...item, quantity: newQuantity } : item
+      )
+    );
   };
   
   const handleOpenQuantityDialog = (product: Product) => {
@@ -105,9 +118,30 @@ export default function PosPage() {
   };
   
   const handleConfirmQuantity = () => {
-    if (selectedProduct) {
-      addToCart(selectedProduct, quantity);
+    if (!selectedProduct) {
+      setQuantityDialogOpen(false);
+      setSelectedProduct(null);
+      return;
     }
+
+    const quantityToAdd = parseInt(quantity, 10);
+    if (isNaN(quantityToAdd) || quantityToAdd <= 0) {
+      return;
+    };
+
+    const cartItem = cart.find(item => item.id === selectedProduct.id);
+    const currentQuantityInCart = cartItem ? cartItem.quantity : 0;
+
+    if (quantityToAdd + currentQuantityInCart > selectedProduct.stock) {
+      toast({
+        title: "Estoque Insuficiente",
+        description: `Disponível: ${selectedProduct.stock}. No carrinho: ${currentQuantityInCart}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    addToCart(selectedProduct, quantity);
     setQuantityDialogOpen(false);
     setSelectedProduct(null);
   };
@@ -206,11 +240,15 @@ export default function PosPage() {
                   <p className="text-xs text-muted-foreground">{formatBRL(
                     product.price
                   )}</p>
+                   <Badge variant="outline" className="mt-2">
+                    Estoque: {product.stock}
+                  </Badge>
                 </CardContent>
                 <CardFooter className="p-2 mt-auto">
                   <Button
                     className="w-full"
                     onClick={() => handleOpenQuantityDialog(product)}
+                    disabled={product.stock === 0}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar
                   </Button>
