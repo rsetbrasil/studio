@@ -10,6 +10,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -17,11 +24,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders, type OrderStatus } from "@/context/OrdersContext";
 import { formatBRL } from "@/lib/utils";
 
 export default function OrdersPage() {
-  const { orders } = useOrders();
+  const { orders, updateOrderStatus } = useOrders();
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -34,6 +41,10 @@ export default function OrdersPage() {
       default:
         return "outline";
     }
+  };
+
+  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
+    updateOrderStatus(orderId, newStatus);
   };
 
   return (
@@ -67,9 +78,24 @@ export default function OrdersPage() {
                       <TableCell>{order.items.length} item(s)</TableCell>
                       <TableCell>{order.date}</TableCell>
                       <TableCell>
-                        <Badge variant={getStatusVariant(order.status) as any}>
-                          {order.status}
-                        </Badge>
+                        <Select
+                          value={order.status}
+                          onValueChange={(newStatus) =>
+                            handleStatusChange(order.id, newStatus as OrderStatus)
+                          }
+                          disabled={order.status === "Finalizado"}
+                        >
+                          <SelectTrigger className="w-auto border-0 p-0 focus:ring-0 focus:ring-offset-0">
+                            <Badge variant={getStatusVariant(order.status) as any}>
+                              {order.status}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Pendente">Pendente</SelectItem>
+                            <SelectItem value="Finalizado">Finalizado</SelectItem>
+                            <SelectItem value="Cancelado">Cancelado</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-right">
                         {formatBRL(order.total)}

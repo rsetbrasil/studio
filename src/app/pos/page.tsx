@@ -29,27 +29,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useOrders } from "@/context/OrdersContext";
 import { useSales } from "@/context/SalesContext";
+import { useProducts, type Product } from "@/context/ProductsContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const allProducts = [
-  { id: 1, name: "Coca-Cola 2L", price: 7.0, stock: 150, category: "Refrigerante" },
-  { id: 2, name: "Guaraná Antarctica 2L", price: 6.5, stock: 120, category: "Refrigerante" },
-  { id: 3, name: "Skol 350ml Lata", price: 3.5, stock: 300, category: "Cerveja" },
-  { id: 4, name: "Brahma 350ml Lata", price: 3.4, stock: 8, category: "Cerveja" },
-  { id: 5, name: "Heineken 330ml Long Neck", price: 5.5, stock: 180, category: "Cerveja" },
-  { id: 6, name: "Red Bull Energy Drink", price: 9.0, stock: 90, category: "Energético" },
-];
-
-type Product = typeof allProducts[0];
 type CartItem = Product & {
   quantity: number;
 };
 
 export default function PosPage() {
+  const { products: allProducts, decreaseStock, getProductById } = useProducts();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [customerName, setCustomerName] = useState("Cliente Balcão");
@@ -92,7 +84,7 @@ export default function PosPage() {
       return;
     }
 
-    const product = allProducts.find((p) => p.id === productId);
+    const product = getProductById(productId);
     if (!product) return;
 
     if (newQuantity > product.stock) {
@@ -131,11 +123,13 @@ export default function PosPage() {
 
     const cartItem = cart.find(item => item.id === selectedProduct.id);
     const currentQuantityInCart = cartItem ? cartItem.quantity : 0;
+    
+    const productInStock = getProductById(selectedProduct.id);
 
-    if (quantityToAdd + currentQuantityInCart > selectedProduct.stock) {
+    if (!productInStock || (quantityToAdd + currentQuantityInCart > productInStock.stock)) {
       toast({
         title: "Estoque Insuficiente",
-        description: `Disponível: ${selectedProduct.stock}. No carrinho: ${currentQuantityInCart}.`,
+        description: `Disponível: ${productInStock?.stock ?? 0}. No carrinho: ${currentQuantityInCart}.`,
         variant: "destructive",
       });
       return;
@@ -150,7 +144,7 @@ export default function PosPage() {
     return allProducts.filter((product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, allProducts]);
   
   const subtotal = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -163,6 +157,20 @@ export default function PosPage() {
     if (cart.length === 0) {
       return;
     }
+
+    for (const item of cart) {
+        const productInStock = getProductById(item.id);
+        if (!productInStock || item.quantity > productInStock.stock) {
+            toast({
+                title: "Venda não realizada",
+                description: `Estoque de ${item.name} insuficiente.`,
+                variant: "destructive",
+            });
+            return;
+        }
+    }
+
+    decreaseStock(cart.map(item => ({ id: item.id, quantity: item.quantity })));
 
     const finalTotal = subtotal + tax + cardFee;
 
@@ -192,6 +200,18 @@ export default function PosPage() {
         variant: "destructive",
       });
       return;
+    }
+
+    for (const item of cart) {
+        const productInStock = getProductById(item.id);
+        if (!productInStock || item.quantity > productInStock.stock) {
+            toast({
+                title: "Pedido não criado",
+                description: `Estoque de ${item.name} insuficiente.`,
+                variant: "destructive",
+            });
+            return;
+        }
     }
 
     const newOrder = {

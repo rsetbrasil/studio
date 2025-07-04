@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useProducts } from './ProductsContext';
 
 type OrderItem = {
   id: number;
@@ -9,18 +10,21 @@ type OrderItem = {
   quantity: number;
 };
 
+export type OrderStatus = "Pendente" | "Finalizado" | "Cancelado";
+
 type Order = {
   id: string;
   customer: string;
   items: OrderItem[];
   date: string;
-  status: "Pendente" | "Finalizado" | "Cancelado";
+  status: OrderStatus;
   total: number;
 };
 
 type OrdersContextType = {
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'date' | 'status'>) => void;
+  updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
 };
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -28,6 +32,7 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderCounter, setOrderCounter] = useState(1);
+  const { decreaseStock, increaseStock } = useProducts();
 
   const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>) => {
       const newId = `PED${String(orderCounter).padStart(3, '0')}`;
@@ -40,12 +45,44 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
           status: "Pendente",
       };
 
+      decreaseStock(order.items);
       setOrders(prevOrders => [order, ...prevOrders]);
       setOrderCounter(prev => prev + 1);
   };
 
+  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    setOrders(currentOrders => {
+      const orderIndex = currentOrders.findIndex(o => o.id === orderId);
+      if (orderIndex === -1) {
+        return currentOrders;
+      }
+      
+      const orderToUpdate = currentOrders[orderIndex];
+      const oldStatus = orderToUpdate.status;
+
+      if (oldStatus === newStatus) {
+        return currentOrders;
+      }
+
+      // Return items to stock
+      if (oldStatus === "Pendente" && newStatus === "Cancelado") {
+        increaseStock(orderToUpdate.items);
+      }
+      
+      // Decrease stock from inventory
+      if (oldStatus === "Cancelado" && newStatus === "Pendente") {
+        decreaseStock(orderToUpdate.items);
+      }
+      
+      const updatedOrders = [...currentOrders];
+      updatedOrders[orderIndex] = { ...orderToUpdate, status: newStatus };
+
+      return updatedOrders;
+    });
+  };
+
   return (
-    <OrdersContext.Provider value={{ orders, addOrder }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus }}>
       {children}
     </OrdersContext.Provider>
   );

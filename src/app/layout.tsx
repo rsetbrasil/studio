@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { SalesProvider } from "@/context/SalesContext";
 import { OrdersProvider } from "@/context/OrdersContext";
+import { ProductsProvider } from "@/context/ProductsContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -20,11 +21,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SalesProvider>
-          <OrdersProvider>
-            {children}
-          </OrdersProvider>
-        </SalesProvider>
+        <ProductsProvider>
+          <SalesProvider>
+            <OrdersProvider>
+              {children}
+            </OrdersProvider>
+          </SalesProvider>
+        </ProductsProvider>
         <Toaster />
       </body>
     </html>
