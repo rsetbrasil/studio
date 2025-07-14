@@ -7,7 +7,6 @@ import { useProducts, type Product } from '@/context/ProductsContext';
 import { Input } from '@/components/ui/input';
 import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
 import { formatBRL } from '@/lib/utils';
-import { cn } from '@/lib/utils';
 
 type ProductSearchProps = {
   onProductSelect: (product: Product) => void;
@@ -35,14 +34,14 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
         <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-            ref={ref}
-            type="text"
-            placeholder="Buscar produto por nome ou código..."
-            className="w-full text-base pl-10"
-            value={searchTerm}
-            onChange={(e) => {
-                setSearchTerm(e.target.value);
-            }}
+              ref={ref}
+              type="text"
+              placeholder="Buscar produto por nome ou código..."
+              className="w-full text-base pl-10"
+              value={searchTerm}
+              onChange={(e) => {
+                  setSearchTerm(e.target.value);
+              }}
             />
             {filteredProducts.length > 0 && (
                 <div className="absolute top-full mt-2 w-full z-10">

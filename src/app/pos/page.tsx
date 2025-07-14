@@ -92,6 +92,11 @@ export default function PosPage() {
     setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
+  const handleCloseQuantityDialog = () => {
+    setProductForQuantity(null);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
+  }
+
   const removeFromCart = (productId: number) => {
     setCart((currentCart) =>
       currentCart.filter((item) => item.id !== productId)
@@ -293,7 +298,7 @@ export default function PosPage() {
         {productForQuantity && (
             <QuantityDialog
                 product={productForQuantity}
-                onClose={() => setProductForQuantity(null)}
+                onClose={handleCloseQuantityDialog}
                 onConfirm={handleAddToCart}
             />
         )}
