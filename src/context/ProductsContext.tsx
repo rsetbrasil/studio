@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -17,6 +18,7 @@ type CartItem = {
 
 type ProductsContextType = {
   products: Product[];
+  addProduct: (productData: Omit<Product, 'id'>) => void;
   decreaseStock: (items: CartItem[]) => void;
   increaseStock: (items: CartItem[]) => void;
   getProductById: (id: number) => Product | undefined;
@@ -36,6 +38,16 @@ const ProductsContext = createContext<ProductsContextType | undefined>(undefined
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [productCounter, setProductCounter] = useState(initialProducts.length + 1);
+
+  const addProduct = (productData: Omit<Product, 'id'>) => {
+    const newProduct: Product = {
+      ...productData,
+      id: productCounter,
+    };
+    setProducts(prevProducts => [...prevProducts, newProduct]);
+    setProductCounter(prev => prev + 1);
+  };
 
   const updateStock = (items: CartItem[], operation: 'increase' | 'decrease') => {
     setProducts(currentProducts => {
@@ -70,7 +82,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <ProductsContext.Provider value={{ products, decreaseStock, increaseStock, getProductById }}>
+    <ProductsContext.Provider value={{ products, addProduct, decreaseStock, increaseStock, getProductById }}>
       {children}
     </ProductsContext.Provider>
   );

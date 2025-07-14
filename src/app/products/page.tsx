@@ -1,6 +1,7 @@
 
 "use client";
 
+import React, { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,12 +19,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useProducts } from "@/context/ProductsContext";
+import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { PlusCircle } from "lucide-react";
+import { ProductDialog } from "@/components/products/product-dialog";
 
 export default function ProductsPage() {
-  const { products } = useProducts();
+  const { products, addProduct } = useProducts();
+  const [isDialogOpen, setDialogOpen] = useState(false);
+
+  const handleAddProduct = (newProductData: Omit<Product, "id">) => {
+    addProduct(newProductData);
+    setDialogOpen(false);
+  };
 
   return (
     <AppShell>
@@ -36,7 +44,7 @@ export default function ProductsPage() {
                 Visualize e gerencie seus produtos.
               </CardDescription>
             </div>
-            <Button>
+            <Button onClick={() => setDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Adicionar Produto
             </Button>
@@ -77,6 +85,12 @@ export default function ProductsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ProductDialog
+        isOpen={isDialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onConfirm={handleAddProduct}
+      />
     </AppShell>
   );
 }
