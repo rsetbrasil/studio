@@ -16,25 +16,21 @@ import { Label } from '@/components/ui/label';
 import type { Product } from '@/context/ProductsContext';
 
 type QuantityDialogProps = {
-  isOpen: boolean;
   onClose: () => void;
   onConfirm: (product: Product, quantity: number) => void;
   product: Product;
 };
 
-export function QuantityDialog({ isOpen, onClose, onConfirm, product }: QuantityDialogProps) {
+export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogProps) {
   const [quantity, setQuantity] = useState('1');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      setQuantity('1');
-      setTimeout(() => {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }, 100);
-    }
-  }, [isOpen]);
+    setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 100);
+  }, []);
 
   const handleConfirm = () => {
     const numQuantity = parseInt(quantity, 10);
@@ -52,9 +48,8 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
     }
   };
 
-
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-xs" onKeyDown={handleKeyDown}>
           <DialogHeader>
             <DialogTitle>{product.name}</DialogTitle>

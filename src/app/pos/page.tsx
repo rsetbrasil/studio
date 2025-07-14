@@ -350,9 +350,8 @@ export default function PosPage() {
 
         {productForQuantity && (
             <QuantityDialog
-                isOpen={!!productForQuantity}
-                onClose={() => setProductForQuantity(null)}
                 product={productForQuantity}
+                onClose={() => setProductForQuantity(null)}
                 onConfirm={handleAddToCart}
             />
         )}
