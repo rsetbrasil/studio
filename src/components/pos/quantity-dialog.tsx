@@ -55,7 +55,7 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xs">
+      <DialogContent className="sm:max-w-xs" onKeyDown={handleKeyDown}>
           <DialogHeader>
             <DialogTitle>{product.name}</DialogTitle>
             <DialogDescription>
@@ -72,7 +72,6 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
                 ref={inputRef}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                onKeyDown={handleKeyDown}
                 className="col-span-3"
                 type="number"
                 min="1"
