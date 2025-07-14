@@ -41,7 +41,6 @@ export default function PosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
-  const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
   const { addSale } = useSales();
@@ -56,12 +55,11 @@ export default function PosPage() {
     setSearchTerm('');
     setPopoverOpen(false);
     setProductForQuantity(product);
-    setQuantityDialogOpen(true);
   };
   
-  const addToCart = (product: Product, quantityToAdd: number) => {
+  const handleAddToCart = (product: Product, quantityToAdd: number) => {
     if (quantityToAdd <= 0) {
-      setQuantityDialogOpen(false);
+      setProductForQuantity(null);
       return;
     }
 
@@ -96,7 +94,7 @@ export default function PosPage() {
       }
     });
 
-    setQuantityDialogOpen(false);
+    setProductForQuantity(null);
     setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
@@ -352,10 +350,10 @@ export default function PosPage() {
 
         {productForQuantity && (
             <QuantityDialog
-                isOpen={quantityDialogOpen}
-                onClose={() => setQuantityDialogOpen(false)}
+                isOpen={!!productForQuantity}
+                onClose={() => setProductForQuantity(null)}
                 product={productForQuantity}
-                onConfirm={addToCart}
+                onConfirm={handleAddToCart}
             />
         )}
         
