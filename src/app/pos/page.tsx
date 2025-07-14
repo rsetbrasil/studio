@@ -72,7 +72,7 @@ export default function PosPage() {
             description: `A quantidade máxima para ${product.name} é ${product.stock}.`,
             variant: "destructive",
         });
-        return; // Don't close the dialog, let the user correct the quantity
+        return;
     }
 
     setCart((currentCart) => {
@@ -260,8 +260,8 @@ export default function PosPage() {
                         {filteredProducts.map((product) => (
                             <CommandItem
                             key={product.id}
-                            onSelect={() => handleProductSelect(product)}
                             value={`${product.name} ${product.id}`}
+                            onSelect={() => handleProductSelect(product)}
                             >
                             <div className="flex justify-between w-full">
                                 <span>{product.name}</span>
