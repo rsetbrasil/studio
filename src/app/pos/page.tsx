@@ -53,6 +53,7 @@ export default function PosPage() {
   }, []);
 
   const handleProductSelect = (product: Product) => {
+    setSearchTerm('');
     setSelectedProduct(product);
     setQuantityDialogOpen(true);
     setPopoverOpen(false);
@@ -96,10 +97,9 @@ export default function PosPage() {
       }
     });
 
-    setSearchTerm("");
     setQuantityDialogOpen(false);
     setSelectedProduct(null);
-    setTimeout(() => searchInputRef.current?.focus(), 0);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
   const removeFromCart = (productId: number) => {
@@ -243,11 +243,6 @@ export default function PosPage() {
                         setPopoverOpen(true);
                     } else {
                         setPopoverOpen(false);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && filteredProducts.length === 1) {
-                      handleProductSelect(filteredProducts[0]);
                     }
                   }}
                 />
