@@ -41,7 +41,6 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
     if (!isNaN(numQuantity) && numQuantity > 0) {
       onConfirm(product, numQuantity);
     } else {
-      // If input is invalid, treat as 1 to avoid errors
       onConfirm(product, 1);
     }
   };
