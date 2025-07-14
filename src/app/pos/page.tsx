@@ -4,16 +4,9 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   X,
-  PlusCircle,
-  FileText,
-  User,
-  Tags,
-  MessageSquare,
-  Truck,
-  Printer,
-  MoreHorizontal,
   CheckCircle2,
-  ListOrdered
+  ListOrdered,
+  Search
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -36,6 +29,7 @@ import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 type CartItem = Product & {
   quantity: number;
@@ -215,32 +209,16 @@ export default function PosPage() {
   return (
     <AppShell>
       <div className="flex flex-col h-full bg-muted/40">
-        <header className="flex items-center gap-2 p-2 border-b bg-background flex-wrap">
-          <Button size="sm" onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0}>
-            <CheckCircle2 className="mr-2 h-4 w-4" /> Concluir (F2)
-          </Button>
-          <Button size="sm" variant="outline"><User className="mr-2 h-4 w-4" /> Cliente (F5)</Button>
-          <Button size="sm" variant="outline"><Tags className="mr-2 h-4 w-4" /> Desc (F3)</Button>
-          <Button size="sm" variant="outline"><MessageSquare className="mr-2 h-4 w-4" /> Obs (F4)</Button>
-          <Button size="sm" variant="outline"><Truck className="mr-2 h-4 w-4" /> Entregar (F9)</Button>
-          <Button size="sm" variant="outline"><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
-          <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
-                <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
-            </Button>
-            <Button size="icon" variant="ghost" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-          </div>
-        </header>
-
-        <main className="flex-1 flex flex-col p-4 gap-4">
+        <header className="flex items-center gap-2 p-4 border-b bg-background flex-wrap">
           <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
-              <div className="relative">
+              <div className="relative flex-1 min-w-[300px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Código, Nome ou use o leitor de código de barras"
-                  className="w-full text-base"
+                  placeholder="Buscar produto por nome ou código..."
+                  className="w-full text-base pl-10"
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
@@ -263,26 +241,39 @@ export default function PosPage() {
                 align="start"
                 onOpenAutoFocus={(e) => e.preventDefault()}
                 >
-              <CommandList>
-                {filteredProducts.length > 0 ? (
-                  filteredProducts.map((product) => (
-                    <CommandItem
-                      key={product.id}
-                      onSelect={() => addToCart(product)}
-                    >
-                      <span>{product.name}</span>
-                      <span className="ml-auto text-muted-foreground">{formatBRL(product.price)}</span>
-                    </CommandItem>
-                  ))
-                ) : (
-                  <div className="p-4 text-sm text-center text-muted-foreground">
-                    Nenhum produto encontrado.
-                  </div>
-                )}
-              </CommandList>
+                <Command>
+                    <CommandList>
+                        <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                        <CommandGroup>
+                        {filteredProducts.map((product) => (
+                            <CommandItem
+                            key={product.id}
+                            onSelect={() => addToCart(product)}
+                            value={`${product.name} ${product.id}`}
+                            >
+                            <div className="flex justify-between w-full">
+                                <span>{product.name}</span>
+                                <span className="text-muted-foreground">{formatBRL(product.price)}</span>
+                            </div>
+                            </CommandItem>
+                        ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
             </PopoverContent>
           </Popover>
 
+          <div className="ml-auto flex items-center gap-2">
+             <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
+                <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
+            </Button>
+            <Button size="sm" onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0}>
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Venda
+            </Button>
+          </div>
+        </header>
+
+        <main className="flex-1 flex flex-col p-4 gap-4">
           <div className="flex-1 rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
             <ScrollArea className="h-full">
                 <Table>
@@ -331,7 +322,7 @@ export default function PosPage() {
                     <TableRow>
                         <TableCell
                         colSpan={6}
-                        className="h-24 text-center text-muted-foreground"
+                        className="h-[calc(100vh-250px)] text-center text-muted-foreground"
                         >
                         Nenhum item adicionado.
                         </TableCell>
@@ -354,7 +345,7 @@ export default function PosPage() {
             isOpen={isPaymentModalOpen}
             onClose={() => setPaymentModalOpen(false)}
             subtotal={total}
-            tax={0} // Tax is already included or not applicable in this new design
+            tax={0}
             onConfirmSale={handleConfirmSale}
             />
         )}
@@ -362,19 +353,3 @@ export default function PosPage() {
     </AppShell>
   );
 }
-
-// Dummy Command components for Popover content styling
-const CommandList = ({ children, className }: { children: React.ReactNode, className?: string }) => (
-    <div className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)}>
-        {children}
-    </div>
-);
-
-const CommandItem = ({ children, onSelect, className }: { children: React.ReactNode, onSelect: () => void, className?: string }) => (
-    <div 
-        className={cn("flex cursor-pointer items-center justify-between p-2 hover:bg-accent rounded-md", className)}
-        onClick={onSelect}
-    >
-        {children}
-    </div>
-);
