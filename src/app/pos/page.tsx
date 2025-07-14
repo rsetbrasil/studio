@@ -42,7 +42,6 @@ export default function PosPage() {
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [isQuantityDialogOpen, setQuantityDialogOpen] = useState(false);
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder } = useOrders();
@@ -55,14 +54,17 @@ export default function PosPage() {
   const handleProductSelect = (product: Product) => {
     setSearchTerm('');
     setSelectedProduct(product);
-    setQuantityDialogOpen(true);
     setPopoverOpen(false);
   };
 
+  const handleCloseQuantityDialog = () => {
+    setSelectedProduct(null);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
+  };
+  
   const addToCart = (product: Product, quantityToAdd: number) => {
     if (quantityToAdd <= 0) {
-      setQuantityDialogOpen(false);
-      setSelectedProduct(null);
+      handleCloseQuantityDialog();
       return;
     }
 
@@ -97,9 +99,7 @@ export default function PosPage() {
       }
     });
 
-    setQuantityDialogOpen(false);
-    setSelectedProduct(null);
-    setTimeout(() => searchInputRef.current?.focus(), 100);
+    handleCloseQuantityDialog();
   };
 
   const removeFromCart = (productId: number) => {
@@ -262,11 +262,6 @@ export default function PosPage() {
                               key={product.id}
                               value={`${product.name} ${product.id}`}
                               onSelect={() => handleProductSelect(product)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleProductSelect(product);
-                                }
-                              }}
                             >
                               <div className="flex justify-between w-full">
                                   <span>{product.name}</span>
@@ -359,12 +354,8 @@ export default function PosPage() {
 
         {selectedProduct && (
             <QuantityDialog
-                isOpen={isQuantityDialogOpen}
-                onClose={() => {
-                    setQuantityDialogOpen(false);
-                    setSelectedProduct(null);
-                    setTimeout(() => searchInputRef.current?.focus(), 100);
-                }}
+                isOpen={!!selectedProduct}
+                onClose={handleCloseQuantityDialog}
                 product={selectedProduct}
                 onConfirm={addToCart}
             />
