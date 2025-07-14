@@ -88,8 +88,7 @@ export default function PosPage() {
       }
     });
 
-    setProductForQuantity(null);
-    setTimeout(() => searchInputRef.current?.focus(), 100);
+    handleCloseQuantityDialog();
   };
 
   const handleCloseQuantityDialog = () => {
