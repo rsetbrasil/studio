@@ -259,14 +259,19 @@ export default function PosPage() {
                         <CommandGroup>
                         {filteredProducts.map((product) => (
                             <CommandItem
-                            key={product.id}
-                            value={`${product.name} ${product.id}`}
-                            onSelect={() => handleProductSelect(product)}
+                              key={product.id}
+                              value={`${product.name} ${product.id}`}
+                              onSelect={() => handleProductSelect(product)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleProductSelect(product);
+                                }
+                              }}
                             >
-                            <div className="flex justify-between w-full">
-                                <span>{product.name}</span>
-                                <span className="text-muted-foreground">Estoque: {product.stock} | {formatBRL(product.price)}</span>
-                            </div>
+                              <div className="flex justify-between w-full">
+                                  <span>{product.name}</span>
+                                  <span className="text-muted-foreground">Estoque: {product.stock} | {formatBRL(product.price)}</span>
+                              </div>
                             </CommandItem>
                         ))}
                         </CommandGroup>
