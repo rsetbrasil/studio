@@ -45,7 +45,7 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       handleConfirm();
