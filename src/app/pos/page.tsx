@@ -41,7 +41,8 @@ export default function PosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantityDialogOpen, setQuantityDialogOpen] = useState(false);
+  const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder } = useOrders();
@@ -53,18 +54,14 @@ export default function PosPage() {
 
   const handleProductSelect = (product: Product) => {
     setSearchTerm('');
-    setSelectedProduct(product);
     setPopoverOpen(false);
-  };
-
-  const handleCloseQuantityDialog = () => {
-    setSelectedProduct(null);
-    setTimeout(() => searchInputRef.current?.focus(), 100);
+    setProductForQuantity(product);
+    setQuantityDialogOpen(true);
   };
   
   const addToCart = (product: Product, quantityToAdd: number) => {
     if (quantityToAdd <= 0) {
-      handleCloseQuantityDialog();
+      setQuantityDialogOpen(false);
       return;
     }
 
@@ -99,7 +96,8 @@ export default function PosPage() {
       }
     });
 
-    handleCloseQuantityDialog();
+    setQuantityDialogOpen(false);
+    setTimeout(() => searchInputRef.current?.focus(), 100);
   };
 
   const removeFromCart = (productId: number) => {
@@ -352,11 +350,11 @@ export default function PosPage() {
             </div>
         </footer>
 
-        {selectedProduct && (
+        {productForQuantity && (
             <QuantityDialog
-                isOpen={!!selectedProduct}
-                onClose={handleCloseQuantityDialog}
-                product={selectedProduct}
+                isOpen={quantityDialogOpen}
+                onClose={() => setQuantityDialogOpen(false)}
+                product={productForQuantity}
                 onConfirm={addToCart}
             />
         )}
