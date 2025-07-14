@@ -6,6 +6,7 @@ import {
   X,
   CheckCircle2,
   ListOrdered,
+  Printer,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -20,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useOrders } from "@/context/OrdersContext";
-import { useSales } from "@/context/SalesContext";
+import { useSales, type Sale } from "@/context/SalesContext";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
@@ -28,6 +29,8 @@ import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuantityDialog } from "@/components/pos/quantity-dialog";
 import { ProductSearch } from "@/components/pos/product-search";
+import { useReactToPrint } from "react-to-print";
+import { Receipt } from "@/components/pos/receipt";
 
 type CartItem = Product & {
   quantity: number;
@@ -42,10 +45,16 @@ export default function PosPage() {
   const { addSale } = useSales();
   const { addOrder } = useOrders();
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [lastSale, setLastSale] = useState<Sale & { change: number } | null>(null);
 
   useEffect(() => {
     searchInputRef.current?.focus();
   }, []);
+
+  const handlePrint = useReactToPrint({
+    content: () => receiptRef.current,
+  });
 
   const handleProductSelect = (product: Product) => {
     setProductForQuantity(product);
@@ -154,20 +163,22 @@ export default function PosPage() {
     decreaseStock(cart.map(item => ({ id: item.id, quantity: item.quantity })));
 
     const finalTotal = total + cardFee;
-
-    const newSale = {
-      customer: "Cliente Balcão",
-      product: cart.length > 1 ? `${cart[0].name} e outros` : cart[0].name,
-      amount: finalTotal,
-    };
-    addSale(newSale);
-    
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
+
+    const newSaleData = {
+      customer: "Cliente Balcão",
+      items: cart,
+      amount: finalTotal,
+      paymentMethod: paymentMethodsUsed,
+    };
+    const newSale = addSale(newSaleData);
+    
     toast({
       title: "Venda Finalizada!",
       description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
     });
-
+    
+    setLastSale({ ...newSale, change });
     setCart([]);
     setPaymentModalOpen(false);
   };
@@ -218,6 +229,11 @@ export default function PosPage() {
             onProductSelect={handleProductSelect} 
           />
           <div className="ml-auto flex items-center gap-2">
+            {lastSale && (
+                <Button size="sm" onClick={handlePrint} variant="outline">
+                    <Printer className="mr-2 h-4 w-4" /> Imprimir Comprovante
+                </Button>
+            )}
              <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
                 <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
             </Button>
@@ -278,7 +294,7 @@ export default function PosPage() {
                         colSpan={6}
                         className="h-[calc(100vh-250px)] text-center text-muted-foreground"
                         >
-                        Nenhum item adicionado.
+                          {lastSale ? "Venda finalizada. Inicie uma nova venda." : "Nenhum item adicionado."}
                         </TableCell>
                     </TableRow>
                     )}
@@ -311,6 +327,10 @@ export default function PosPage() {
             onConfirmSale={handleConfirmSale}
             />
         )}
+
+        <div className="hidden">
+            {lastSale && <Receipt ref={receiptRef} sale={lastSale} />}
+        </div>
       </div>
     </AppShell>
   );

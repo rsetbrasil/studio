@@ -2,10 +2,18 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-type Sale = {
+type SaleItem = {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export type Sale = {
   id: string;
   customer: string;
-  product: string;
+  items: SaleItem[];
+  paymentMethod: string;
   date: string;
   status: "Finalizada" | "Pendente" | "Cancelada";
   amount: number;
@@ -13,15 +21,28 @@ type Sale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => void;
+  addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
 };
 
 const initialSales: Sale[] = [
-  { id: "SALE001", customer: "João Silva", product: "Coca-Cola 2L", date: "2024-07-28", status: "Finalizada", amount: 7.00 },
-  { id: "SALE002", customer: "Maria Oliveira", product: "Skol 350ml Lata", date: "2024-07-28", status: "Finalizada", amount: 3.50 },
-  { id: "SALE003", customer: "Carlos Pereira", product: "Heineken 330ml", date: "2024-07-27", status: "Finalizada", amount: 5.50 },
-  { id: "SALE004", customer: "Ana Costa", product: "Red Bull", date: "2024-07-27", status: "Finalizada", amount: 9.00 },
-  { id: "SALE005", customer: "Pedro Martins", product: "Guaraná 2L", date: "2024-07-26", status: "Finalizada", amount: 6.50 },
+  { 
+    id: "SALE001", 
+    customer: "João Silva", 
+    items: [{ id: 1, name: "Coca-Cola 2L", price: 7.00, quantity: 1 }], 
+    paymentMethod: "Dinheiro",
+    date: "2024-07-28", 
+    status: "Finalizada", 
+    amount: 7.00 
+  },
+  { 
+    id: "SALE002", 
+    customer: "Maria Oliveira", 
+    items: [{ id: 3, name: "Skol 350ml Lata", price: 3.50, quantity: 1 }],
+    paymentMethod: "Débito",
+    date: "2024-07-28", 
+    status: "Finalizada", 
+    amount: 3.50 
+  },
 ];
 
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
@@ -30,9 +51,9 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [saleCounter, setSaleCounter] = useState(sales.length + 1);
 
-  const addSale = (newSaleData: Omit<Sale, 'id' | 'date' | 'status'>) => {
+  const addSale = (newSaleData: Omit<Sale, 'id' | 'date' | 'status'>): Sale => {
       const newId = `SALE${String(saleCounter).padStart(3, '0')}`;
-      const newDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const newDate = new Date().toISOString();
 
       const sale: Sale = {
           ...newSaleData,
@@ -43,6 +64,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
       setSales(prevSales => [sale, ...prevSales]);
       setSaleCounter(prev => prev + 1);
+      return sale;
   };
 
   return (

@@ -39,7 +39,7 @@ export default function SalesPage() {
                 <TableRow>
                   <TableHead>ID da Venda</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Produto Principal</TableHead>
+                  <TableHead>Itens</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -51,7 +51,7 @@ export default function SalesPage() {
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
-                      <TableCell>{sale.product}</TableCell>
+                      <TableCell>{sale.items.length} item(s)</TableCell>
                       <TableCell>{sale.date}</TableCell>
                       <TableCell>
                         <Badge variant="default">{sale.status}</Badge>
