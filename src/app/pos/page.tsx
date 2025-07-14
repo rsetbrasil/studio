@@ -28,8 +28,8 @@ import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { QuantityDialog } from "@/components/pos/quantity-dialog";
 
 type CartItem = Product & {
   quantity: number;
@@ -41,6 +41,8 @@ export default function PosPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isPopoverOpen, setPopoverOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isQuantityDialogOpen, setQuantityDialogOpen] = useState(false);
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder } = useOrders();
@@ -50,7 +52,28 @@ export default function PosPage() {
     searchInputRef.current?.focus();
   }, []);
 
-  const addToCart = (product: Product, quantityToAdd: number = 1) => {
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product);
+    setQuantityDialogOpen(true);
+    setPopoverOpen(false);
+  };
+
+  const addToCart = (product: Product, quantityToAdd: number) => {
+    if (quantityToAdd <= 0) {
+      setQuantityDialogOpen(false);
+      setSelectedProduct(null);
+      return;
+    }
+
+    if (quantityToAdd > product.stock) {
+        toast({
+            title: "Estoque Insuficiente",
+            description: `A quantidade máxima para ${product.name} é ${product.stock}.`,
+            variant: "destructive",
+        });
+        return; // Don't close the dialog, let the user correct the quantity
+    }
+
     setCart((currentCart) => {
       const existingItem = currentCart.find((item) => item.id === product.id);
       if (existingItem) {
@@ -58,7 +81,7 @@ export default function PosPage() {
         if (newQuantity > product.stock) {
           toast({
             title: "Estoque Insuficiente",
-            description: `A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
+            description: `Você já tem ${existingItem.quantity} no carrinho. A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
             variant: "destructive",
           });
           return currentCart;
@@ -69,19 +92,13 @@ export default function PosPage() {
             : item
         );
       } else {
-        if (quantityToAdd > product.stock) {
-          toast({
-            title: "Estoque Insuficiente",
-            description: `A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
-            variant: "destructive",
-          });
-          return currentCart;
-        }
         return [...currentCart, { ...product, quantity: quantityToAdd }];
       }
     });
+
     setSearchTerm("");
-    setPopoverOpen(false);
+    setQuantityDialogOpen(false);
+    setSelectedProduct(null);
     setTimeout(() => searchInputRef.current?.focus(), 0);
   };
 
@@ -229,8 +246,8 @@ export default function PosPage() {
                     }
                   }}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && filteredProducts.length > 0) {
-                      addToCart(filteredProducts[0]);
+                    if (e.key === 'Enter' && filteredProducts.length === 1) {
+                      handleProductSelect(filteredProducts[0]);
                     }
                   }}
                 />
@@ -248,12 +265,12 @@ export default function PosPage() {
                         {filteredProducts.map((product) => (
                             <CommandItem
                             key={product.id}
-                            onSelect={() => addToCart(product)}
+                            onSelect={() => handleProductSelect(product)}
                             value={`${product.name} ${product.id}`}
                             >
                             <div className="flex justify-between w-full">
                                 <span>{product.name}</span>
-                                <span className="text-muted-foreground">{formatBRL(product.price)}</span>
+                                <span className="text-muted-foreground">Estoque: {product.stock} | {formatBRL(product.price)}</span>
                             </div>
                             </CommandItem>
                         ))}
@@ -340,6 +357,19 @@ export default function PosPage() {
             </div>
         </footer>
 
+        {selectedProduct && (
+            <QuantityDialog
+                isOpen={isQuantityDialogOpen}
+                onClose={() => {
+                    setQuantityDialogOpen(false);
+                    setSelectedProduct(null);
+                    setTimeout(() => searchInputRef.current?.focus(), 100);
+                }}
+                product={selectedProduct}
+                onConfirm={addToCart}
+            />
+        )}
+        
         {isPaymentModalOpen && (
             <PaymentDialog
             isOpen={isPaymentModalOpen}
