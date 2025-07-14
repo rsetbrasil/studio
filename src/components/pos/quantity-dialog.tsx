@@ -36,18 +36,27 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
     }
   }, [isOpen]);
 
-  const handleConfirm = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConfirm = () => {
     const numQuantity = parseInt(quantity, 10);
     if (!isNaN(numQuantity) && numQuantity > 0) {
       onConfirm(product, numQuantity);
+    } else {
+      // If input is invalid, treat as 1 to avoid errors
+      onConfirm(product, 1);
     }
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleConfirm();
+    }
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-xs">
-        <form onSubmit={handleConfirm}>
           <DialogHeader>
             <DialogTitle>{product.name}</DialogTitle>
             <DialogDescription>
@@ -64,6 +73,7 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
                 ref={inputRef}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
+                onKeyDown={handleKeyDown}
                 className="col-span-3"
                 type="number"
                 min="1"
@@ -73,9 +83,8 @@ export function QuantityDialog({ isOpen, onClose, onConfirm, product }: Quantity
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit">Confirmar</Button>
+            <Button type="button" onClick={handleConfirm}>Confirmar</Button>
           </DialogFooter>
-        </form>
       </DialogContent>
     </Dialog>
   );
