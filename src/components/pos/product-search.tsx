@@ -4,7 +4,7 @@
 import React, { useState, useMemo, forwardRef } from 'react';
 import { Search } from 'lucide-react';
 import { useProducts, type Product } from '@/context/ProductsContext';
-import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command';
+import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandInput } from '@/components/ui/command';
 import { formatBRL } from '@/lib/utils';
 
 type ProductSearchProps = {
@@ -38,12 +38,12 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
 
     return (
         <Command shouldFilter={false} className="relative flex-1 min-w-[300px] overflow-visible">
-            <div className="flex items-center">
+            <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Command.Input
+                <CommandInput
                     ref={ref}
                     placeholder="Buscar produto por nome ou código..."
-                    className="w-full text-base pl-10 h-10 border border-input bg-background rounded-md"
+                    className="w-full text-base pl-10 h-10"
                     value={searchTerm}
                     onValueChange={setSearchTerm}
                 />
