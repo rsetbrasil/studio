@@ -6,7 +6,6 @@ import {
   X,
   CheckCircle2,
   ListOrdered,
-  Search
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -26,21 +25,18 @@ import { useProducts, type Product } from "@/context/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { QuantityDialog } from "@/components/pos/quantity-dialog";
+import { ProductSearch } from "@/components/pos/product-search";
 
 type CartItem = Product & {
   quantity: number;
 };
 
 export default function PosPage() {
-  const { products: allProducts, decreaseStock, getProductById } = useProducts();
+  const { decreaseStock, getProductById } = useProducts();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [isPopoverOpen, setPopoverOpen] = useState(false);
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
   const { addSale } = useSales();
@@ -52,8 +48,6 @@ export default function PosPage() {
   }, []);
 
   const handleProductSelect = (product: Product) => {
-    setSearchTerm('');
-    setPopoverOpen(false);
     setProductForQuantity(product);
   };
   
@@ -133,14 +127,6 @@ export default function PosPage() {
       )
     );
   };
-
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm) return [];
-    return allProducts.filter((product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(product.id).includes(searchTerm)
-    );
-  }, [searchTerm, allProducts]);
   
   const total = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -223,54 +209,10 @@ export default function PosPage() {
     <AppShell>
       <div className="flex flex-col h-full bg-muted/40">
         <header className="flex items-center gap-2 p-4 border-b bg-background flex-wrap">
-          <Popover open={isPopoverOpen} onOpenChange={setPopoverOpen}>
-            <PopoverTrigger asChild>
-              <div className="relative flex-1 min-w-[300px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Buscar produto por nome ou código..."
-                  className="w-full text-base pl-10"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    if (e.target.value) {
-                        setPopoverOpen(true);
-                    } else {
-                        setPopoverOpen(false);
-                    }
-                  }}
-                />
-              </div>
-            </PopoverTrigger>
-            <PopoverContent 
-                className="w-[--radix-popover-trigger-width] p-0" 
-                align="start"
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                >
-                <Command>
-                    <CommandList>
-                        <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
-                        <CommandGroup>
-                        {filteredProducts.map((product) => (
-                            <CommandItem
-                              key={product.id}
-                              value={`${product.name} ${product.id}`}
-                              onSelect={() => handleProductSelect(product)}
-                            >
-                              <div className="flex justify-between w-full">
-                                  <span>{product.name}</span>
-                                  <span className="text-muted-foreground">Estoque: {product.stock} | {formatBRL(product.price)}</span>
-                              </div>
-                            </CommandItem>
-                        ))}
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-            </PopoverContent>
-          </Popover>
-
+          <ProductSearch 
+            ref={searchInputRef}
+            onProductSelect={handleProductSelect} 
+          />
           <div className="ml-auto flex items-center gap-2">
              <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
                 <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
