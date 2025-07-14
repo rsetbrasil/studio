@@ -1,23 +1,79 @@
+
+"use client";
+
 import { AppShell } from "@/components/app-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useProducts } from "@/context/ProductsContext";
+import { formatBRL } from "@/lib/utils";
+import { PlusCircle } from "lucide-react";
 
 export default function ProductsPage() {
+  const { products } = useProducts();
+
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Gestão de Produtos</CardTitle>
-            <CardDescription>
-              Cadastro de produtos, controle de estoque, categorias e unidades de medida.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Gestão de Produtos</CardTitle>
+              <CardDescription>
+                Visualize e gerencie seus produtos.
+              </CardDescription>
+            </div>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Adicionar Produto
+            </Button>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                <Package className="h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-muted-foreground">O recurso de gestão de produtos está em desenvolvimento.</p>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Estoque</TableHead>
+                  <TableHead className="text-right">Preço</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products.length > 0 ? (
+                  products.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="font-medium">{product.id}</TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell>{product.stock}</TableCell>
+                      <TableCell className="text-right">
+                        {formatBRL(product.price)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      Nenhum produto cadastrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>
