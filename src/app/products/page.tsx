@@ -21,16 +21,31 @@ import {
 } from "@/components/ui/table";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Pencil } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
 
 export default function ProductsPage() {
-  const { products, addProduct } = useProducts();
+  const { products, addProduct, updateProduct } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const handleAddProduct = (newProductData: Omit<Product, "id">) => {
-    addProduct(newProductData);
+  const handleOpenDialog = (product: Product | null = null) => {
+    setEditingProduct(product);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setEditingProduct(null);
     setDialogOpen(false);
+  };
+
+  const handleConfirm = (productData: Omit<Product, "id">) => {
+    if (editingProduct) {
+      updateProduct(editingProduct.id, productData);
+    } else {
+      addProduct(productData);
+    }
+    handleCloseDialog();
   };
 
   return (
@@ -41,10 +56,10 @@ export default function ProductsPage() {
             <div>
               <CardTitle>Gestão de Produtos</CardTitle>
               <CardDescription>
-                Visualize e gerencie seus produtos.
+                Visualize, adicione e edite seus produtos.
               </CardDescription>
             </div>
-            <Button onClick={() => setDialogOpen(true)}>
+            <Button onClick={() => handleOpenDialog()}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Adicionar Produto
             </Button>
@@ -57,7 +72,8 @@ export default function ProductsPage() {
                   <TableHead>Nome</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Estoque</TableHead>
-                  <TableHead className="text-right">Preço</TableHead>
+                  <TableHead>Preço</TableHead>
+                  <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -68,14 +84,22 @@ export default function ProductsPage() {
                       <TableCell>{product.name}</TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>{product.stock}</TableCell>
-                      <TableCell className="text-right">
-                        {formatBRL(product.price)}
+                      <TableCell>{formatBRL(product.price)}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenDialog(product)}
+                        >
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Nenhum produto cadastrado.
                     </TableCell>
                   </TableRow>
@@ -88,8 +112,9 @@ export default function ProductsPage() {
 
       <ProductDialog
         isOpen={isDialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onConfirm={handleAddProduct}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirm}
+        product={editingProduct}
       />
     </AppShell>
   );

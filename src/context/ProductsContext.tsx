@@ -19,6 +19,7 @@ type CartItem = {
 type ProductsContextType = {
   products: Product[];
   addProduct: (productData: Omit<Product, 'id'>) => void;
+  updateProduct: (productId: number, productData: Omit<Product, 'id'>) => void;
   decreaseStock: (items: CartItem[]) => void;
   increaseStock: (items: CartItem[]) => void;
   getProductById: (id: number) => Product | undefined;
@@ -47,6 +48,14 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     };
     setProducts(prevProducts => [...prevProducts, newProduct]);
     setProductCounter(prev => prev + 1);
+  };
+
+  const updateProduct = (productId: number, productData: Omit<Product, 'id'>) => {
+    setProducts(currentProducts =>
+      currentProducts.map(p =>
+        p.id === productId ? { ...p, ...productData, id: productId } : p
+      )
+    );
   };
 
   const updateStock = (items: CartItem[], operation: 'increase' | 'decrease') => {
@@ -82,7 +91,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <ProductsContext.Provider value={{ products, addProduct, decreaseStock, increaseStock, getProductById }}>
+    <ProductsContext.Provider value={{ products, addProduct, updateProduct, decreaseStock, increaseStock, getProductById }}>
       {children}
     </ProductsContext.Provider>
   );
