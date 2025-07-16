@@ -29,6 +29,10 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
         </div>
 
         <div>
+            <p><strong>Cliente:</strong> {sale.customer}</p>
+        </div>
+
+        <div className="mt-2">
           <h3 className="font-bold mb-1">Itens:</h3>
           <table className="w-full">
             <thead>

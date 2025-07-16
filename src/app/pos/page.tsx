@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ListOrdered,
   Printer,
+  User,
 } from "lucide-react";
 
 import { AppShell } from "@/components/app-shell";
@@ -39,6 +40,7 @@ type CartItem = Product & {
 export default function PosPage() {
   const { decreaseStock, getProductById } = useProducts();
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [customerName, setCustomerName] = useState("Cliente Balcão");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
@@ -166,7 +168,7 @@ export default function PosPage() {
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
 
     const newSaleData = {
-      customer: "Cliente Balcão",
+      customer: customerName || "Cliente Balcão",
       items: cart,
       amount: finalTotal,
       paymentMethod: paymentMethodsUsed,
@@ -175,7 +177,7 @@ export default function PosPage() {
     
     toast({
       title: "Venda Finalizada!",
-      description: `Venda registrada com ${paymentMethodsUsed}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
+      description: `Venda registrada para ${customerName}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
     });
     
     setLastSale({ ...newSale, change });
@@ -206,7 +208,7 @@ export default function PosPage() {
     }
 
     const newOrder = {
-      customer: "Cliente Balcão",
+      customer: customerName || "Cliente Balcão",
       items: cart,
       total: total,
     };
@@ -214,7 +216,7 @@ export default function PosPage() {
 
     toast({
       title: "Pedido Criado!",
-      description: `O pedido para Cliente Balcão foi salvo e pode ser visto na página de Pedidos.`,
+      description: `O pedido para ${customerName} foi salvo e pode ser visto na página de Pedidos.`,
     });
 
     setCart([]);
@@ -223,11 +225,20 @@ export default function PosPage() {
   return (
     <AppShell>
       <div className="flex flex-col h-full bg-muted/40">
-        <header className="flex items-center gap-2 p-4 border-b bg-background flex-wrap">
+        <header className="flex items-center gap-4 p-4 border-b bg-background flex-wrap">
           <ProductSearch 
             ref={searchInputRef}
             onProductSelect={handleProductSelect} 
           />
+          <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                  placeholder="Nome do Cliente"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full text-base pl-10 h-10 min-w-[200px]"
+              />
+          </div>
           <div className="ml-auto flex items-center gap-2">
             {lastSale && (
                 <Button size="sm" onClick={handlePrint} variant="outline">
