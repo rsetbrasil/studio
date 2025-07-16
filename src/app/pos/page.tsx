@@ -60,7 +60,7 @@ export default function PosPage() {
     setProductForQuantity(product);
   };
   
-  const handleAddToCart = (product: Product, quantityToAdd: number) => {
+  const handleAddToCart = (product: Product, quantityToAdd: number, price: number) => {
     if (quantityToAdd <= 0) {
       setProductForQuantity(null);
       return;
@@ -89,11 +89,11 @@ export default function PosPage() {
         }
         return currentCart.map((item) =>
           item.id === product.id
-            ? { ...item, quantity: newQuantity }
+            ? { ...item, quantity: newQuantity, price: price }
             : item
         );
       } else {
-        return [...currentCart, { ...product, quantity: quantityToAdd }];
+        return [...currentCart, { ...product, quantity: quantityToAdd, price: price }];
       }
     });
 

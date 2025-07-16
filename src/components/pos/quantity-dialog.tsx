@@ -17,28 +17,36 @@ import type { Product } from '@/context/ProductsContext';
 
 type QuantityDialogProps = {
   onClose: () => void;
-  onConfirm: (product: Product, quantity: number) => void;
+  onConfirm: (product: Product, quantity: number, price: number) => void;
   product: Product;
 };
 
 export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogProps) {
   const [quantity, setQuantity] = useState('1');
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [price, setPrice] = useState(product.price.toFixed(2));
+  const quantityInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTimeout(() => {
-      inputRef.current?.focus();
-      inputRef.current?.select();
+      quantityInputRef.current?.focus();
+      quantityInputRef.current?.select();
     }, 100);
   }, []);
 
   const handleConfirm = () => {
     const numQuantity = parseInt(quantity, 10);
-    if (!isNaN(numQuantity) && numQuantity > 0) {
-      onConfirm(product, numQuantity);
-    } else {
-      onConfirm(product, 1);
+    const numPrice = parseFloat(price.replace(',', '.'));
+
+    if (isNaN(numQuantity) || numQuantity <= 0) {
+      onClose();
+      return;
     }
+    if (isNaN(numPrice) || numPrice < 0) {
+      onClose();
+      return;
+    }
+    
+    onConfirm(product, numQuantity, numPrice);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -59,12 +67,25 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="price" className="text-right">
+                Preço
+              </Label>
+              <Input
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="col-span-3"
+                type="text"
+                inputMode="decimal"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
                 Quant.
               </Label>
               <Input
                 id="quantity"
-                ref={inputRef}
+                ref={quantityInputRef}
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 className="col-span-3"
