@@ -9,6 +9,7 @@ import {
   Printer,
   User,
 } from "lucide-react";
+import { useSearchParams, useRouter } from 'next/navigation';
 
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -45,14 +46,39 @@ export default function PosPage() {
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
   const { addSale } = useSales();
-  const { addOrder } = useOrders();
+  const { addOrder, getOrderById, updateOrderStatus } = useOrders();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [lastSale, setLastSale] = useState<Sale & { change: number } | null>(null);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   useEffect(() => {
     searchInputRef.current?.focus();
-  }, []);
+
+    const orderIdToLoad = searchParams.get('orderId');
+    if (orderIdToLoad) {
+      const order = getOrderById(orderIdToLoad);
+      if (order && order.status === 'Pendente') {
+        const cartItems: CartItem[] = order.items.map(item => ({
+            ...item,
+            stock: getProductById(item.id)?.stock ?? item.quantity,
+        }));
+        setCart(cartItems);
+        setCustomerName(order.customer);
+        updateOrderStatus(order.id, 'Finalizado');
+
+        toast({
+          title: "Pedido Carregado",
+          description: `Pedido ${order.id} de ${order.customer} carregado para faturamento.`,
+        });
+
+        const newUrl = window.location.pathname;
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+      }
+    }
+  }, [searchParams, getOrderById, updateOrderStatus, getProductById, toast]);
 
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
@@ -346,3 +372,4 @@ export default function PosPage() {
     </AppShell>
   );
 }
+

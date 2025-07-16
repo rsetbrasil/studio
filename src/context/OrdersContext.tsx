@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -25,6 +26,7 @@ type OrdersContextType = {
   orders: Order[];
   addOrder: (order: Omit<Order, 'id' | 'date' | 'status'>) => void;
   updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
+  getOrderById: (orderId: string) => Order | undefined;
 };
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -69,9 +71,20 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         increaseStock(orderToUpdate.items);
       }
       
-      // Decrease stock from inventory
+      // Decrease stock from inventory (only when creating an order, not when just changing status from Cancelled to Pending)
       if (oldStatus === "Cancelado" && newStatus === "Pendente") {
-        decreaseStock(orderToUpdate.items);
+        const hasEnoughStock = orderToUpdate.items.every(item => {
+          const product = useProducts().getProductById(item.id);
+          return product && product.stock >= item.quantity;
+        });
+
+        if (hasEnoughStock) {
+          decreaseStock(orderToUpdate.items);
+        } else {
+          console.error("Not enough stock to change order status back to Pending.");
+          // Maybe show a toast message to the user
+          return currentOrders;
+        }
       }
       
       const updatedOrders = [...currentOrders];
@@ -81,8 +94,12 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const getOrderById = (orderId: string): Order | undefined => {
+    return orders.find(o => o.id === orderId);
+  }
+
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById }}>
       {children}
     </OrdersContext.Provider>
   );
@@ -95,3 +112,4 @@ export const useOrders = () => {
   }
   return context;
 };
+

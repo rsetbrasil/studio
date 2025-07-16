@@ -1,7 +1,9 @@
+
 "use client";
 
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -26,6 +28,8 @@ import {
 } from "@/components/ui/table";
 import { useOrders, type OrderStatus } from "@/context/OrdersContext";
 import { formatBRL } from "@/lib/utils";
+import { CreditCard } from "lucide-react";
+import Link from "next/link";
 
 export default function OrdersPage() {
   const { orders, updateOrderStatus } = useOrders();
@@ -67,6 +71,7 @@ export default function OrdersPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="w-[120px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -100,11 +105,21 @@ export default function OrdersPage() {
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
+                       <TableCell className="text-right">
+                        {order.status === 'Pendente' && (
+                          <Button asChild size="sm" variant="outline">
+                            <Link href={`/pos?orderId=${order.id}`}>
+                              <CreditCard className="mr-2 h-4 w-4" />
+                              Faturar
+                            </Link>
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhum pedido registrado.
                     </TableCell>
                   </TableRow>
@@ -117,3 +132,4 @@ export default function OrdersPage() {
     </AppShell>
   );
 }
+
