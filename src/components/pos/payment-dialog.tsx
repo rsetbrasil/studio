@@ -36,7 +36,12 @@ type PaymentDialogProps = {
 export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }: PaymentDialogProps) {
   const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
   const [paymentAmountStrings, setPaymentAmountStrings] = useState<Record<string, string>>({});
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const paymentButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const dialogContentRef = useRef<HTMLDivElement>(null);
+
   const { toast } = useToast();
 
   const cardFee = useMemo(() => {
@@ -67,13 +72,20 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       const initialTotal = subtotal + tax; // We calculate fee based on selection, so start without it.
       setPaymentAmounts({ 'Dinheiro': initialTotal });
       setPaymentAmountStrings({ 'Dinheiro': initialTotal.toFixed(2).replace('.', ',') });
+      setFocusedIndex(0); // Focus on 'Dinheiro' by default
     } else {
       // Clear state on close
       setPaymentAmounts({});
       setPaymentAmountStrings({});
+      setFocusedIndex(0);
     }
   }, [isOpen, subtotal, tax]);
 
+  useEffect(() => {
+    if (isOpen && paymentButtonRefs.current[focusedIndex]) {
+        paymentButtonRefs.current[focusedIndex]?.focus();
+    }
+  }, [isOpen, focusedIndex]);
 
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
@@ -107,6 +119,11 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
         if (inputElement) {
             inputElement.focus();
             inputElement.select();
+        } else {
+           const selectedIndex = paymentOptions.findIndex(p => p.value === method);
+           if (selectedIndex !== -1) {
+               setFocusedIndex(selectedIndex);
+           }
         }
     }, 100);
   };
@@ -153,10 +170,30 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     }
     onConfirmSale({ paymentAmounts, change, cardFee });
   };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (document.activeElement?.tagName === 'INPUT') return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedIndex(prev => (prev + 1) % paymentOptions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedIndex(prev => (prev - 1 + paymentOptions.length) % paymentOptions.length);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+       e.preventDefault();
+       const currentMethod = paymentOptions[focusedIndex].value;
+       handleSelectPaymentMethod(currentMethod);
+    }
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md p-0 gap-0">
+      <DialogContent 
+        ref={dialogContentRef}
+        className="sm:max-w-md p-0 gap-0"
+        onKeyDown={handleKeyDown}
+      >
         <DialogHeader className="p-6 pb-4">
           <DialogTitle className="text-center text-sm font-normal text-muted-foreground tracking-widest">TOTAL A PAGAR</DialogTitle>
            <div className="text-center text-4xl font-bold">{formatBRL(total)}</div>
@@ -166,15 +203,16 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             <span className="sr-only">Fechar</span>
         </button>
         <div className="flex flex-col px-6 pb-6 gap-2">
-            {paymentOptions.map(({ value, label, icon: Icon }) => {
+            {paymentOptions.map(({ value, label, icon: Icon }, index) => {
                 const isSelected = paymentAmounts[value] !== undefined;
                 return (
                     <button 
                         type="button"
                         key={value}
+                        ref={(el) => (paymentButtonRefs.current[index] = el)}
                         onClick={() => handleSelectPaymentMethod(value)}
                         className={cn(
-                            "flex items-center p-3 rounded-lg border-2 text-left transition-all",
+                            "flex items-center p-3 rounded-lg border-2 text-left transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                             isSelected ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 hover:bg-muted"
                         )}
                     >
