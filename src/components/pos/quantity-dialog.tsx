@@ -23,7 +23,7 @@ type QuantityDialogProps = {
 
 export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogProps) {
   const [quantity, setQuantity] = useState('1');
-  const [price, setPrice] = useState(product.price.toFixed(2));
+  const [price, setPrice] = useState(product.price.toFixed(2).replace('.', ','));
   const quantityInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,20 +66,7 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">
-                Preço
-              </Label>
-              <Input
-                id="price"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="col-span-3"
-                type="text"
-                inputMode="decimal"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
+             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="quantity" className="text-right">
                 Quant.
               </Label>
@@ -92,6 +79,19 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
                 type="number"
                 min="1"
                 max={product.stock}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="price" className="text-right">
+                Preço
+              </Label>
+              <Input
+                id="price"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="col-span-3"
+                type="text"
+                inputMode="decimal"
               />
             </div>
           </div>
