@@ -169,11 +169,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             {paymentOptions.map(({ value, label, icon: Icon }) => {
                 const isSelected = paymentAmounts[value] !== undefined;
                 return (
-                    <div 
+                    <button 
+                        type="button"
                         key={value}
                         onClick={() => handleSelectPaymentMethod(value)}
                         className={cn(
-                            "flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                            "flex items-center p-3 rounded-lg border-2 text-left transition-all",
                             isSelected ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 hover:bg-muted"
                         )}
                     >
@@ -197,7 +198,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                                 />
                             </div>
                         )}
-                    </div>
+                    </button>
                 )
             })}
         </div>
