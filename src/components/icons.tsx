@@ -1,6 +1,6 @@
 import type { SVGProps } from 'react';
 
-export function SipStreamLogo(props: SVGProps<SVGSVGElement>) {
+export function PDVRsetLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       {...props}

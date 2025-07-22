@@ -4,7 +4,7 @@
 import React from 'react';
 import { formatBRL } from '@/lib/utils';
 import type { Sale } from '@/context/SalesContext';
-import { SipStreamLogo } from '../icons';
+import { PDVRsetLogo } from '../icons';
 
 type ReceiptProps = {
   sale: Sale & { change: number };
@@ -17,8 +17,8 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
     return (
       <div ref={ref} className="p-4 bg-white text-black text-sm font-mono w-[300px]">
         <div className="text-center mb-4">
-            <SipStreamLogo className="h-8 w-8 mx-auto text-black" />
-            <h2 className="text-lg font-bold">SipStream</h2>
+            <PDVRsetLogo className="h-8 w-8 mx-auto text-black" />
+            <h2 className="text-lg font-bold">PDVRset</h2>
             <p>CNPJ: 00.000.000/0001-00</p>
             <p>Rua Exemplo, 123, Cidade, Estado</p>
             <p>{new Date(sale.date).toLocaleString('pt-BR')}</p>

@@ -36,7 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { SipStreamLogo } from "./icons";
+import { PDVRsetLogo } from "./icons";
 
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Painel" },
@@ -53,7 +53,7 @@ const navItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const pageTitle =
-    navItems.find((item) => item.href === pathname)?.label || "SipStream";
+    navItems.find((item) => item.href === pathname)?.label || "PDVRset";
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -63,8 +63,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href="/dashboard"
             className="flex items-center gap-2 font-semibold"
           >
-            <SipStreamLogo className="h-6 w-6 text-primary" />
-            <span>SipStream</span>
+            <PDVRsetLogo className="h-6 w-6 text-primary" />
+            <span>PDVRset</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-2">
@@ -119,8 +119,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href="#"
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
-                  <SipStreamLogo className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">SipStream</span>
+                  <PDVRsetLogo className="h-5 w-5 transition-all group-hover:scale-110" />
+                  <span className="sr-only">PDVRset</span>
                 </Link>
                 {navItems.map((item) => (
                   <Link

@@ -9,7 +9,7 @@ import { ProductsProvider } from "@/context/ProductsContext";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "SipStream",
+  title: "PDVRset",
   description: "Sistema de gestão completo para uma distribuidora de bebidas.",
 };
 

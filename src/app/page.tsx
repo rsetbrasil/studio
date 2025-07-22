@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { SipStreamLogo } from "@/components/icons";
+import { PDVRsetLogo } from "@/components/icons";
 
 export default function LoginPage() {
   return (
@@ -11,9 +11,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mb-4 flex justify-center">
-             <SipStreamLogo className="h-10 w-10 text-primary" />
+             <PDVRsetLogo className="h-10 w-10 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Bem-vindo ao SipStream</CardTitle>
+          <CardTitle className="text-2xl font-bold">Bem-vindo ao PDVRset</CardTitle>
           <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
         </CardHeader>
         <CardContent>
