@@ -41,6 +41,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const paymentButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const dialogContentRef = useRef<HTMLDivElement>(null);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   const { toast } = useToast();
 
@@ -48,16 +49,16 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     let fee = 0;
     const paymentMethods = Object.keys(paymentAmounts);
 
-    if (paymentMethods.includes('Crédito')) {
-      fee = Math.max(fee, subtotal * CREDIT_FEE_RATE);
+    if (paymentMethods.includes('Crédito') && paymentAmounts['Crédito'] > 0) {
+        fee = Math.max(fee, paymentAmounts['Crédito'] * CREDIT_FEE_RATE);
     }
-    if (paymentMethods.includes('Débito')) {
-      fee = Math.max(fee, subtotal * DEBIT_FEE_RATE);
+    if (paymentMethods.includes('Débito') && paymentAmounts['Débito'] > 0) {
+        fee = Math.max(fee, paymentAmounts['Débito'] * DEBIT_FEE_RATE);
     }
     
     return fee;
-  }, [paymentAmounts, subtotal]);
-
+  }, [paymentAmounts]);
+  
   const total = useMemo(() => subtotal + tax + cardFee, [subtotal, tax, cardFee]);
 
   const totalPaid = useMemo(() => {
@@ -69,12 +70,11 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
 
   useEffect(() => {
     if (isOpen) {
-      const initialTotal = subtotal + tax; // We calculate fee based on selection, so start without it.
+      const initialTotal = subtotal + tax;
       setPaymentAmounts({ 'Dinheiro': initialTotal });
       setPaymentAmountStrings({ 'Dinheiro': initialTotal.toFixed(2).replace('.', ',') });
-      setFocusedIndex(0); // Focus on 'Dinheiro' by default
+      setFocusedIndex(0); 
     } else {
-      // Clear state on close
       setPaymentAmounts({});
       setPaymentAmountStrings({});
       setFocusedIndex(0);
@@ -82,10 +82,22 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   }, [isOpen, subtotal, tax]);
 
   useEffect(() => {
+    if (isOpen) {
+        setTimeout(() => {
+            const buttonToFocus = paymentButtonRefs.current[focusedIndex];
+            if (buttonToFocus) {
+                buttonToFocus.focus();
+            }
+        }, 100);
+    }
+  }, [isOpen]);
+
+   useEffect(() => {
     if (isOpen && paymentButtonRefs.current[focusedIndex]) {
         paymentButtonRefs.current[focusedIndex]?.focus();
     }
-  }, [isOpen, focusedIndex]);
+  }, [focusedIndex, isOpen]);
+
 
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
@@ -93,14 +105,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
         const isSelected = newAmounts[method] !== undefined;
 
         if (isSelected) {
-            // Prevent removing the last payment method by clicking
             if (Object.keys(newAmounts).length > 1) {
               delete newAmounts[method];
             }
         } else {
-            // Add new payment method, pre-filled with remaining balance
             const paidSoFar = Object.values(newAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
-            const currentTotal = subtotal + tax + cardFee; // Recalculate total with potential new fees
+            const currentTotal = subtotal + tax + cardFee;
             const remaining = currentTotal - paidSoFar;
             newAmounts[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
         }
@@ -134,7 +144,6 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       [method]: value,
     }));
 
-    // Allow empty input or just a comma for typing
     if (value === "" || value === ",") {
         setPaymentAmounts(prev => ({...prev, [method]: 0}));
         return;
@@ -172,18 +181,29 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (document.activeElement?.tagName === 'INPUT') return;
+    const isInputFocused = document.activeElement?.tagName === 'INPUT';
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setFocusedIndex(prev => (prev + 1) % paymentOptions.length);
+      if (!isInputFocused) {
+          setFocusedIndex(prev => (prev + 1) % paymentOptions.length);
+      } else {
+          confirmButtonRef.current?.focus();
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setFocusedIndex(prev => (prev - 1 + paymentOptions.length) % paymentOptions.length);
+       if (!isInputFocused) {
+            setFocusedIndex(prev => (prev - 1 + paymentOptions.length) % paymentOptions.length);
+       }
     } else if (e.key === 'Enter' || e.key === ' ') {
-       e.preventDefault();
-       const currentMethod = paymentOptions[focusedIndex].value;
-       handleSelectPaymentMethod(currentMethod);
+        if (!isInputFocused) {
+           e.preventDefault();
+           const currentMethod = paymentOptions[focusedIndex].value;
+           handleSelectPaymentMethod(currentMethod);
+        }
+    }
+    if (e.key === 'Enter' && isInputFocused) {
+        handleFinish();
     }
   }
 
@@ -211,9 +231,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                         key={value}
                         ref={(el) => (paymentButtonRefs.current[index] = el)}
                         onClick={() => handleSelectPaymentMethod(value)}
+                        onFocus={() => setFocusedIndex(index)}
                         className={cn(
-                            "flex items-center p-3 rounded-lg border-2 text-left transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                            isSelected ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 hover:bg-muted"
+                            "flex items-center p-3 rounded-lg border-2 text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2",
+                            isSelected ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 hover:bg-muted",
+                            focusedIndex === index && !isSelected ? "ring-2 ring-ring ring-offset-2" : "",
+                            focusedIndex === index && isSelected ? "ring-2 ring-primary ring-offset-2" : ""
                         )}
                     >
                         <Icon className="h-6 w-6 mr-4 text-muted-foreground" />
@@ -250,6 +273,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                 </div>
             </div>
           <Button 
+            ref={confirmButtonRef}
             size="lg" 
             className="w-full h-12 text-lg font-semibold"
             onClick={handleFinish}
