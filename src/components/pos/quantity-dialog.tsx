@@ -25,6 +25,7 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
   const [quantity, setQuantity] = useState('1');
   const [price, setPrice] = useState(product.price.toFixed(2).replace('.', ','));
   const quantityInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTimeout(() => {
@@ -52,7 +53,12 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleConfirm();
+      if (document.activeElement === quantityInputRef.current) {
+        priceInputRef.current?.focus();
+        priceInputRef.current?.select();
+      } else if (document.activeElement === priceInputRef.current) {
+        handleConfirm();
+      }
     }
   };
 
@@ -87,6 +93,7 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
               </Label>
               <Input
                 id="price"
+                ref={priceInputRef}
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className="col-span-3"
