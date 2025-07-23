@@ -2,10 +2,9 @@
 "use client";
 
 import {
-  ArrowUpRight,
   CreditCard,
   DollarSign,
-  PackageWarning,
+  PackageX,
   ListOrdered,
 } from "lucide-react";
 
@@ -82,7 +81,7 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 Produtos com Baixo Estoque
               </CardTitle>
-              <PackageWarning className="h-4 w-4 text-muted-foreground" />
+              <PackageX className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{lowStockProducts}</div>
