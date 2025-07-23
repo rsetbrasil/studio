@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 export type Product = {
   id: number;
@@ -24,6 +24,13 @@ type ProductsContextType = {
   decreaseStock: (items: CartItem[]) => void;
   increaseStock: (items: CartItem[]) => void;
   getProductById: (id: number) => Product | undefined;
+  
+  categories: string[];
+  unitsOfMeasure: string[];
+  addCategory: (category: string) => void;
+  updateCategory: (oldCategory: string, newCategory: string) => void;
+  addUnitOfMeasure: (unit: string) => void;
+  updateUnitOfMeasure: (oldUnit: string, newUnit: string) => void;
 };
 
 const initialProducts: Product[] = [
@@ -141,6 +148,12 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productCounter, setProductCounter] = useState(initialProducts.length + 1);
 
+  const initialCategories = useMemo(() => Array.from(new Set(initialProducts.map(p => p.category))).sort(), []);
+  const initialUnits = useMemo(() => Array.from(new Set(initialProducts.map(p => p.unitOfMeasure))).sort(), []);
+
+  const [categories, setCategories] = useState<string[]>(initialCategories);
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(initialUnits);
+
   const addProduct = (productData: Omit<Product, 'id'>) => {
     const newProduct: Product = {
       ...productData,
@@ -190,8 +203,38 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     return products.find(p => p.id === id);
   };
 
+  const addCategory = (category: string) => {
+    if (category && !categories.includes(category)) {
+      setCategories(prev => [...prev, category].sort());
+    }
+  };
+
+  const updateCategory = (oldCategory: string, newCategory: string) => {
+    if (!newCategory || newCategory === oldCategory) return;
+    // Update category list
+    setCategories(prev => prev.map(c => c === oldCategory ? newCategory : c).sort());
+    // Update products using the old category
+    setProducts(prev => prev.map(p => p.category === oldCategory ? { ...p, category: newCategory } : p));
+  };
+  
+  const addUnitOfMeasure = (unit: string) => {
+    if (unit && !unitsOfMeasure.includes(unit)) {
+        setUnitsOfMeasure(prev => [...prev, unit].sort());
+    }
+  };
+
+  const updateUnitOfMeasure = (oldUnit: string, newUnit: string) => {
+    if (!newUnit || newUnit === oldUnit) return;
+    setUnitsOfMeasure(prev => prev.map(u => u === oldUnit ? newUnit : u).sort());
+    setProducts(prev => prev.map(p => p.unitOfMeasure === oldUnit ? { ...p, unitOfMeasure: newUnit } : p));
+  };
+
+
   return (
-    <ProductsContext.Provider value={{ products, addProduct, updateProduct, decreaseStock, increaseStock, getProductById }}>
+    <ProductsContext.Provider value={{ 
+      products, addProduct, updateProduct, decreaseStock, increaseStock, getProductById,
+      categories, unitsOfMeasure, addCategory, updateCategory, addUnitOfMeasure, updateUnitOfMeasure
+    }}>
       {children}
     </ProductsContext.Provider>
   );

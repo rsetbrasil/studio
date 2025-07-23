@@ -10,16 +10,15 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
   CommandList
 } from "@/components/ui/command"
-import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Command as CommandPrimitive } from "cmdk"
 
 type ComboboxProps = {
     options: { value: string; label: string }[];
@@ -41,24 +40,6 @@ export function Combobox({
     className
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [inputValue, setInputValue] = React.useState(value || "");
-
-  React.useEffect(() => {
-    setInputValue(value || "");
-  }, [value]);
-
-  const handleSelect = (currentValue: string) => {
-    const newValue = currentValue === value ? "" : currentValue;
-    onChange(newValue);
-    setInputValue(newValue);
-    setOpen(false);
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const newValue = e.target.value;
-      setInputValue(newValue);
-      onChange(newValue);
-  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -77,22 +58,7 @@ export function Combobox({
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
-            <CommandPrimitive.Input 
-                asChild
-                value={inputValue}
-                onValueChange={(search) => {
-                    setInputValue(search)
-                    onChange(search)
-                }}
-            >
-                <Input
-                    placeholder={searchPlaceholder}
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    className="h-9 border-0 shadow-none focus-visible:ring-0"
-                    autoFocus
-                />
-            </CommandPrimitive.Input>
+          <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{noResultsText}</CommandEmpty>
             <CommandGroup>
@@ -100,7 +66,10 @@ export function Combobox({
                 <CommandItem
                   key={option.value}
                   value={option.value}
-                  onSelect={handleSelect}
+                  onSelect={(currentValue) => {
+                    onChange(currentValue === value ? "" : currentValue)
+                    setOpen(false)
+                  }}
                 >
                   <Check
                     className={cn(
