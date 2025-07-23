@@ -8,6 +8,7 @@ import {
   DollarSign,
   FileText,
   Home,
+  Landmark,
   ListOrdered,
   Package,
   PanelLeft,
@@ -42,6 +43,7 @@ import { PDVRsetLogo } from "./icons";
 const navItems = [
   { href: "/dashboard", icon: Home, label: "Painel" },
   { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda" },
+  { href: "/cash-register", icon: Landmark, label: "Caixa" },
   { href: "/sales", icon: Tag, label: "Vendas" },
   { href: "/reports", icon: FileText, label: "Relatórios" },
   { href: "/orders", icon: ListOrdered, label: "Pedidos" },

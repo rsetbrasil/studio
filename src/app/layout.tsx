@@ -6,6 +6,7 @@ import { SalesProvider } from "@/context/SalesContext";
 import { OrdersProvider } from "@/context/OrdersContext";
 import { ProductsProvider } from "@/context/ProductsContext";
 import { FinancialProvider } from "@/context/FinancialContext";
+import { CashRegisterProvider } from "@/context/CashRegisterContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -26,7 +27,9 @@ export default function RootLayout({
           <OrdersProvider>
             <SalesProvider>
               <FinancialProvider>
-                {children}
+                <CashRegisterProvider>
+                  {children}
+                </CashRegisterProvider>
               </FinancialProvider>
             </SalesProvider>
           </OrdersProvider>
