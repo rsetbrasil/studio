@@ -12,8 +12,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PlusCircle, Save, X } from 'lucide-react';
+import { PlusCircle, Save, Trash, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 
 type EntityManagementDialogProps = {
   isOpen: boolean;
@@ -22,6 +23,7 @@ type EntityManagementDialogProps = {
   items: string[];
   onAdd: (item: string) => void;
   onUpdate: (oldItem: string, newItem: string) => void;
+  onDelete: (item: string) => void;
 };
 
 export function EntityManagementDialog({
@@ -31,6 +33,7 @@ export function EntityManagementDialog({
   items,
   onAdd,
   onUpdate,
+  onDelete,
 }: EntityManagementDialogProps) {
   const [editingItems, setEditingItems] = useState<Record<string, string>>({});
   const [newItem, setNewItem] = useState('');
@@ -42,11 +45,14 @@ export function EntityManagementDialog({
 
   const handleSave = (oldItem: string) => {
     const updatedValue = editingItems[oldItem];
-    if (updatedValue && updatedValue.trim() !== '') {
+    if (updatedValue && updatedValue.trim() !== '' && updatedValue.trim() !== oldItem) {
       onUpdate(oldItem, updatedValue.trim());
       const { [oldItem]: _, ...rest } = editingItems;
       setEditingItems(rest);
       toast({ title: 'Item atualizado com sucesso!' });
+    } else {
+        const {[oldItem]: _, ...rest} = editingItems;
+        setEditingItems(rest);
     }
   };
 
@@ -87,7 +93,7 @@ export function EntityManagementDialog({
                     onChange={e => handleInputChange(item, e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSave(item)}
                   />
-                  {editingItems[item] && (
+                  {editingItems[item] ? (
                     <>
                      <Button onClick={() => handleSave(item)} size="icon" variant="outline">
                         <Save className="h-4 w-4" />
@@ -99,6 +105,28 @@ export function EntityManagementDialog({
                         <X className="h-4 w-4" />
                       </Button>
                     </>
+                  ) : (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button size="icon" variant="outline">
+                            <Trash className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação não pode ser desfeita. Tem certeza que deseja excluir o item "{item}"?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => onDelete(item)}>
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
               ))}
@@ -112,3 +140,5 @@ export function EntityManagementDialog({
     </Dialog>
   );
 }
+
+    

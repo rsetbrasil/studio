@@ -37,9 +37,11 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     categories, 
     unitsOfMeasure, 
     addCategory, 
-    updateCategory, 
+    updateCategory,
+    deleteCategory, 
     addUnitOfMeasure,
-    updateUnitOfMeasure
+    updateUnitOfMeasure,
+    deleteUnitOfMeasure
   } = useProducts();
   
   const [name, setName] = useState('');
@@ -103,6 +105,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
         items: categories,
         onAdd: addCategory,
         onUpdate: updateCategory,
+        onDelete: deleteCategory,
       };
     }
     if (dialogManagementState.type === 'unit') {
@@ -111,6 +114,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
         items: unitsOfMeasure,
         onAdd: addUnitOfMeasure,
         onUpdate: updateUnitOfMeasure,
+        onDelete: deleteUnitOfMeasure,
       };
     }
     return null;
@@ -209,8 +213,11 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
           items={managementProps.items}
           onAdd={managementProps.onAdd}
           onUpdate={managementProps.onUpdate}
+          onDelete={managementProps.onDelete}
         />
       )}
     </>
   );
 }
+
+    

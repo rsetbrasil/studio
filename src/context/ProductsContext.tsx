@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export type Product = {
   id: number;
@@ -29,8 +30,10 @@ type ProductsContextType = {
   unitsOfMeasure: string[];
   addCategory: (category: string) => void;
   updateCategory: (oldCategory: string, newCategory: string) => void;
+  deleteCategory: (category: string) => void;
   addUnitOfMeasure: (unit: string) => void;
   updateUnitOfMeasure: (oldUnit: string, newUnit: string) => void;
+  deleteUnitOfMeasure: (unit: string) => void;
 };
 
 const initialProducts: Product[] = [
@@ -153,6 +156,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const [categories, setCategories] = useState<string[]>(initialCategories);
   const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(initialUnits);
+  
+  const { toast } = useToast();
 
   const addProduct = (productData: Omit<Product, 'id'>) => {
     const newProduct: Product = {
@@ -211,10 +216,21 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const updateCategory = (oldCategory: string, newCategory: string) => {
     if (!newCategory || newCategory === oldCategory) return;
-    // Update category list
     setCategories(prev => prev.map(c => c === oldCategory ? newCategory : c).sort());
-    // Update products using the old category
     setProducts(prev => prev.map(p => p.category === oldCategory ? { ...p, category: newCategory } : p));
+  };
+
+  const deleteCategory = (category: string) => {
+    const isCategoryInUse = products.some(p => p.category === category);
+    if (isCategoryInUse) {
+        toast({
+            title: "Categoria em uso",
+            description: "Não é possível excluir uma categoria que está sendo usada por produtos.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setCategories(prev => prev.filter(c => c !== category));
   };
   
   const addUnitOfMeasure = (unit: string) => {
@@ -229,11 +245,25 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     setProducts(prev => prev.map(p => p.unitOfMeasure === oldUnit ? { ...p, unitOfMeasure: newUnit } : p));
   };
 
+  const deleteUnitOfMeasure = (unit: string) => {
+    const isUnitInUse = products.some(p => p.unitOfMeasure === unit);
+    if (isUnitInUse) {
+        toast({
+            title: "Unidade de medida em uso",
+            description: "Não é possível excluir uma unidade de medida que está sendo usada por produtos.",
+            variant: "destructive",
+        });
+        return;
+    }
+    setUnitsOfMeasure(prev => prev.filter(u => u !== unit));
+  };
+
 
   return (
     <ProductsContext.Provider value={{ 
       products, addProduct, updateProduct, decreaseStock, increaseStock, getProductById,
-      categories, unitsOfMeasure, addCategory, updateCategory, addUnitOfMeasure, updateUnitOfMeasure
+      categories, unitsOfMeasure, addCategory, updateCategory, deleteCategory,
+      addUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure
     }}>
       {children}
     </ProductsContext.Provider>
@@ -247,3 +277,5 @@ export const useProducts = () => {
   }
   return context;
 };
+
+    
