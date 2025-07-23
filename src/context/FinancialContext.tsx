@@ -15,6 +15,7 @@ export type Transaction = {
 type FinancialContextType = {
   transactions: Transaction[];
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  resetTransactions: () => void;
 };
 
 const initialTransactions: Transaction[] = [
@@ -40,9 +41,14 @@ export const FinancialProvider = ({ children }: { children: ReactNode }) => {
     setTransactions(prevTransactions => [newTransaction, ...prevTransactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setTransactionCounter(prev => prev + 1);
   };
+  
+  const resetTransactions = () => {
+    setTransactions([]);
+    setTransactionCounter(1);
+  };
 
   return (
-    <FinancialContext.Provider value={{ transactions, addTransaction }}>
+    <FinancialContext.Provider value={{ transactions, addTransaction, resetTransactions }}>
       {children}
     </FinancialContext.Provider>
   );

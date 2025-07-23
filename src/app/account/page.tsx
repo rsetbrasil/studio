@@ -1,3 +1,7 @@
+
+"use client";
+
+import React, { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,8 +14,30 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResetDataDialog } from "@/components/account/reset-data-dialog";
+import { useSales } from "@/context/SalesContext";
+import { useOrders } from "@/context/OrdersContext";
+import { useFinancial } from "@/context/FinancialContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AccountPage() {
+  const [isResetDialogOpen, setResetDialogOpen] = useState(false);
+  const { resetSales } = useSales();
+  const { resetOrders } = useOrders();
+  const { resetTransactions } = useFinancial();
+  const { toast } = useToast();
+
+  const handleResetData = () => {
+    resetSales();
+    resetOrders();
+    resetTransactions();
+    setResetDialogOpen(false);
+    toast({
+      title: "Dados Redefinidos!",
+      description: "As informações de vendas, pedidos e financeiro foram zeradas.",
+    });
+  };
+
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
@@ -72,7 +98,29 @@ export default function AccountPage() {
             <Button>Atualizar Senha</Button>
           </CardFooter>
         </Card>
+
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+            <CardDescription>
+              Ações irreversíveis. Tenha certeza antes de prosseguir.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="destructive" onClick={() => setResetDialogOpen(true)}>
+              Zerar Dados do Sistema
+            </Button>
+            <p className="text-sm text-muted-foreground mt-2">
+              Esta ação irá apagar permanentemente todas as vendas, pedidos e transações financeiras. Os produtos não serão afetados.
+            </p>
+          </CardContent>
+        </Card>
       </div>
+      <ResetDataDialog
+        isOpen={isResetDialogOpen}
+        onClose={() => setResetDialogOpen(false)}
+        onConfirm={handleResetData}
+      />
     </AppShell>
   );
 }

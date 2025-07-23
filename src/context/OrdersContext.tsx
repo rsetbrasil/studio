@@ -27,6 +27,7 @@ type OrdersContextType = {
   addOrder: (order: Omit<Order, 'id' | 'date' | 'status'>) => void;
   updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
   getOrderById: (orderId: string) => Order | undefined;
+  resetOrders: () => void;
 };
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -96,10 +97,15 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
 
   const getOrderById = (orderId: string): Order | undefined => {
     return orders.find(o => o.id === orderId);
-  }
+  };
+  
+  const resetOrders = () => {
+    setOrders([]);
+    setOrderCounter(1);
+  };
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders }}>
       {children}
     </OrdersContext.Provider>
   );
@@ -112,4 +118,3 @@ export const useOrders = () => {
   }
   return context;
 };
-

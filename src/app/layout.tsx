@@ -23,13 +23,13 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ProductsProvider>
-          <SalesProvider>
-            <OrdersProvider>
+          <OrdersProvider>
+            <SalesProvider>
               <FinancialProvider>
                 {children}
               </FinancialProvider>
-            </OrdersProvider>
-          </SalesProvider>
+            </SalesProvider>
+          </OrdersProvider>
         </ProductsProvider>
         <Toaster />
       </body>

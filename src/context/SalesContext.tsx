@@ -22,6 +22,7 @@ export type Sale = {
 type SalesContextType = {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
+  resetSales: () => void;
 };
 
 const initialSales: Sale[] = [
@@ -67,8 +68,13 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
       return sale;
   };
 
+  const resetSales = () => {
+    setSales([]);
+    setSaleCounter(1);
+  };
+
   return (
-    <SalesContext.Provider value={{ sales, addSale }}>
+    <SalesContext.Provider value={{ sales, addSale, resetSales }}>
       {children}
     </SalesContext.Provider>
   );
