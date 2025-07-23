@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { SalesProvider } from "@/context/SalesContext";
 import { OrdersProvider } from "@/context/OrdersContext";
 import { ProductsProvider } from "@/context/ProductsContext";
+import { FinancialProvider } from "@/context/FinancialContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -24,7 +25,9 @@ export default function RootLayout({
         <ProductsProvider>
           <SalesProvider>
             <OrdersProvider>
-              {children}
+              <FinancialProvider>
+                {children}
+              </FinancialProvider>
             </OrdersProvider>
           </SalesProvider>
         </ProductsProvider>

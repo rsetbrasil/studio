@@ -1,4 +1,7 @@
 
+"use client";
+
+import React, { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import {
   Card,
@@ -19,17 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/utils";
 import { ArrowDownCircle, ArrowUpCircle, DollarSign, PlusCircle } from "lucide-react";
+import { useFinancial, type Transaction } from "@/context/FinancialContext";
+import { TransactionDialog } from "@/components/financial/transaction-dialog";
 
-const transactions = [
-  { id: 1, date: "2024-07-28", description: "Venda - Pedido SALE001", type: "Receita", status: "Pago", amount: 7.00 },
-  { id: 2, date: "2024-07-28", description: "Venda - Pedido SALE002", type: "Receita", status: "Pago", amount: 3.50 },
-  { id: 3, date: "2024-07-29", description: "Compra de estoque - Fornecedor A", type: "Despesa", status: "Pago", amount: 500.00 },
-  { id: 4, date: "2024-07-30", description: "Pagamento de Aluguel", type: "Despesa", status: "Pendente", amount: 1200.00 },
-  { id: 5, date: "2024-08-01", description: "Venda - Cliente B", type: "Receita", status: "Pendente", amount: 350.00 },
-  { id: 6, date: "2024-08-02", description: "Pagamento de Salários", type: "Despesa", status: "Pago", amount: 2500.00 },
-];
 
 export default function FinancialPage() {
+  const { transactions, addTransaction } = useFinancial();
+  const [isDialogOpen, setDialogOpen] = useState(false);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -45,6 +44,11 @@ export default function FinancialPage() {
   const contasAReceber = transactions.filter(t => t.type === 'Receita' && t.status === 'Pendente').reduce((acc, t) => acc + t.amount, 0);
   const contasAPagar = transactions.filter(t => t.type === 'Despesa' && t.status === 'Pendente').reduce((acc, t) => acc + t.amount, 0);
   const saldoAtual = transactions.filter(t => t.status === 'Pago').reduce((acc, t) => t.type === 'Receita' ? acc + t.amount : acc - t.amount, 0);
+
+  const handleConfirm = (transactionData: Omit<Transaction, "id">) => {
+    addTransaction(transactionData);
+    setDialogOpen(false);
+  };
 
   return (
     <AppShell>
@@ -90,7 +94,7 @@ export default function FinancialPage() {
                 Acompanhe as últimas transações financeiras.
                 </CardDescription>
             </div>
-            <Button>
+            <Button onClick={() => setDialogOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Transação
             </Button>
@@ -140,6 +144,11 @@ export default function FinancialPage() {
           </CardContent>
         </Card>
       </div>
+      <TransactionDialog
+        isOpen={isDialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onConfirm={handleConfirm}
+      />
     </AppShell>
   );
 }
