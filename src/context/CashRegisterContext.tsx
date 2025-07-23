@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useSales, Sale } from './SalesContext';
 
 export type CashRegisterSession = {
@@ -28,6 +28,7 @@ type CashRegisterContextType = {
   openRegister: (openingBalance: number) => void;
   closeRegister: () => void;
   getSalesForCurrentSession: () => Sale[];
+  resetHistory: () => void;
 };
 
 const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined);
@@ -80,9 +81,17 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
     setState({ isOpen: false, currentSession: null });
     setSessionCounter(prev => prev + 1);
   };
+  
+  const resetHistory = () => {
+    setHistory([]);
+    setSessionCounter(1);
+    if(state.isOpen){
+      setState({ isOpen: false, currentSession: null });
+    }
+  }
 
   return (
-    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession }}>
+    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, resetHistory }}>
       {children}
     </CashRegisterContext.Provider>
   );

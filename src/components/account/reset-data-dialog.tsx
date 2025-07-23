@@ -28,8 +28,8 @@ export function ResetDataDialog({ isOpen, onClose, onConfirm }: ResetDataDialogP
           <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação não pode ser desfeita. Isso irá apagar permanentemente
-            todas as vendas, pedidos e transações financeiras. Os dados de produtos
-            não serão afetados.
+            todas as vendas, pedidos, transações financeiras e histórico de caixa.
+            Os dados de produtos não serão afetados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
