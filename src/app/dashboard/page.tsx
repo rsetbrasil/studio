@@ -121,7 +121,7 @@ export default function DashboardPage() {
                           {sale.customer}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(sale.date).toLocaleDateString('pt-BR')}
+                          {new Date(sale.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                         </p>
                       </div>
                       <div className="ml-auto font-medium">{formatBRL(sale.amount)}</div>
