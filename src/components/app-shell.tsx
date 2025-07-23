@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -48,6 +49,7 @@ const navItems = [
   { href: "/suppliers", icon: Truck, label: "Fornecedores" },
   { href: "/financial", icon: DollarSign, label: "Financeiro" },
   { href: "/users", icon: Users, label: "Usuários" },
+  { href: "/account", icon: Settings, label: "Configurações" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -83,21 +85,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {item.label}
               </Link>
             ))}
-          </nav>
-        </div>
-        <div className="mt-auto p-4">
-          <nav>
-            <Link
-              href="/account"
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
-                pathname === "/account"
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Settings className="h-4 w-4" />
-              Configurações
-            </Link>
           </nav>
         </div>
       </aside>
@@ -136,17 +123,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
-                <Link
-                  href="/account"
-                  className={`flex items-center gap-4 px-2.5 ${
-                    pathname === "/account"
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Settings className="h-5 w-5" />
-                  Configurações
-                </Link>
               </nav>
             </SheetContent>
           </Sheet>
