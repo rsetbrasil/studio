@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 type SaleItem = {
   id: number;
@@ -23,6 +24,8 @@ type SalesContextType = {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
   resetSales: () => void;
+  totalSalesValue: number;
+  salesLastMonthPercentage: number;
 };
 
 const initialSales: Sale[] = [
@@ -73,8 +76,27 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     setSaleCounter(1);
   };
 
+  const totalSalesValue = useMemo(() => sales.reduce((acc, sale) => acc + sale.amount, 0), [sales]);
+
+  const salesLastMonthPercentage = useMemo(() => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    
+    const lastMonthSales = sales.filter(s => new Date(s.date) >= lastMonth && new Date(s.date) <= lastMonthEnd).length;
+    const twoMonthsAgoSales = sales.filter(s => new Date(s.date) >= twoMonthsAgo && new Date(s.date) < lastMonth).length;
+    
+    if (twoMonthsAgoSales === 0) {
+      return lastMonthSales > 0 ? 100 : 0;
+    }
+    
+    return ((lastMonthSales - twoMonthsAgoSales) / twoMonthsAgoSales) * 100;
+  }, [sales]);
+
+
   return (
-    <SalesContext.Provider value={{ sales, addSale, resetSales }}>
+    <SalesContext.Provider value={{ sales, addSale, resetSales, totalSalesValue, salesLastMonthPercentage }}>
       {children}
     </SalesContext.Provider>
   );

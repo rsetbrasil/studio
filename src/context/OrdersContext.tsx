@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { useProducts } from './ProductsContext';
 
 type OrderItem = {
@@ -28,6 +28,7 @@ type OrdersContextType = {
   updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
   getOrderById: (orderId: string) => Order | undefined;
   resetOrders: () => void;
+  ordersLastMonthPercentage: number;
 };
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -35,11 +36,11 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderCounter, setOrderCounter] = useState(1);
-  const { decreaseStock, increaseStock } = useProducts();
+  const { decreaseStock, increaseStock, getProductById: getProductStockById } = useProducts();
 
   const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>) => {
       const newId = `PED${String(orderCounter).padStart(3, '0')}`;
-      const newDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      const newDate = new Date().toISOString(); 
 
       const order: Order = {
           ...newOrderData,
@@ -75,7 +76,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       // Decrease stock from inventory (only when creating an order, not when just changing status from Cancelled to Pending)
       if (oldStatus === "Cancelado" && newStatus === "Pendente") {
         const hasEnoughStock = orderToUpdate.items.every(item => {
-          const product = useProducts().getProductById(item.id);
+          const product = getProductStockById(item.id);
           return product && product.stock >= item.quantity;
         });
 
@@ -104,8 +105,24 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     setOrderCounter(1);
   };
 
+  const ordersLastMonthPercentage = useMemo(() => {
+    const now = new Date();
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    
+    const lastMonthOrders = orders.filter(o => new Date(o.date) >= lastMonth && new Date(o.date) <= lastMonthEnd).length;
+    const twoMonthsAgoOrders = orders.filter(o => new Date(o.date) >= twoMonthsAgo && new Date(o.date) < lastMonth).length;
+    
+    if (twoMonthsAgoOrders === 0) {
+      return lastMonthOrders > 0 ? 100 : 0;
+    }
+    
+    return ((lastMonthOrders - twoMonthsAgoOrders) / twoMonthsAgoOrders) * 100;
+  }, [orders]);
+
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage }}>
       {children}
     </OrdersContext.Provider>
   );

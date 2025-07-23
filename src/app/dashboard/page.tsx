@@ -1,15 +1,16 @@
+
+"use client";
+
 import {
-  Activity,
   ArrowUpRight,
   CreditCard,
   DollarSign,
-  Users,
+  PackageWarning,
+  ListOrdered,
 } from "lucide-react";
-import Link from "next/link";
+
 import { AppShell } from "@/components/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,17 +18,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { OverviewChart } from "@/components/dashboard/overview";
+import { useSales } from "@/context/SalesContext";
+import { useOrders } from "@/context/OrdersContext";
+import { useProducts } from "@/context/ProductsContext";
+import { formatBRL } from "@/lib/utils";
+
 
 export default function DashboardPage() {
+  const { sales, totalSalesValue, salesLastMonthPercentage } = useSales();
+  const { orders, ordersLastMonthPercentage } = useOrders();
+  const { products } = useProducts();
+
+  const lowStockProducts = products.filter(p => p.stock < 10).length;
+  const recentSales = sales.slice(0, 5);
+  
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-4 md:space-y-8">
@@ -40,49 +45,49 @@ export default function DashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ 45.231,89</div>
+              <div className="text-2xl font-bold">{formatBRL(totalSalesValue)}</div>
               <p className="text-xs text-muted-foreground">
-                +20.1% do mês passado
+                {salesLastMonthPercentage > 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Novos Pedidos
+                Total de Pedidos
               </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <ListOrdered className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+2350</div>
-              <p className="text-xs text-muted-foreground">
-                +180.1% do mês passado
+              <div className="text-2xl font-bold">+{orders.length}</div>
+               <p className="text-xs text-muted-foreground">
+                {ordersLastMonthPercentage > 0 ? `+${ordersLastMonthPercentage.toFixed(1)}%` : `${ordersLastMonthPercentage.toFixed(1)}%`} do mês passado
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vendas</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+12,234</div>
+              <div className="text-2xl font-bold">+{sales.length}</div>
               <p className="text-xs text-muted-foreground">
-                +19% do mês passado
+                {salesLastMonthPercentage > 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Entregas Ativas
+                Produtos com Baixo Estoque
               </CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
+              <PackageWarning className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+573</div>
+              <div className="text-2xl font-bold">{lowStockProducts}</div>
               <p className="text-xs text-muted-foreground">
-                +201 desde a última hora
+                Produtos com menos de 10 unidades
               </p>
             </CardContent>
           </Card>
@@ -100,86 +105,32 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle>Vendas Recentes</CardTitle>
               <CardDescription>
-                Você fez 265 vendas este mês.
+                As últimas 5 vendas realizadas.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-8">
-                <div className="flex items-center">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
-                    <AvatarFallback>OM</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Olivia Martin
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      olivia.martin@email.com
-                    </p>
-                  </div>
-                  <div className="ml-auto font-medium">+R$ 1.999,00</div>
-                </div>
-                <div className="flex items-center">
-                  <Avatar className="flex h-9 w-9 items-center justify-center space-y-0 border">
-                    <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
-                    <AvatarFallback>JL</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Jackson Lee
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      jackson.lee@email.com
-                    </p>
-                  </div>
-                  <div className="ml-auto font-medium">+R$ 39,00</div>
-                </div>
-                <div className="flex items-center">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
-                    <AvatarFallback>IN</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Isabella Nguyen
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      isabella.nguyen@email.com
-                    </p>
-                  </div>
-                  <div className="ml-auto font-medium">+R$ 299,00</div>
-                </div>
-                <div className="flex items-center">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
-                    <AvatarFallback>WK</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      William Kim
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      will@email.com
-                    </p>
-                  </div>
-                  <div className="ml-auto font-medium">+R$ 99,00</div>
-                </div>
-                <div className="flex items-center">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
-                    <AvatarFallback>SD</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      Sofia Davis
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      sofia.davis@email.com
-                    </p>
-                  </div>
-                  <div className="ml-auto font-medium">+R$ 39,00</div>
-                </div>
+              <div className="space-y-4">
+                 {recentSales.length > 0 ? (
+                  recentSales.map(sale => (
+                    <div className="flex items-center" key={sale.id}>
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
+                        <AvatarFallback>{sale.customer.substring(0,2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {sale.customer}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(sale.date).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      <div className="ml-auto font-medium">{formatBRL(sale.amount)}</div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center">Nenhuma venda recente.</p>
+                )}
               </div>
             </CardContent>
           </Card>
