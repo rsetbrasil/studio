@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import type { Product } from '@/context/ProductsContext';
+import { useProducts, type Product } from '@/context/ProductsContext';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type ProductDialogProps = {
   isOpen: boolean;
@@ -24,11 +25,24 @@ type ProductDialogProps = {
 };
 
 export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDialogProps) {
+  const { products } = useProducts();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
+  const [unitOfMeasure, setUnitOfMeasure] = useState('');
   const { toast } = useToast();
+
+  const existingCategories = useMemo(() => {
+    const categories = new Set(products.map(p => p.category));
+    return Array.from(categories);
+  }, [products]);
+
+  const existingUnits = useMemo(() => {
+    const units = new Set(products.map(p => p.unitOfMeasure));
+    return Array.from(units);
+  }, [products]);
+
 
   useEffect(() => {
     if (product) {
@@ -36,16 +50,18 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
       setCategory(product.category);
       setPrice(String(product.price));
       setStock(String(product.stock));
+      setUnitOfMeasure(product.unitOfMeasure);
     } else {
       setName('');
       setCategory('');
       setPrice('');
       setStock('');
+      setUnitOfMeasure('');
     }
   }, [product, isOpen]);
 
   const handleConfirm = () => {
-    if (!name || !category || !price || !stock) {
+    if (!name || !category || !price || !stock || !unitOfMeasure) {
       toast({
         title: "Campos Obrigatórios",
         description: "Por favor, preencha todos os campos.",
@@ -59,6 +75,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
       category,
       price: parseFloat(price.replace(',', '.')),
       stock: parseInt(stock, 10),
+      unitOfMeasure,
     };
 
     onConfirm(productData);
@@ -84,7 +101,31 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
             <Label htmlFor="category" className="text-right">
               Categoria
             </Label>
-            <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} className="col-span-3" />
+            <Select onValueChange={setCategory} value={category}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                    {existingCategories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="unitOfMeasure" className="text-right">
+              Un. Medida
+            </Label>
+            <Select onValueChange={setUnitOfMeasure} value={unitOfMeasure}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecione uma unidade" />
+                </SelectTrigger>
+                <SelectContent>
+                     {existingUnits.map((unit) => (
+                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="price" className="text-right">

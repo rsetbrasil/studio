@@ -98,6 +98,7 @@ export default function ProductsPage() {
                   <TableHead>ID</TableHead>
                   <TableHead>Nome</TableHead>
                   <TableHead>Categoria</TableHead>
+                  <TableHead>Un. Medida</TableHead>
                   <TableHead>Estoque</TableHead>
                   <TableHead>Preço</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
@@ -110,6 +111,7 @@ export default function ProductsPage() {
                       <TableCell className="font-medium">{product.id}</TableCell>
                       <TableCell>{product.name}</TableCell>
                       <TableCell>{product.category}</TableCell>
+                      <TableCell>{product.unitOfMeasure}</TableCell>
                       <TableCell>{product.stock}</TableCell>
                       <TableCell>{formatBRL(product.price)}</TableCell>
                       <TableCell>
@@ -126,7 +128,7 @@ export default function ProductsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhum produto encontrado.
                     </TableCell>
                   </TableRow>
