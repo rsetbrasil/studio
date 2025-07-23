@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,15 +19,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle, Pencil } from "lucide-react";
+import { PlusCircle, Pencil, Search } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
 
 export default function ProductsPage() {
   const { products, addProduct, updateProduct } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -48,21 +50,46 @@ export default function ProductsPage() {
     handleCloseDialog();
   };
 
+  const filteredProducts = useMemo(() => {
+    if (!searchTerm) {
+      return products;
+    }
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(lowercasedTerm) ||
+        String(product.id).includes(lowercasedTerm)
+    );
+  }, [products, searchTerm]);
+
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Gestão de Produtos</CardTitle>
-              <CardDescription>
-                Visualize, adicione e edite seus produtos.
-              </CardDescription>
+          <CardHeader>
+             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <CardTitle>Gestão de Produtos</CardTitle>
+                    <CardDescription>
+                        Visualize, adicione e edite seus produtos.
+                    </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                    <div className="relative w-full sm:max-w-xs">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Buscar por nome ou código..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10"
+                        />
+                    </div>
+                    <Button onClick={() => handleOpenDialog()}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Adicionar Produto
+                    </Button>
+                </div>
             </div>
-            <Button onClick={() => handleOpenDialog()}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Adicionar Produto
-            </Button>
           </CardHeader>
           <CardContent>
             <Table>
@@ -77,8 +104,8 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {products.length > 0 ? (
-                  products.map((product) => (
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.id}</TableCell>
                       <TableCell>{product.name}</TableCell>
@@ -100,7 +127,7 @@ export default function ProductsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
-                      Nenhum produto cadastrado.
+                      Nenhum produto encontrado.
                     </TableCell>
                   </TableRow>
                 )}
