@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useProducts, type Product } from '@/context/ProductsContext';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 
 type ProductDialogProps = {
   isOpen: boolean;
@@ -35,12 +35,12 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
 
   const existingCategories = useMemo(() => {
     const categories = new Set(products.map(p => p.category));
-    return Array.from(categories);
+    return Array.from(categories).map(cat => ({ value: cat, label: cat }));
   }, [products]);
 
   const existingUnits = useMemo(() => {
     const units = new Set(products.map(p => p.unitOfMeasure));
-    return Array.from(units);
+    return Array.from(units).map(unit => ({ value: unit, label: unit }));
   }, [products]);
 
 
@@ -101,31 +101,29 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
             <Label htmlFor="category" className="text-right">
               Categoria
             </Label>
-            <Select onValueChange={setCategory} value={category}>
-                <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                    {existingCategories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+             <Combobox
+                options={existingCategories}
+                value={category}
+                onChange={setCategory}
+                placeholder="Selecione ou crie..."
+                searchPlaceholder="Buscar categoria..."
+                noResultsText="Nenhuma categoria encontrada."
+                className="col-span-3"
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="unitOfMeasure" className="text-right">
               Un. Medida
             </Label>
-            <Select onValueChange={setUnitOfMeasure} value={unitOfMeasure}>
-                <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecione uma unidade" />
-                </SelectTrigger>
-                <SelectContent>
-                     {existingUnits.map((unit) => (
-                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <Combobox
+                options={existingUnits}
+                value={unitOfMeasure}
+                onChange={setUnitOfMeasure}
+                placeholder="Selecione ou crie..."
+                searchPlaceholder="Buscar unidade..."
+                noResultsText="Nenhuma unidade encontrada."
+                className="col-span-3"
+            />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="price" className="text-right">
