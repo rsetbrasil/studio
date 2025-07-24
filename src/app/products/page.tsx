@@ -41,7 +41,7 @@ export default function ProductsPage() {
     setDialogOpen(false);
   };
 
-  const handleConfirm = (productData: Omit<Product, "id">) => {
+  const handleConfirm = (productData: Omit<Product, 'id' | 'margin'>) => {
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
     } else {
@@ -97,10 +97,11 @@ export default function ProductsPage() {
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Categoria</TableHead>
                   <TableHead>Un. Medida</TableHead>
                   <TableHead>Estoque</TableHead>
+                  <TableHead>Custo</TableHead>
                   <TableHead>Preço</TableHead>
+                  <TableHead>Categoria</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -110,10 +111,11 @@ export default function ProductsPage() {
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.id}</TableCell>
                       <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.category}</TableCell>
                       <TableCell>{product.unitOfMeasure}</TableCell>
                       <TableCell>{product.stock}</TableCell>
+                      <TableCell>{formatBRL(product.cost)}</TableCell>
                       <TableCell>{formatBRL(product.price)}</TableCell>
+                      <TableCell>{product.category}</TableCell>
                       <TableCell>
                         <Button
                           variant="outline"
@@ -128,7 +130,7 @@ export default function ProductsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Nenhum produto encontrado.
                     </TableCell>
                   </TableRow>

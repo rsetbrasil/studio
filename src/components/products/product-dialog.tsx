@@ -22,7 +22,7 @@ import { EntityManagementDialog } from './entity-management-dialog';
 type ProductDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (productData: Omit<Product, 'id'>) => void;
+  onConfirm: (productData: Omit<Product, 'id' | 'margin'>) => void;
   product?: Product | null;
 };
 
@@ -33,7 +33,6 @@ type DialogManagementState = {
 
 export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDialogProps) {
   const { 
-    products, 
     categories, 
     unitsOfMeasure, 
     addCategory, 
@@ -46,6 +45,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
   
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
+  const [cost, setCost] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [unitOfMeasure, setUnitOfMeasure] = useState('');
@@ -57,12 +57,14 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     if (product) {
       setName(product.name);
       setCategory(product.category);
+      setCost(String(product.cost));
       setPrice(String(product.price));
       setStock(String(product.stock));
       setUnitOfMeasure(product.unitOfMeasure);
     } else {
       setName('');
       setCategory('');
+      setCost('');
       setPrice('');
       setStock('');
       setUnitOfMeasure('');
@@ -70,7 +72,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
   }, [product, isOpen]);
 
   const handleConfirm = () => {
-    if (!name || !category || !price || !stock || !unitOfMeasure) {
+    if (!name || !category || !price || !stock || !unitOfMeasure || !cost) {
       toast({
         title: "Campos Obrigatórios",
         description: "Por favor, preencha todos os campos.",
@@ -82,6 +84,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     const productData = {
       name,
       category,
+      cost: parseFloat(cost.replace(',', '.')),
       price: parseFloat(price.replace(',', '.')),
       stock: parseInt(stock, 10),
       unitOfMeasure,
@@ -183,6 +186,13 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="cost" className="text-right">
+                Custo
+              </Label>
+              <Input id="cost" value={cost} onChange={(e) => setCost(e.target.value)} className="col-span-3" type="text" inputMode="decimal" />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">
                 Preço
               </Label>
@@ -219,5 +229,3 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     </>
   );
 }
-
-    

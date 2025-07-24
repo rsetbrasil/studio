@@ -20,6 +20,7 @@ import { useOrders } from "@/context/OrdersContext";
 import { useFinancial } from "@/context/FinancialContext";
 import { useCashRegister } from "@/context/CashRegisterContext";
 import { useToast } from "@/hooks/use-toast";
+import { useProducts } from "@/context/ProductsContext";
 
 export default function AccountPage() {
   const [isResetDialogOpen, setResetDialogOpen] = useState(false);
@@ -27,6 +28,7 @@ export default function AccountPage() {
   const { resetOrders } = useOrders();
   const { resetTransactions } = useFinancial();
   const { resetHistory } = useCashRegister();
+  const { resetProducts } = useProducts();
   const { toast } = useToast();
 
   const handleResetData = () => {
@@ -34,10 +36,11 @@ export default function AccountPage() {
     resetOrders();
     resetTransactions();
     resetHistory();
+    resetProducts();
     setResetDialogOpen(false);
     toast({
       title: "Dados Redefinidos!",
-      description: "As informações de vendas, pedidos, financeiro e histórico de caixa foram zeradas.",
+      description: "Todas as informações operacionais (vendas, pedidos, financeiro, caixa e produtos) foram zeradas.",
     });
   };
 
@@ -114,7 +117,7 @@ export default function AccountPage() {
               Zerar Dados do Sistema
             </Button>
             <p className="text-sm text-muted-foreground mt-2">
-              Esta ação irá apagar permanentemente todas as vendas, pedidos, transações financeiras e histórico de caixa. Os produtos não serão afetados.
+              Esta ação irá apagar permanentemente todas as vendas, pedidos, transações financeiras, histórico de caixa e produtos.
             </p>
           </CardContent>
         </Card>
