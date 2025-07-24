@@ -60,7 +60,7 @@ export default function LoginPage() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="admin"
+                  placeholder="Seu usuário"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -76,6 +76,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Sua senha"
                 />
               </div>
               <Button type="submit" className="w-full">
