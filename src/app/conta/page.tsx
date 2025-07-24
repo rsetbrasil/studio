@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,10 +22,13 @@ import { useCashRegister } from "@/context/CashRegisterContext";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/context/ProductsContext";
 import { useCompany, type CompanyInfo } from "@/context/CompanyContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Upload } from "lucide-react";
 
 export default function AccountPage() {
   const { companyInfo, updateCompanyInfo, isMounted } = useCompany();
   const [localCompanyInfo, setLocalCompanyInfo] = useState<CompanyInfo>(companyInfo);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [isResetDataDialogOpen, setResetDataDialogOpen] = useState(false);
   const [isResetProductsDialogOpen, setResetProductsDialogOpen] = useState(false);
@@ -46,6 +49,18 @@ export default function AccountPage() {
   const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setLocalCompanyInfo(prev => ({ ...prev, [name]: value }));
+  };
+  
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setLocalCompanyInfo(prev => ({ ...prev, logoUrl: base64String }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveChanges = () => {
@@ -76,6 +91,8 @@ export default function AccountPage() {
       description: "Todos os dados de produtos, categorias e unidades de medida foram zerados.",
     });
   };
+  
+  const triggerFileSelect = () => fileInputRef.current?.click();
 
   return (
     <>
@@ -114,12 +131,37 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle>Informações da Empresa</CardTitle>
             <CardDescription>
-              Essas informações serão exibidas nos comprovantes de venda.
+              Essas informações serão exibidas nos comprovantes de venda e no sistema.
             </CardDescription>
           </CardHeader>
           <CardContent>
+             <div className="flex items-center gap-4 mb-6">
+                <Avatar className="h-20 w-20">
+                    <AvatarImage src={localCompanyInfo.logoUrl} alt="Logo da Empresa" />
+                    <AvatarFallback>Logo</AvatarFallback>
+                </Avatar>
+                <div>
+                     <Button variant="outline" onClick={triggerFileSelect}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Enviar Logo
+                    </Button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleLogoChange}
+                        className="hidden"
+                        accept="image/png, image/jpeg, image/svg+xml"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2">Envie um PNG, JPG ou SVG. Recomendado: 128x128px.</p>
+                </div>
+            </div>
+            
             <form className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
+               <div className="grid gap-2">
+                <Label htmlFor="systemName">Nome do Sistema</Label>
+                <Input name="systemName" id="systemName" value={localCompanyInfo.systemName} onChange={handleCompanyInfoChange} />
+              </div>
+               <div className="grid gap-2">
                 <Label htmlFor="tradeName">Nome Fantasia</Label>
                 <Input name="tradeName" id="tradeName" value={localCompanyInfo.tradeName} onChange={handleCompanyInfoChange} />
               </div>

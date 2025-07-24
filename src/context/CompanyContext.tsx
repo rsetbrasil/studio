@@ -4,6 +4,8 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export type CompanyInfo = {
+  systemName: string;
+  logoUrl: string;
   tradeName: string;
   businessName: string;
   address: string;
@@ -36,6 +38,8 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 };
 
 const initialCompanyInfo: CompanyInfo = {
+  systemName: "SipStream",
+  logoUrl: "",
   tradeName: "NOME DE FANTASIA",
   businessName: "NOME DA RAZÃO SOCIAL COM. DE INFORMÁTICA LTDA-ME",
   address: "Rua dos Equipamentos, 9 - Sobreloja 101 e 102",

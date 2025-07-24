@@ -40,8 +40,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { AppLogo } from "./icons";
 import { useAuth } from "@/context/AuthContext";
+import { useCompany } from "@/context/CompanyContext";
+import Image from "next/image";
 
 const navItems = [
   { href: "/painel", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
@@ -61,6 +62,7 @@ const navItems = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { companyInfo } = useCompany();
 
   const accessibleNavItems = React.useMemo(() => {
     if (!user) return [];
@@ -78,8 +80,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href="/painel"
             className="flex items-center gap-2 font-semibold"
           >
-            <AppLogo className="h-6 w-6 text-primary" />
-            <span>SipStream</span>
+             {companyInfo.logoUrl ? (
+                <Image src={companyInfo.logoUrl} alt="Logo da Empresa" width={24} height={24} className="h-6 w-6" />
+              ) : (
+                <Package className="h-6 w-6 text-primary" />
+              )}
+            <span>{companyInfo.systemName || "SipStream"}</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-2">
@@ -119,8 +125,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href="#"
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
-                  <AppLogo className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">SipStream</span>
+                   {companyInfo.logoUrl ? (
+                      <Image src={companyInfo.logoUrl} alt="Logo da Empresa" width={20} height={20} className="h-5 w-5" />
+                    ) : (
+                      <Package className="h-5 w-5 transition-all group-hover:scale-110" />
+                    )}
+                  <span className="sr-only">{companyInfo.systemName || "SipStream"}</span>
                 </Link>
                 {accessibleNavItems.map((item) => (
                   <Link
