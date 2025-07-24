@@ -135,7 +135,7 @@ export default function PosComponent() {
                     salePrice: item.price,
                     unitOfSale: item.unit,
                     cartId: `${item.id}-${Date.now()}-${index}`,
-                    cost: product?.cost || 0
+                    cost: product?.cost ?? 0,
                 }
              });
              setCart(cartItems);
@@ -150,8 +150,10 @@ export default function PosComponent() {
          }
     }
 
-    const newUrl = window.location.pathname;
-    window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    if(searchParams.has('orderId') || searchParams.has('saleId')){
+        const newUrl = window.location.pathname;
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
+    }
     
     // Focus on the search input when the component mounts
     searchInputRef.current?.focus();
@@ -437,7 +439,7 @@ export default function PosComponent() {
       price: item.salePrice,
       quantity: item.quantity,
       unit: item.unitOfSale,
-      cost: item.cost || 0, // Ensure cost is never undefined
+      cost: item.cost,
     }));
     
     const updatedSaleData = {
@@ -457,6 +459,8 @@ export default function PosComponent() {
     setPaymentModalOpen(false);
     setEditingSaleId(null);
     setOriginalSaleItems([]);
+    setCart([]);
+    setCustomerName('');
     router.push('/vendas');
   };
   
