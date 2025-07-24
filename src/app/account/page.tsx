@@ -101,7 +101,7 @@ export default function AccountPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="email">E-mail</Label>
-                <Input id="email" type="email" defaultValue="admin@pdvrset.com" />
+                <Input id="email" type="email" defaultValue="admin@distribuidora.com" />
               </div>
             </form>
           </CardContent>

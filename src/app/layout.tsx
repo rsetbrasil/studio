@@ -17,7 +17,7 @@ import { FiadoProvider } from "@/context/FiadoContext";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "PDVRset",
+  title: "Distribuidora",
   description: "Sistema de gestão completo para uma distribuidora de bebidas.",
 };
 
