@@ -29,13 +29,13 @@ import { useToast } from "@/hooks/use-toast";
 
 type CsvProduct = {
   id: number;
-  name: string;
+  nome: string;
   categoria: string;
   unidade_medida: string;
   preco_compra_fardo: number;
   preco_venda_fardo: number;
   unidades_por_fardo: number;
-  estoque: number;
+  estoque_fardo: number;
 };
 
 
@@ -101,13 +101,13 @@ export default function ProductsPage() {
             } else {
                 const mappedProducts = results.data.map(csvProduct => ({
                     id: csvProduct.id,
-                    name: csvProduct.name,
+                    name: csvProduct.nome,
                     category: csvProduct.categoria,
                     unitOfMeasure: csvProduct.unidade_medida,
                     cost: csvProduct.preco_compra_fardo,
                     packPrice: csvProduct.preco_venda_fardo,
                     unitsPerPack: csvProduct.unidades_por_fardo,
-                    stock: csvProduct.estoque,
+                    stock: csvProduct.estoque_fardo,
                 }));
 
                 loadProducts(mappedProducts);
