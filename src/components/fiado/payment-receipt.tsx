@@ -12,6 +12,7 @@ type PaymentReceiptProps = {
   payment: {
       amount: number;
       paymentMethod: string;
+      date: string;
   };
   user: User;
 };
@@ -19,7 +20,12 @@ type PaymentReceiptProps = {
 export const PaymentReceipt = React.forwardRef<HTMLDivElement, PaymentReceiptProps>(
   ({ account, payment, user }, ref) => {
     const { companyInfo } = useCompany();
-    const newBalance = account.balance - payment.amount;
+    
+    const transactionTimeBalance = account.transactions
+        .filter(tx => new Date(tx.date) > new Date(payment.date))
+        .reduce((acc, tx) => acc - tx.amount, account.balance);
+        
+    const newBalance = transactionTimeBalance - payment.amount;
 
     return (
       <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container relative">
@@ -39,7 +45,7 @@ export const PaymentReceipt = React.forwardRef<HTMLDivElement, PaymentReceiptPro
 
         <div className="my-1 px-1">
             <div className="flex justify-between">
-                <span>{new Date().toLocaleString('pt-BR')}</span>
+                <span>{new Date(payment.date).toLocaleString('pt-BR')}</span>
                 <span className="font-bold">COMPROVANTE DE PAGAMENTO</span>
             </div>
              <div className="flex justify-between">
@@ -52,7 +58,7 @@ export const PaymentReceipt = React.forwardRef<HTMLDivElement, PaymentReceiptPro
         <div className="mt-2 space-y-1 px-1 text-sm">
           <div className="flex justify-between">
             <span>Saldo Anterior:</span>
-            <span>{formatBRL(account.balance)}</span>
+            <span>{formatBRL(transactionTimeBalance)}</span>
           </div>
            <div className="flex justify-between font-bold">
             <span>Valor Pago:</span>

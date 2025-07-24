@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, DollarSign, Printer, ChevronDown, ChevronRight, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
-import { useFiado, type FiadoAccount } from "@/context/FiadoContext";
+import { useFiado, type FiadoAccount, type FiadoTransaction } from "@/context/FiadoContext";
 import { useCashRegister } from "@/context/CashRegisterContext";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/fiado/payment-dialog";
@@ -39,7 +39,7 @@ export default function FiadoPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [payingAccount, setPayingAccount] = useState<FiadoAccount | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [lastPayment, setLastPayment] = useState<{ account: FiadoAccount, payment: PaymentInfo } | null>(null);
+  const [paymentToPrint, setPaymentToPrint] = useState<{ account: FiadoAccount, transaction: FiadoTransaction } | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -64,9 +64,9 @@ export default function FiadoPage() {
   };
 
   const handlePaymentConfirm = (customerName: string, amount: number, paymentMethod: string) => {
-    addPayment(customerName, amount, paymentMethod);
+    const paymentTransaction = addPayment(customerName, amount, paymentMethod);
     
-    if (cashRegisterState.isOpen) {
+    if (cashRegisterState.isOpen && paymentTransaction) {
       addAdjustment({
         type: "suprimento",
         amount: amount,
@@ -75,11 +75,15 @@ export default function FiadoPage() {
     }
     
     const account = accounts.find(a => a.customerName === customerName);
-    if (account) {
-        setLastPayment({ account, payment: { amount, paymentMethod } });
+    if (account && paymentTransaction) {
+        setPaymentToPrint({ account, transaction: paymentTransaction });
     }
     
     setPayingAccount(null);
+  };
+  
+  const handlePrintRequest = (account: FiadoAccount, transaction: FiadoTransaction) => {
+    setPaymentToPrint({ account, transaction });
   };
   
   const handlePrint = () => {
@@ -87,11 +91,11 @@ export default function FiadoPage() {
   };
 
   React.useEffect(() => {
-    if (lastPayment && receiptRef.current) {
+    if (paymentToPrint && receiptRef.current) {
         handlePrint();
-        setLastPayment(null);
+        setPaymentToPrint(null);
     }
-  }, [lastPayment]);
+  }, [paymentToPrint]);
 
   return (
     <>
@@ -165,6 +169,7 @@ export default function FiadoPage() {
                                                     <TableHead>Operação</TableHead>
                                                     <TableHead>Descrição</TableHead>
                                                     <TableHead className="text-right">Valor</TableHead>
+                                                    <TableHead className="w-[100px] text-center">Ações</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -181,6 +186,13 @@ export default function FiadoPage() {
                                                     </TableCell>
                                                     <TableCell className={`text-right font-medium ${tx.type === 'sale' ? 'text-destructive' : 'text-green-600'}`}>
                                                     {formatBRL(Math.abs(tx.amount))}
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        {tx.type === 'payment' && (
+                                                            <Button variant="ghost" size="icon" onClick={() => handlePrintRequest(account, tx)}>
+                                                                <Printer className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                                 ))}
@@ -220,11 +232,15 @@ export default function FiadoPage() {
       )}
       
       <div className="hidden print:block">
-        {lastPayment && user && (
+        {paymentToPrint && user && (
             <PaymentReceipt 
                 ref={receiptRef}
-                account={lastPayment.account}
-                payment={lastPayment.payment}
+                account={paymentToPrint.account}
+                payment={{ 
+                    amount: Math.abs(paymentToPrint.transaction.amount), 
+                    paymentMethod: paymentToPrint.transaction.paymentMethod || '',
+                    date: paymentToPrint.transaction.date
+                }}
                 user={user}
             />
         )}

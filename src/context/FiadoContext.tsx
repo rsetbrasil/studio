@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useSales, Sale, SaleItem } from './SalesContext';
 
-type FiadoTransaction = {
+export type FiadoTransaction = {
   id: string; // saleId or paymentId
   date: string;
   type: 'sale' | 'payment';
@@ -22,7 +22,7 @@ export type FiadoAccount = {
 type FiadoContextType = {
   accounts: FiadoAccount[];
   addFiadoSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => void;
-  addPayment: (customerName: string, amount: number, paymentMethod: string) => void;
+  addPayment: (customerName: string, amount: number, paymentMethod: string) => FiadoTransaction | null;
   isMounted: boolean;
 };
 
@@ -90,13 +90,15 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const addPayment = (customerName: string, amount: number, paymentMethod: string) => {
+  const addPayment = (customerName: string, amount: number, paymentMethod: string): FiadoTransaction | null => {
+    let paymentTransaction: FiadoTransaction | null = null;
+    
     setAccounts(prevAccounts => {
         const accountIndex = prevAccounts.findIndex(acc => acc.customerName === customerName);
         if (accountIndex === -1) return prevAccounts;
 
         const updatedAccounts = [...prevAccounts];
-        const account = updatedAccounts[accountIndex];
+        const account = { ...updatedAccounts[accountIndex] };
         
         const actualAmount = Math.min(amount, account.balance);
         account.balance -= actualAmount;
@@ -108,10 +110,16 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
             amount: -actualAmount,
             paymentMethod: paymentMethod,
         };
-        account.transactions.unshift(newPayment);
+        
+        paymentTransaction = newPayment;
+        
+        account.transactions = [newPayment, ...account.transactions];
+        updatedAccounts[accountIndex] = account;
 
         return updatedAccounts;
     });
+
+    return paymentTransaction;
   };
 
   return (
