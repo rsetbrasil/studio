@@ -105,7 +105,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       currentSession: {
         openingBalance,
         openingTime: new Date().toISOString(),
-        adjustments: [],
+        adjustments: [], // Always initialize as an empty array
       },
     });
   };
@@ -124,10 +124,10 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
     
     const sessionSales = getSalesForCurrentSession();
     const totalSales = sessionSales.reduce((acc, sale) => acc + sale.amount, 0);
-    const totalSuprimento = state.currentSession.adjustments
+    const totalSuprimento = (state.currentSession.adjustments || [])
       .filter(a => a.type === 'suprimento')
       .reduce((acc, a) => acc + a.amount, 0);
-    const totalSangria = state.currentSession.adjustments
+    const totalSangria = (state.currentSession.adjustments || [])
       .filter(a => a.type === 'sangria')
       .reduce((acc, a) => acc + a.amount, 0);
     
@@ -141,7 +141,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       closingBalance: closingBalance,
       totalSales: totalSales,
       sales: sessionSales,
-      adjustments: state.currentSession.adjustments,
+      adjustments: state.currentSession.adjustments || [],
     };
 
     setHistory(prev => [newSession, ...prev]);
@@ -158,13 +158,20 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       time: new Date().toISOString(),
     };
 
-    setState(prevState => ({
-      ...prevState,
-      currentSession: prevState.currentSession ? {
-        ...prevState.currentSession,
-        adjustments: [...prevState.currentSession.adjustments, newAdjustment]
-      } : null
-    }));
+    setState(prevState => {
+      if (!prevState.currentSession) return prevState;
+
+      // Ensure adjustments is an array before spreading
+      const existingAdjustments = prevState.currentSession.adjustments || [];
+
+      return {
+        ...prevState,
+        currentSession: {
+          ...prevState.currentSession,
+          adjustments: [...existingAdjustments, newAdjustment]
+        }
+      };
+    });
   };
   
   const deleteSession = (sessionId: number) => {
