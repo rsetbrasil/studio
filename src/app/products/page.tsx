@@ -28,14 +28,14 @@ import { ProductDialog } from "@/components/products/product-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type CsvProductImport = {
-  id: number;
+  id: string | number;
   nome: string;
   categoria: string;
   unidade_medida: string;
-  preco_compra_fardo: number;
-  preco_venda_fardo: number;
-  unidades_por_fardo: number;
-  estoque_fardo: number;
+  preco_compra_fardo: string | number;
+  preco_venda_fardo: string | number;
+  unidades_por_fardo: string | number;
+  estoque_fardo: string | number;
 };
 
 
@@ -88,7 +88,6 @@ export default function ProductsPage() {
 
     Papa.parse<CsvProductImport>(file, {
         header: true,
-        dynamicTyping: true,
         skipEmptyLines: true,
         complete: (results) => {
             if(results.errors.length) {
@@ -100,23 +99,34 @@ export default function ProductsPage() {
                 console.error("CSV Parsing Errors:", results.errors);
             } else {
                 const mappedProducts = results.data
-                  .filter(csvProduct => csvProduct.id && csvProduct.nome) // Filtra linhas inválidas/vazias
+                  .filter(csvProduct => {
+                    const id = Number(csvProduct.id);
+                    return csvProduct.nome && !isNaN(id) && id > 0;
+                  })
                   .map(csvProduct => ({
                     id: Number(csvProduct.id),
                     name: csvProduct.nome,
                     category: csvProduct.categoria,
                     unitOfMeasure: csvProduct.unidade_medida,
-                    cost: Number(csvProduct.preco_compra_fardo),
-                    packPrice: Number(csvProduct.preco_venda_fardo),
-                    unitsPerPack: Number(csvProduct.unidades_por_fardo),
-                    stock: Number(csvProduct.estoque_fardo),
+                    cost: Number(String(csvProduct.preco_compra_fardo).replace(',', '.')) || 0,
+                    packPrice: Number(String(csvProduct.preco_venda_fardo).replace(',', '.')) || 0,
+                    unitsPerPack: Number(csvProduct.unidades_por_fardo) || 0,
+                    stock: Number(csvProduct.estoque_fardo) || 0,
                 }));
 
-                loadProducts(mappedProducts);
-                toast({
-                    title: "Produtos Importados!",
-                    description: `${mappedProducts.length} produtos foram carregados com sucesso.`,
-                });
+                if (mappedProducts.length > 0) {
+                  loadProducts(mappedProducts);
+                  toast({
+                      title: "Produtos Importados!",
+                      description: `${mappedProducts.length} produtos foram carregados com sucesso.`,
+                  });
+                } else {
+                   toast({
+                        title: "Nenhum produto válido encontrado",
+                        description: "Verifique se o arquivo CSV tem as colunas 'id' e 'nome' preenchidas corretamente.",
+                        variant: "destructive",
+                    });
+                }
             }
         },
         error: (error) => {
