@@ -99,7 +99,9 @@ export default function ProductsPage() {
                 });
                 console.error("CSV Parsing Errors:", results.errors);
             } else {
-                const mappedProducts = results.data.map(csvProduct => ({
+                const mappedProducts = results.data
+                  .filter(csvProduct => csvProduct.id && csvProduct.nome) // Filtra linhas inválidas/vazias
+                  .map(csvProduct => ({
                     id: Number(csvProduct.id),
                     name: csvProduct.nome,
                     category: csvProduct.categoria,
@@ -113,7 +115,7 @@ export default function ProductsPage() {
                 loadProducts(mappedProducts);
                 toast({
                     title: "Produtos Importados!",
-                    description: `${results.data.length} produtos foram carregados com sucesso.`,
+                    description: `${mappedProducts.length} produtos foram carregados com sucesso.`,
                 });
             }
         },
