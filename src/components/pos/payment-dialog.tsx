@@ -41,7 +41,6 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const paymentButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const dialogContentRef = useRef<HTMLDivElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   const { toast } = useToast();
@@ -71,7 +70,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       const initialTotal = subtotal + tax;
       setPaymentAmounts({ 'Dinheiro': initialTotal });
       setPaymentAmountStrings({ 'Dinheiro': formatBRL(initialTotal).replace('R$', '').trim() });
-      setFocusedIndex(0); 
+      setTimeout(() => paymentButtonRefs.current[0]?.focus(), 100);
     } else {
       setPaymentAmounts({});
       setPaymentAmountStrings({});
@@ -79,41 +78,24 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     }
   }, [isOpen, subtotal, tax]);
 
-
-  useEffect(() => {
-    if (isOpen) {
-        setTimeout(() => {
-            const buttonToFocus = paymentButtonRefs.current[focusedIndex];
-            if (buttonToFocus) {
-                buttonToFocus.focus();
-            }
-        }, 100);
-    }
-  }, [isOpen]);
-
-   useEffect(() => {
-    if (isOpen && paymentButtonRefs.current[focusedIndex]) {
-        paymentButtonRefs.current[focusedIndex]?.focus();
-    }
-  }, [focusedIndex, isOpen]);
-
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
         const newAmountsNum: Record<string, number> = { ...prevAmounts };
-        const newAmountsStr: Record<string, string> = {};
         const isSelected = newAmountsNum[method] !== undefined;
 
         if (isSelected) {
+            // Deselect if it's not the only one selected
             if (Object.keys(newAmountsNum).length > 1) {
               delete newAmountsNum[method];
             }
         } else {
+            // Select and fill with remaining balance
             const paidSoFar = Object.values(newAmountsNum).reduce((sum, amt) => sum + (amt || 0), 0);
-            const currentTotal = subtotal + tax; // Use initial total, cardFee will be calculated later
-            const remaining = currentTotal - paidSoFar;
+            const remaining = total - paidSoFar;
             newAmountsNum[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
         }
 
+        const newAmountsStr: Record<string, string> = {};
         Object.keys(newAmountsNum).forEach(key => {
           newAmountsStr[key] = formatCurrencyInput(String(newAmountsNum[key] * 100));
         });
@@ -126,11 +108,6 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
         if (inputElement) {
             inputElement.focus();
             inputElement.select();
-        } else {
-           const selectedIndex = paymentOptions.findIndex(p => p.value === method);
-           if (selectedIndex !== -1) {
-               setFocusedIndex(selectedIndex);
-           }
         }
     }, 100);
   };
@@ -162,16 +139,14 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (!isInputFocused) {
-          setFocusedIndex(prev => (prev + 1) % paymentOptions.length);
-      } else {
-          confirmButtonRef.current?.focus();
-      }
+      const nextIndex = (focusedIndex + 1) % paymentOptions.length;
+      setFocusedIndex(nextIndex);
+      paymentButtonRefs.current[nextIndex]?.focus();
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-       if (!isInputFocused) {
-            setFocusedIndex(prev => (prev - 1 + paymentOptions.length) % paymentOptions.length);
-       }
+      const prevIndex = (focusedIndex - 1 + paymentOptions.length) % paymentOptions.length;
+      setFocusedIndex(prevIndex);
+       paymentButtonRefs.current[prevIndex]?.focus();
     } else if (e.key === 'Enter' || e.key === ' ') {
         if (!isInputFocused) {
            e.preventDefault();
@@ -187,7 +162,6 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        ref={dialogContentRef}
         className="sm:max-w-md p-0 gap-0"
         onKeyDown={handleKeyDown}
       >
@@ -210,23 +184,22 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                         onClick={() => handleSelectPaymentMethod(value)}
                         onFocus={() => setFocusedIndex(index)}
                         className={cn(
-                            "flex items-center p-3 rounded-lg border-2 text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-2",
-                            isSelected ? "border-primary bg-primary/10" : "border-transparent bg-muted/50 hover:bg-muted",
-                            focusedIndex === index && !isSelected ? "ring-2 ring-ring ring-offset-2" : "",
-                            focusedIndex === index && isSelected ? "ring-2 ring-primary ring-offset-2" : ""
+                            "flex items-center p-3 rounded-lg border-2 text-left transition-all focus:outline-none focus:ring-2 focus:ring-offset-background",
+                            isSelected ? "border-primary bg-primary/10 ring-primary" : "border-transparent bg-muted/50 ring-ring",
                         )}
                     >
                         <Icon className="h-6 w-6 mr-4 text-muted-foreground" />
                         <span className="flex-1 font-medium">{label}</span>
                         {isSelected && (
                             <div className="relative w-32">
+                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
                                 <Input
                                     ref={(el) => { paymentInputRefs.current[value] = el; }}
                                     type="text"
                                     inputMode="decimal"
                                     value={paymentAmountStrings[value] ?? ''}
                                     onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
-                                    className="h-9 text-right font-bold text-base pr-3"
+                                    className="h-9 text-right font-bold text-base pr-3 pl-9 bg-background"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         (e.target as HTMLInputElement).select();
@@ -240,12 +213,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                 )
             })}
         </div>
-        <DialogFooter className="flex-col gap-2 bg-muted/50 p-4">
+        <DialogFooter className="flex-col gap-2 bg-muted/50 p-4 border-t">
              <div className="w-full flex justify-between items-center text-base">
                 <div className="font-semibold text-muted-foreground">
                     {change > 0 ? "Troco" : (balance > 0.001 ? "Falta" : "Total Pago")}
                 </div>
-                <div className="font-bold text-primary">
+                <div className={cn("font-bold", balance > 0.001 ? "text-destructive" : "text-primary")}>
                     {change > 0 ? formatBRL(change) : (balance > 0.001 ? formatBRL(balance) : formatBRL(totalPaid))}
                 </div>
             </div>
