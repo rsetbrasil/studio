@@ -104,6 +104,7 @@ export default function ProductsPage() {
               const id = Number(csvProduct.id);
               const name = csvProduct.nome;
 
+              // Rigorous check to ensure only valid products are pushed
               if (name && name.trim() !== '' && !isNaN(id) && id > 0) {
                 acc.push({
                   id: id,
