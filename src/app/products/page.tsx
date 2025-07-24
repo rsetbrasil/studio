@@ -75,31 +75,33 @@ export default function ProductsPage() {
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Gestão de Produtos</CardTitle>
-              <CardDescription>
-                Visualize, adicione e edite seus produtos.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative w-full sm:max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10"
-                />
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Gestão de Produtos</CardTitle>
+                <CardDescription>
+                  Visualize, adicione e edite seus produtos.
+                </CardDescription>
               </div>
-              <Button onClick={handleImportClick} variant="outline">
-                <Upload className="mr-2 h-4 w-4" />
-                Importar
-              </Button>
-              <Button onClick={() => handleOpenDialog()}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Adicionar Produto
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="relative w-full sm:max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10"
+                  />
+                </div>
+                <Button onClick={handleImportClick} variant="outline">
+                  <Upload className="mr-2 h-4 w-4" />
+                  Importar
+                </Button>
+                <Button onClick={() => handleOpenDialog()}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Adicionar Produto
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
