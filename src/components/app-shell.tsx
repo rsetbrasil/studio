@@ -79,7 +79,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             className="flex items-center gap-2 font-semibold"
           >
             <AppLogo className="h-6 w-6 text-primary" />
-            <span>Distribuidora</span>
+            <span>SipStream</span>
           </Link>
         </div>
         <div className="flex-1 overflow-auto py-2">
@@ -120,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
                   <AppLogo className="h-5 w-5 transition-all group-hover:scale-110" />
-                  <span className="sr-only">Distribuidora</span>
+                  <span className="sr-only">SipStream</span>
                 </Link>
                 {accessibleNavItems.map((item) => (
                   <Link
