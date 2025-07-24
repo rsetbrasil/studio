@@ -18,7 +18,6 @@ import { useProducts, type Product } from '@/context/ProductsContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pencil } from 'lucide-react';
 import { EntityManagementDialog } from './entity-management-dialog';
-import Image from 'next/image';
 import { formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 
 
@@ -148,103 +147,85 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
   return (
     <>
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>{product ? 'Editar Produto' : 'Adicionar Novo Produto'}</DialogTitle>
             <DialogDescription>
               Atualize os detalhes do produto. Clique em salvar quando terminar.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
-            {/* Coluna da Imagem */}
-            <div className="md:col-span-1 space-y-2">
-                <Label>Imagem do Produto</Label>
-                <div className="flex items-center justify-center w-full h-48 border-2 border-dashed rounded-lg">
-                    <Image 
-                        src={product?.imageUrl || "https://placehold.co/200x200.png"} 
-                        alt={product?.name || "Placeholder"}
-                        width={200}
-                        height={200}
-                        className="object-contain h-full"
-                        data-ai-hint="beverage bottle"
-                    />
-                </div>
-            </div>
+          <div className="grid grid-cols-2 gap-4 py-4">
+              <div className="col-span-2">
+                  <Label htmlFor="name">Nome do Produto</Label>
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              </div>
+              <div>
+                  <Label htmlFor="id">Código</Label>
+                  <Input id="id" value={product?.id ?? ''} readOnly disabled />
+              </div>
+              <div>
+                  <Label htmlFor="category">Categoria</Label>
+                  <div className="flex items-center gap-2">
+                      <Select value={category} onValueChange={setCategory}>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Selecione..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                              {categories.map((cat) => (
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => openManagementDialog('category')}>
+                          <Pencil className="h-4 w-4" />
+                      </Button>
+                  </div>
+              </div>
 
-            {/* Coluna dos Campos */}
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                    <Label htmlFor="name">Nome do Produto</Label>
-                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-                </div>
-                <div>
-                    <Label htmlFor="id">Código</Label>
-                    <Input id="id" value={product?.id ?? ''} readOnly disabled />
-                </div>
-                <div>
-                    <Label htmlFor="category">Categoria</Label>
-                    <div className="flex items-center gap-2">
-                        <Select value={category} onValueChange={setCategory}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categories.map((cat) => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => openManagementDialog('category')}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
+              <div>
+                  <Label htmlFor="unitOfMeasure">Unidade de Medida</Label>
+                  <div className="flex items-center gap-2">
+                      <Select value={unitOfMeasure} onValueChange={setUnitOfMeasure}>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {unitsOfMeasure.map((unit) => (
+                          <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                          ))}
+                      </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => openManagementDialog('unit')}>
+                          <Pencil className="h-4 w-4" />
+                      </Button>
+                  </div>
+              </div>
 
-                <div>
-                    <Label htmlFor="unitOfMeasure">Unidade de Medida</Label>
-                    <div className="flex items-center gap-2">
-                        <Select value={unitOfMeasure} onValueChange={setUnitOfMeasure}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {unitsOfMeasure.map((unit) => (
-                            <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                            ))}
-                        </SelectContent>
-                        </Select>
-                        <Button variant="outline" size="icon" className="h-9 w-9 flex-shrink-0" onClick={() => openManagementDialog('unit')}>
-                            <Pencil className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
+              <div>
+                  <Label htmlFor="unitsPerPack">Unid. por Fardo</Label>
+                  <Input id="unitsPerPack" value={unitsPerPack} onChange={e => setUnitsPerPack(e.target.value)} type="number" />
+              </div>
 
-                <div>
-                    <Label htmlFor="unitsPerPack">Unid. por Fardo</Label>
-                    <Input id="unitsPerPack" value={unitsPerPack} onChange={e => setUnitsPerPack(e.target.value)} type="number" />
-                </div>
+              <div>
+                  <Label htmlFor="cost">Preço de Compra (Fardo)</Label>
+                  <Input id="cost" value={costStr} onChange={(e) => setCostStr(formatCurrencyInput(e.target.value))} type="text" inputMode="decimal" placeholder="0,00" />
+              </div>
 
-                <div>
-                    <Label htmlFor="cost">Preço de Compra (Fardo)</Label>
-                    <Input id="cost" value={costStr} onChange={(e) => setCostStr(formatCurrencyInput(e.target.value))} type="text" inputMode="decimal" placeholder="0,00" />
-                </div>
+              <div>
+                  <Label htmlFor="packPrice">Preço de Venda (Fardo)</Label>
+                  <Input id="packPrice" value={packPriceStr} onChange={(e) => setPackPriceStr(formatCurrencyInput(e.target.value))} type="text" inputMode="decimal" placeholder="0,00" />
+              </div>
+              
+              <div>
+                  <Label htmlFor="unitPrice">Preço de Venda (Unit.)</Label>
+                  <Input id="unitPrice" value={formatBRL(unitPrice)} readOnly disabled />
+                  <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente.</p>
+              </div>
 
                 <div>
-                    <Label htmlFor="packPrice">Preço de Venda (Fardo)</Label>
-                    <Input id="packPrice" value={packPriceStr} onChange={(e) => setPackPriceStr(formatCurrencyInput(e.target.value))} type="text" inputMode="decimal" placeholder="0,00" />
-                </div>
-                
-                <div>
-                    <Label htmlFor="unitPrice">Preço de Venda (Unit.)</Label>
-                    <Input id="unitPrice" value={formatBRL(unitPrice)} readOnly disabled />
-                    <p className="text-xs text-muted-foreground mt-1">Calculado automaticamente.</p>
-                </div>
-
-                 <div>
-                    <Label htmlFor="stock">Estoque (em Fardos)</Label>
-                    <Input id="stock" value={stock} onChange={(e) => setStock(e.target.value)} type="number" />
-                </div>
-            </div>
+                  <Label htmlFor="stock">Estoque (em Fardos)</Label>
+                  <Input id="stock" value={stock} onChange={(e) => setStock(e.target.value)} type="number" />
+              </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
@@ -269,3 +250,5 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     </>
   );
 }
+
+    
