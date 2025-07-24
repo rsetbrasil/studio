@@ -186,21 +186,21 @@ export default function ProductsPage() {
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4">
+           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">
               <CardTitle>Gestão de Produtos</CardTitle>
               <CardDescription>
                 Visualize, adicione, importe e exporte seus produtos.
               </CardDescription>
             </div>
-            <div className="flex w-full md:w-auto items-center gap-2">
-              <div className="relative flex-1 md:flex-initial md:max-w-xs">
+            <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <div className="relative flex-1 sm:flex-initial">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10"
+                  className="w-full pl-10 sm:w-64"
                 />
               </div>
               <input
