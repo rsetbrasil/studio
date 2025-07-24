@@ -37,7 +37,6 @@ type OrderForSale = {
 type SalesContextType = {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale | null;
-  addSaleFromOrder: (order: OrderForSale) => Promise<Sale | null>;
   updateSaleStatus: (saleId: string, status: SaleStatus) => void;
   getSaleById: (saleId: string) => Sale | undefined;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
@@ -91,16 +90,6 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error adding sale:", error);
         return null;
       }
-  };
-  
-  const addSaleFromOrder = async (order: OrderForSale): Promise<Sale | null> => {
-    const saleData = {
-      customer: order.customer,
-      items: order.items,
-      amount: order.total,
-      paymentMethod: "Pedido Faturado", // Or another identifier
-    };
-    return addSale(saleData);
   };
   
   const updateSaleStatus = async (saleId: string, status: SaleStatus) => {
@@ -171,7 +160,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale: addSale as any, addSaleFromOrder, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus, getSaleById }}>
+    <SalesContext.Provider value={{ sales, addSale: addSale as any, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus, getSaleById }}>
       {children}
     </SalesContext.Provider>
   );

@@ -49,7 +49,6 @@ type OrdersContextType = {
     }
   ) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
-  faturarPedido: (orderId: string) => void;
   resetOrders: () => Promise<void>;
   ordersLastMonthPercentage: number;
   isMounted: boolean;
@@ -61,7 +60,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-  const { addSaleFromOrder } = useSales();
   
   const fetchOrders = async () => {
     try {
@@ -131,10 +129,12 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     if (oldStatus === newStatus) return;
 
     try {
+        // If an order is cancelled, return items to stock.
         if (oldStatus === "Pendente" && newStatus === "Cancelado") {
             await stockActions.increaseStock(orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
         }
       
+        // If a cancelled order is reactivated, check stock and decrease it.
         if (oldStatus === "Cancelado" && newStatus === "Pendente") {
             const hasEnoughStock = orderToUpdate.items.every(item => {
                 const product = stockActions.getProductById(String(item.id));
@@ -207,20 +207,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     return orders.find(o => o.id === orderId);
   };
   
-  const faturarPedido = async (orderId: string) => {
-    const order = getOrderById(orderId);
-    if (!order || order.status !== 'Pendente') return;
-
-    try {
-        await addSaleFromOrder(order);
-        const orderRef = doc(db, "orders", orderId);
-        await updateDoc(orderRef, { status: 'Faturado' });
-        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'Faturado' } : o));
-    } catch (e) {
-        console.error("Error invoicing order:", e);
-    }
-  };
-  
   const resetOrders = async () => {
     try {
         const batch = writeBatch(db);
@@ -250,7 +236,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus, updateOrder, getOrderById, resetOrders, faturarPedido, ordersLastMonthPercentage, isMounted }}>
+    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus: updateOrderStatus as any, updateOrder, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
       {children}
     </OrdersContext.Provider>
   );

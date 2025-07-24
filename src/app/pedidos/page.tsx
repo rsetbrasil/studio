@@ -12,13 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -27,18 +20,20 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/context/AuthContext";
-import { useOrders, type OrderStatus } from "@/context/OrdersContext";
+import { useOrders } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { Pencil, Trash, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 export default function OrdersPage() {
-  const { orders, updateOrderStatus: updateOrderStatusFromContext, faturarPedido } = useOrders();
+  const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   
   const canEditOrder = user?.role === 'Administrador' || user?.role === 'Gerente' || user?.role === 'Vendedor';
   const canManageStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
@@ -57,11 +52,7 @@ export default function OrdersPage() {
   };
   
   const handleFaturar = (orderId: string) => {
-      faturarPedido(orderId);
-      toast({
-        title: "Pedido Faturado!",
-        description: "O pedido foi faturado e uma venda foi gerada."
-      });
+      router.push(`/pdv?orderId=${orderId}`);
   };
 
   const handleDelete = (orderId: string) => {
