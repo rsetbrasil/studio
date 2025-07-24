@@ -44,17 +44,19 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
   const stockUnitDisplay = isPack ? packUnitName : 'Unidade';
 
   useEffect(() => {
+    // Set initial state based on selling the pack
+    setUnitOfSale(packUnitName);
     setPriceStr(formatCurrencyInput(String(packPrice * 100)));
     setTimeout(() => {
       quantityInputRef.current?.focus();
       quantityInputRef.current?.select();
     }, 100);
-  }, [product, packPrice]);
+  }, [product, packPrice, packUnitName]);
   
   useEffect(() => {
-      const newPrice = isPack ? packPrice : unitPrice;
+      const newPrice = unitOfSale === packUnitName ? packPrice : unitPrice;
       setPriceStr(formatCurrencyInput(String(newPrice * 100)));
-  }, [isPack, packPrice, unitPrice]);
+  }, [unitOfSale, packPrice, unitPrice, packUnitName]);
 
   const handleConfirm = () => {
     const numQuantity = parseInt(quantity, 10);
@@ -101,10 +103,12 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
                         <RadioGroupItem value={packUnitName} id={`r-${packUnitName}`} />
                         <Label htmlFor={`r-${packUnitName}`}>{packUnitName}</Label>
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Unidade" id="r-unidade" />
-                        <Label htmlFor="r-unidade">Unidade</Label>
-                    </div>
+                    {unitsPerPack > 1 && (
+                      <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="Unidade" id="r-unidade" />
+                          <Label htmlFor="r-unidade">Unidade</Label>
+                      </div>
+                    )}
                 </RadioGroup>
              </div>
              <div className="space-y-2">
@@ -141,4 +145,3 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
     </Dialog>
   );
 }
-
