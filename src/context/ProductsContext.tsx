@@ -144,8 +144,12 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     }));
     setProducts(productsWithPrice);
 
-    const maxId = Math.max(0, ...productsWithPrice.map(p => p.id));
-    setProductCounter(maxId + 1);
+    if (productsWithPrice.length > 0) {
+      const maxId = Math.max(...productsWithPrice.map(p => p.id));
+      setProductCounter(maxId + 1);
+    } else {
+      setProductCounter(1);
+    }
     
     const newCategories = Array.from(new Set(productsWithPrice.map(p => p.category))).sort();
     setCategories(newCategories);
