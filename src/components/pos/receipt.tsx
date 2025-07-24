@@ -82,7 +82,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
         <div className="mt-1 space-y-0.5 px-1">
           <div className="flex justify-between">
             <span>Total da Nota R$</span>
-            <span>{formatBRL(subtotal)}</span>
+            <span>{formatBRL(sale.amount)}</span>
           </div>
            {sale.status === 'Finalizada' && (
             <>

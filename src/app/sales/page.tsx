@@ -29,7 +29,7 @@ import { Receipt } from "@/components/pos/receipt";
 import { useAuth } from "@/context/AuthContext";
 
 export default function SalesPage() {
-  const { sales, cancelSale, isMounted } = useSales();
+  const { sales, cancelSale, isMounted, getSaleById } = useSales();
   const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToPrint, setSaleToPrint] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
@@ -52,8 +52,12 @@ export default function SalesPage() {
     }
   };
   
-  const handlePrintRequest = (sale: Sale) => {
-    setSaleToPrint({ ...sale, change: 0, totalPaid: sale.amount }); // Assuming 0 change for reprint
+  const handlePrintRequest = (saleId: string) => {
+    const sale = getSaleById(saleId);
+    if (sale) {
+      // Assuming 0 change and total paid equals amount for reprint of already finalized/fiado sales
+      setSaleToPrint({ ...sale, change: 0, totalPaid: sale.amount }); 
+    }
   };
   
   const handleActualPrint = () => {
@@ -121,7 +125,7 @@ export default function SalesPage() {
                           variant="outline"
                           size="sm"
                           disabled={sale.status === 'Cancelada'}
-                          onClick={() => handlePrintRequest(sale)}
+                          onClick={() => handlePrintRequest(sale.id)}
                         >
                           <Printer className="mr-2 h-4 w-4" />
                           Imprimir
@@ -129,7 +133,7 @@ export default function SalesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={sale.status === 'Cancelada'}
+                          disabled={sale.status === 'Cancelada' || sale.status === 'Fiado'}
                           onClick={() => handleCancelClick(sale)}
                         >
                           <XCircle className="mr-2 h-4 w-4" />
