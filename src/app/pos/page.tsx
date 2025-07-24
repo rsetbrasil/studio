@@ -68,6 +68,10 @@ export default function PosPage() {
     },
   });
 
+  const total = useMemo(() => {
+    return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
+  }, [cart]);
+
   useEffect(() => {
     searchInputRef.current?.focus();
 
@@ -272,10 +276,6 @@ export default function PosPage() {
     );
   };
   
-  const total = useMemo(() => {
-    return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
-  }, [cart]);
-
   const handleConfirmSale = ({ paymentAmounts, change, cardFee }: { paymentAmounts: Record<string, number>; change: number; cardFee: number }) => {
     if (cart.length === 0) return;
 
