@@ -55,7 +55,7 @@ const navItems = [
   { href: "/produtos", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
   { href: "/fornecedores", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
   { href: "/financeiro", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
-  { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente"] },
   { href: "/usuarios", icon: Users, label: "Usuários", roles: ["Administrador"] },
   { href: "/conta", icon: Settings, label: "Configurações", roles: ["Administrador"] },
 ];
