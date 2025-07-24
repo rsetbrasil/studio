@@ -250,5 +250,3 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     </>
   );
 }
-
-    

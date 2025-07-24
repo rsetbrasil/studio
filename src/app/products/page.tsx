@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,11 +27,12 @@ import { ProductDialog } from "@/components/products/product-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct } = useProducts();
+  const { products, addProduct, updateProduct, loadProducts } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -65,11 +66,42 @@ export default function ProductsPage() {
   }, [products, searchTerm]);
   
   const handleImportClick = () => {
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A importação de produtos estará disponível em breve.",
-    });
-  }
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result;
+        if (typeof content === 'string') {
+          const importedProducts = JSON.parse(content);
+          if (Array.isArray(importedProducts)) {
+            loadProducts(importedProducts);
+            toast({
+              title: "Produtos Importados!",
+              description: `${importedProducts.length} produtos foram carregados com sucesso.`,
+            });
+          } else {
+             throw new Error("O arquivo JSON não contém um array de produtos.");
+          }
+        }
+      } catch (error) {
+        toast({
+          title: "Erro na Importação",
+          description: "O arquivo selecionado não é um JSON válido ou está no formato incorreto.",
+          variant: "destructive",
+        });
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input to allow re-importing the same file
+    event.target.value = '';
+  };
+
 
   return (
     <AppShell>
@@ -97,6 +129,13 @@ export default function ProductsPage() {
                   <Upload className="mr-2 h-4 w-4" />
                   Importar
                 </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  accept=".json"
+                />
                 <Button onClick={() => handleOpenDialog()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Adicionar Produto

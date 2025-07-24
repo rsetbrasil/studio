@@ -30,6 +30,7 @@ type ProductsContextType = {
   increaseStock: (items: CartItem[]) => void;
   getProductById: (id: number) => Product | undefined;
   resetProducts: () => void;
+  loadProducts: (products: Omit<Product, 'price'>[]) => void;
   
   categories: string[];
   unitsOfMeasure: string[];
@@ -196,6 +197,23 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       )
     );
   };
+  
+  const loadProducts = (newProducts: Omit<Product, 'price'>[]) => {
+    const productsWithPrice = newProducts.map(p => ({
+      ...p,
+      price: calculatePrice(p.packPrice, p.unitsPerPack)
+    }));
+    setProducts(productsWithPrice);
+
+    const maxId = Math.max(0, ...productsWithPrice.map(p => p.id));
+    setProductCounter(maxId + 1);
+    
+    const newCategories = Array.from(new Set(productsWithPrice.map(p => p.category))).sort();
+    setCategories(newCategories);
+
+    const newUnits = Array.from(new Set(productsWithPrice.map(p => p.unitOfMeasure))).sort();
+    setUnitsOfMeasure(newUnits);
+  };
 
   const updateStock = (items: CartItem[], operation: 'increase' | 'decrease') => {
     setProducts(currentProducts => {
@@ -289,7 +307,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ProductsContext.Provider value={{ 
-      products, addProduct, updateProduct, decreaseStock, increaseStock, getProductById, resetProducts,
+      products, addProduct, updateProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts,
       categories, unitsOfMeasure, addCategory, updateCategory, deleteCategory,
       addUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure
     }}>
