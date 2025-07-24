@@ -180,31 +180,45 @@ export default function PosPage() {
   
   const handleAddToCart = (product: Product, quantity: number, price: number) => {
     if (quantity <= 0) {
-      setProductForQuantity(null);
-      return;
+        handleCloseQuantityDialog();
+        return;
     }
 
-    if (quantity > product.stock) {
+    const existingCartItem = cart.find(item => item.id === product.id && item.salePrice === price);
+    const quantityInCart = existingCartItem ? existingCartItem.quantity : 0;
+    const totalQuantity = quantityInCart + quantity;
+
+    if (totalQuantity > product.stock) {
         toast({
             title: "Estoque Insuficiente",
-            description: `A quantidade máxima para ${product.name} é ${product.stock} ${product.unitOfMeasure}(s).`,
+            description: `A quantidade total (${totalQuantity}) para ${product.name} excede o estoque (${product.stock}).`,
             variant: "destructive",
         });
         return;
     }
-
+    
     setCart((currentCart) => {
-      const newItem: CartItem = {
-        ...product,
-        cartId: `${product.id}-${Date.now()}`,
-        quantity: quantity,
-        salePrice: price,
-      };
-      return [...currentCart, newItem];
+        if (existingCartItem) {
+            // Update quantity of existing item
+            return currentCart.map((item) =>
+                item.cartId === existingCartItem.cartId
+                    ? { ...item, quantity: item.quantity + quantity }
+                    : item
+            );
+        } else {
+            // Add new item to cart
+            const newItem: CartItem = {
+                ...product,
+                cartId: `${product.id}-${Date.now()}`,
+                quantity: quantity,
+                salePrice: price,
+            };
+            return [...currentCart, newItem];
+        }
     });
 
     handleCloseQuantityDialog();
-  };
+};
 
   const handleCloseQuantityDialog = () => {
     setProductForQuantity(null);
