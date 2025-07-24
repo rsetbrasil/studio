@@ -42,63 +42,18 @@ type ProductsContextType = {
   deleteUnitOfMeasure: (unit: string) => void;
 };
 
-const initialProducts: Omit<Product, 'price'>[] = [
-    { id: 1, name: "AGUA C/GAS CRYSTAL 500ML", category: "AGUA", unitOfMeasure: "FARDO", cost: 15.00, packPrice: 21.00, unitsPerPack: 12, stock: 50 },
-    { id: 2, name: "AGUA S/GAS CRYSTAL 500ML", category: "AGUA", unitOfMeasure: "FARDO", cost: 12.00, packPrice: 18.00, unitsPerPack: 12, stock: 60 },
-    { id: 3, name: "AGUA C/GAS CRYSTAL 1,5L", category: "AGUA", unitOfMeasure: "FARDO", cost: 18.00, packPrice: 24.00, unitsPerPack: 6, stock: 45 },
-    { id: 4, name: "AGUA S/GAS CRYSTAL 1,5L", category: "AGUA", unitOfMeasure: "FARDO", cost: 16.00, packPrice: 22.00, unitsPerPack: 6, stock: 55 },
-    { id: 5, name: "AGUA TONICA SCHWEPPES 350ML", category: "AGUA", unitOfMeasure: "FARDO", cost: 30.00, packPrice: 42.00, unitsPerPack: 12, stock: 30 },
-    { id: 6, name: "COCA-COLA 2L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 45.00, packPrice: 54.00, unitsPerPack: 6, stock: 40 },
-    { id: 7, name: "COCA-COLA 1L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 32.00, packPrice: 40.00, unitsPerPack: 8, stock: 30 },
-    { id: 8, name: "COCA-COLA 600ML", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 24.00, packPrice: 30.00, unitsPerPack: 6, stock: 50 },
-    { id: 9, name: "COCA-COLA 350ML", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 28.00, packPrice: 36.00, unitsPerPack: 12, stock: 80 },
-    { id: 10, name: "COCA-COLA 200ML", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 20.00, packPrice: 26.00, unitsPerPack: 12, stock: 60 },
-    { id: 11, name: "GUARANA ANTARCTICA 2L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 42.00, packPrice: 51.00, unitsPerPack: 6, stock: 35 },
-    { id: 12, name: "GUARANA ANTARCTICA 350ML", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 26.00, packPrice: 33.00, unitsPerPack: 12, stock: 70 },
-    { id: 13, name: "FANTA LARANJA 2L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 40.00, packPrice: 48.00, unitsPerPack: 6, stock: 30 },
-    { id: 14, name: "SPRITE 2L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 40.00, packPrice: 48.00, unitsPerPack: 6, stock: 25 },
-    { id: 15, name: "CERV SKOL 350ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 25.00, packPrice: 31.00, unitsPerPack: 12, stock: 120 },
-    { id: 16, name: "CERV SKOL 473ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 34.00, packPrice: 42.00, unitsPerPack: 12, stock: 100 },
-    { id: 17, name: "CERV SKOL 269ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 22.00, packPrice: 28.00, unitsPerPack: 12, stock: 150 },
-    { id: 18, name: "CERV SKOL 600ML", category: "CERVEJA", unitOfMeasure: "CAIXA", cost: 80.00, packPrice: 96.00, unitsPerPack: 12, stock: 50 },
-    { id: 19, name: "CERV BRAHMA 350ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 25.50, packPrice: 31.50, unitsPerPack: 12, stock: 110 },
-    { id: 20, name: "CERV BRAHMA 473ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 35.00, packPrice: 43.00, unitsPerPack: 12, stock: 90 },
-    { id: 23, name: "CERV BUDWEISER 330ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 40.00, packPrice: 50.00, unitsPerPack: 12, stock: 80 },
-    { id: 24, name: "SUCO LARANJA DEL VALLE 1L", category: "SUCO", unitOfMeasure: "CAIXA", cost: 30.00, packPrice: 42.00, unitsPerPack: 6, stock: 45 },
-    { id: 25, name: "SUCO UVA DEL VALLE 1L", category: "SUCO", unitOfMeasure: "CAIXA", cost: 30.00, packPrice: 42.00, unitsPerPack: 6, stock: 40 },
-    { id: 26, name: "ENERGETICO RED BULL 250ML", category: "ENERGETICO", unitOfMeasure: "FARDO", cost: 96.00, packPrice: 120.00, unitsPerPack: 24, stock: 30 },
-    { id: 27, name: "ENERGETICO MONSTER 473ML", category: "ENERGETICO", unitOfMeasure: "FARDO", cost: 85.00, packPrice: 105.00, unitsPerPack: 12, stock: 25 },
-    { id: 28, name: "GATORADE LIMAO 500ML", category: "ISOTONICO", unitOfMeasure: "FARDO", cost: 33.00, packPrice: 45.00, unitsPerPack: 6, stock: 25 },
-    { id: 296, name: 'HEINEKEN L/N 24X330ML', category: 'CERVEJA', unitOfMeasure: 'CAIXA', cost: 110.00, packPrice: 134.90, unitsPerPack: 24, stock: 356 },
-    { id: 297, name: 'HEINEKEN L/N 330ML MERCEARIA', category: 'CERVEJA', unitOfMeasure: 'UNIDADE', cost: 5.50, packPrice: 7.00, unitsPerPack: 1, stock: 8 },
-    { id: 298, name: 'HEINEKEN LATA 12X350ML', category: 'CERVEJA', unitOfMeasure: 'FARDO', cost: 45.00, packPrice: 53.90, unitsPerPack: 12, stock: 174 },
-    { id: 351, name: 'MEIA HEINEKEN L/N 12X330ML', category: 'CERVEJA', unitOfMeasure: 'FARDO', cost: 58.00, packPrice: 68.00, unitsPerPack: 12, stock: 6 },
-];
-
-
 const calculatePrice = (packPrice: number, unitsPerPack: number) => {
     if(!unitsPerPack || unitsPerPack === 0) return packPrice;
     return packPrice / unitsPerPack;
 }
 
-const initialProductsWithPrice = initialProducts.map(p => ({
-    ...p,
-    price: calculatePrice(p.packPrice, p.unitsPerPack)
-}))
-
-const initialCategories = Array.from(new Set(initialProducts.map(p => p.category))).sort();
-const initialUnits = Array.from(new Set(initialProducts.map(p => p.unitOfMeasure))).sort();
-const initialMaxId = Math.max(0, ...initialProducts.map(p => p.id));
-
-
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<Product[]>(initialProductsWithPrice);
-  const [productCounter, setProductCounter] = useState(initialMaxId + 1);
-
-  const [categories, setCategories] = useState<string[]>(initialCategories);
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(initialUnits);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productCounter, setProductCounter] = useState(1);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
   
   const { toast } = useToast();
 
