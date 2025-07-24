@@ -175,8 +175,8 @@ export default function PosPage() {
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
     onAfterPrint: () => {
-        setCart([]);
-        setLastSale(null);
+      setCart([]);
+      setLastSale(null);
     },
   });
   
@@ -473,4 +473,3 @@ export default function PosPage() {
     </AppShell>
   );
 }
-
