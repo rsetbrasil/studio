@@ -78,6 +78,8 @@ export default function CashRegisterPage() {
     ['Dinheiro', 'PIX', 'Crédito', 'Débito'].forEach(method => totals[method] = 0);
     
     salesForCurrentSession.forEach(sale => {
+      if(sale.paymentMethod === 'Fiado') return; // Do not include Fiado sales here
+
       const methods = sale.paymentMethod.split(' e ');
       const amountPerMethod = sale.amount / methods.length;
       methods.forEach(method => {
@@ -88,6 +90,7 @@ export default function CashRegisterPage() {
     });
     return totals;
   }, [salesForCurrentSession, state.currentSession]);
+
 
   const allMovements = useMemo(() => {
     if (!state.currentSession) return [];
@@ -206,13 +209,13 @@ export default function CashRegisterPage() {
                   </CardHeader>
                 </Card>
                  <Card>
-                  <CardHeader className="pb-2">
+                    <CardHeader className="pb-2">
                       <CardDescription>Lucro Bruto</CardDescription>
                       <CardTitle className="text-2xl text-teal-600">{formatBRL(grossProfit)}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0 px-6 pb-2">
-                     <p className="text-xs text-muted-foreground">Lucro das vendas no período</p>
-                  </CardContent>
+                    </CardHeader>
+                     <CardContent className="p-0 px-6 pb-2">
+                       <p className="text-xs text-muted-foreground">Lucro das vendas no período</p>
+                    </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
@@ -351,6 +354,7 @@ export default function CashRegisterPage() {
                 inputMode="decimal"
                 value={openingBalance}
                 onChange={e => setOpeningBalance(formatCurrencyInput(e.target.value))}
+                onKeyDown={(e) => e.key === 'Enter' && handleOpenRegister()}
                 placeholder="0,00"
               />
             </div>
