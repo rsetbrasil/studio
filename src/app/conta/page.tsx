@@ -56,11 +56,11 @@ export default function AccountPage() {
     });
   };
 
-  const handleResetData = () => {
-    resetSales();
-    resetOrders();
-    resetTransactions();
-    resetHistory();
+  const handleResetData = async () => {
+    await resetSales();
+    await resetOrders();
+    await resetTransactions();
+    await resetHistory();
     setResetDataDialogOpen(false);
     toast({
       title: "Dados Operacionais Redefinidos!",
@@ -68,8 +68,8 @@ export default function AccountPage() {
     });
   };
 
-  const handleResetProducts = () => {
-    resetProducts();
+  const handleResetProducts = async () => {
+    await resetProducts();
     setResetProductsDialogOpen(false);
     toast({
       title: "Produtos Redefinidos!",

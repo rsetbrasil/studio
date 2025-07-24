@@ -3,6 +3,9 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useSales, Sale } from './SalesContext';
+import { db } from '@/lib/firebase';
+import { doc, setDoc, getDoc, collection, addDoc, query, orderBy, getDocs, deleteDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export type CashAdjustment = {
   id: string;
@@ -13,7 +16,7 @@ export type CashAdjustment = {
 };
 
 export type CashRegisterSession = {
-  id: number;
+  id: string; // Firestore document ID
   openingTime: string;
   closingTime: string | null;
   openingBalance: number;
@@ -35,32 +38,16 @@ type CashRegisterState = {
 type CashRegisterContextType = {
   state: CashRegisterState;
   history: CashRegisterSession[];
-  openRegister: (openingBalance: number) => void;
-  closeRegister: () => void;
-  addAdjustment: (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => void;
-  deleteSession: (sessionId: number) => void;
+  openRegister: (openingBalance: number) => Promise<void>;
+  closeRegister: () => Promise<void>;
+  addAdjustment: (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => Promise<void>;
+  deleteSession: (sessionId: string) => Promise<void>;
   getSalesForCurrentSession: () => Sale[];
-  resetHistory: () => void;
+  resetHistory: () => Promise<void>;
   isMounted: boolean;
 };
 
 const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined);
-
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = localStorage.getItem(key);
-    if (!storedValue) {
-        return defaultValue;
-    }
-    try {
-        return JSON.parse(storedValue);
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
-};
 
 const defaultState: CashRegisterState = { isOpen: false, currentSession: null };
 
@@ -68,46 +55,64 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   const { sales } = useSales();
   const [state, setState] = useState<CashRegisterState>(defaultState);
   const [history, setHistory] = useState<CashRegisterSession[]>([]);
-  const [sessionCounter, setSessionCounter] = useState<number>(1);
   const [isMounted, setIsMounted] = useState(false);
+  const { toast } = useToast();
+
+  const fetchCurrentState = async () => {
+    try {
+      const stateDoc = await getDoc(doc(db, "cashRegister", "currentState"));
+      if (stateDoc.exists()) {
+        setState(stateDoc.data() as CashRegisterState);
+      } else {
+        // If no state exists, create it with default closed state
+        await setDoc(doc(db, "cashRegister", "currentState"), defaultState);
+        setState(defaultState);
+      }
+    } catch (error) {
+      console.error("Error fetching cash register state:", error);
+      toast({ title: "Erro ao buscar estado do caixa.", variant: "destructive" });
+    }
+  };
+  
+  const fetchHistory = async () => {
+    try {
+      const historyCollection = collection(db, "cashRegisterHistory");
+      const q = query(historyCollection, orderBy("closingTime", "desc"));
+      const historySnapshot = await getDocs(q);
+      const historyList = historySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as CashRegisterSession));
+      setHistory(historyList);
+    } catch (error) {
+        console.error("Error fetching cash register history:", error);
+    }
+  }
 
   useEffect(() => {
     setIsMounted(true);
-    setState(getInitialState('cashRegisterState', defaultState));
-    setHistory(getInitialState('cashRegisterHistory', []));
-    setSessionCounter(getInitialState('cashRegisterCounter', 1));
+    fetchCurrentState();
+    fetchHistory();
   }, []);
+  
+  const updateStateInFirestore = async (newState: CashRegisterState) => {
+    try {
+        await setDoc(doc(db, "cashRegister", "currentState"), newState, { merge: true });
+        setState(newState);
+    } catch(error) {
+        console.error("Error updating state in Firestore:", error);
+    }
+  }
 
-  useEffect(() => {
-      if(isMounted) {
-        localStorage.setItem('cashRegisterState', JSON.stringify(state));
-      }
-  }, [state, isMounted]);
-
-  useEffect(() => {
-      if(isMounted) {
-        localStorage.setItem('cashRegisterHistory', JSON.stringify(history));
-      }
-  }, [history, isMounted]);
-
-  useEffect(() => {
-      if(isMounted) {
-        localStorage.setItem('cashRegisterCounter', JSON.stringify(sessionCounter));
-      }
-  }, [sessionCounter, isMounted]);
-
-
-  const openRegister = (openingBalance: number) => {
+  const openRegister = async (openingBalance: number) => {
     if (state.isOpen) return;
 
-    setState({
+    const newState: CashRegisterState = {
       isOpen: true,
       currentSession: {
         openingBalance,
         openingTime: new Date().toISOString(),
-        adjustments: [], // Always initialize as an empty array
+        adjustments: [],
       },
-    });
+    };
+    await updateStateInFirestore(newState);
   };
   
   const getSalesForCurrentSession = useCallback(() => {
@@ -119,7 +124,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
 
   }, [isMounted, state.currentSession, sales]);
 
-  const closeRegister = () => {
+  const closeRegister = async () => {
     if (!state.isOpen || !state.currentSession) return;
     
     const sessionSales = getSalesForCurrentSession();
@@ -133,8 +138,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
     
     const closingBalance = state.currentSession.openingBalance + totalSales + totalSuprimento - totalSangria;
 
-    const newSession: CashRegisterSession = {
-      id: sessionCounter,
+    const newSessionData: Omit<CashRegisterSession, 'id'> = {
       openingTime: state.currentSession.openingTime,
       closingTime: new Date().toISOString(),
       openingBalance: state.currentSession.openingBalance,
@@ -143,13 +147,18 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       sales: sessionSales,
       adjustments: state.currentSession.adjustments || [],
     };
-
-    setHistory(prev => [newSession, ...prev]);
-    setState({ isOpen: false, currentSession: null });
-    setSessionCounter(prev => prev + 1);
+    
+    try {
+        const docRef = await addDoc(collection(db, "cashRegisterHistory"), newSessionData);
+        setHistory(prev => [{ id: docRef.id, ...newSessionData }, ...prev]);
+        await updateStateInFirestore(defaultState); // Reset state to closed
+    } catch (error) {
+        console.error("Error closing register:", error);
+        toast({ title: "Erro ao fechar o caixa", variant: "destructive" });
+    }
   };
   
-  const addAdjustment = (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => {
+  const addAdjustment = async (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => {
     if (!state.isOpen || !state.currentSession) return;
 
     const newAdjustment: CashAdjustment = {
@@ -158,36 +167,45 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       time: new Date().toISOString(),
     };
 
-    setState(prevState => {
-      if (!prevState.currentSession) return prevState;
-
-      // Ensure adjustments is an array before spreading
-      const existingAdjustments = prevState.currentSession.adjustments || [];
-
-      return {
-        ...prevState,
+    const newState: CashRegisterState = {
+        ...state,
         currentSession: {
-          ...prevState.currentSession,
-          adjustments: [...existingAdjustments, newAdjustment]
+            ...state.currentSession,
+            adjustments: [...(state.currentSession.adjustments || []), newAdjustment]
         }
-      };
-    });
+    };
+    await updateStateInFirestore(newState);
   };
   
-  const deleteSession = (sessionId: number) => {
-    setHistory(prev => prev.filter(session => session.id !== sessionId));
+  const deleteSession = async (sessionId: string) => {
+      try {
+        await deleteDoc(doc(db, "cashRegisterHistory", sessionId));
+        setHistory(prev => prev.filter(session => session.id !== sessionId));
+        toast({ title: "Registro de caixa excluído." });
+      } catch (error) {
+        console.error("Error deleting session:", error);
+        toast({ title: "Erro ao excluir registro.", variant: "destructive" });
+      }
   };
   
-  const resetHistory = () => {
-    setHistory([]);
-    setSessionCounter(1);
-    if(state.isOpen){
-      setState({ isOpen: false, currentSession: null });
-    }
-     if (typeof window !== 'undefined') {
-        localStorage.removeItem('cashRegisterState');
-        localStorage.removeItem('cashRegisterHistory');
-        localStorage.removeItem('cashRegisterCounter');
+  const resetHistory = async () => {
+    try {
+        // Delete all documents from history
+        const historySnapshot = await getDocs(collection(db, "cashRegisterHistory"));
+        for (const doc of historySnapshot.docs) {
+            await deleteDoc(doc.ref);
+        }
+        setHistory([]);
+
+        // Reset current state if open
+        if(state.isOpen){
+            await updateStateInFirestore(defaultState);
+        }
+        
+        toast({ title: "Histórico de caixa zerado."});
+    } catch (error) {
+        console.error("Error resetting history:", error);
+        toast({ title: "Erro ao zerar histórico.", variant: "destructive" });
     }
   }
 

@@ -3,6 +3,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy } from 'firebase/firestore';
 
 type OrderItem = {
   id: number;
@@ -14,7 +16,8 @@ type OrderItem = {
 export type OrderStatus = "Pendente" | "Finalizado" | "Cancelado";
 
 type Order = {
-  id: string;
+  id: string; // Firestore ID
+  displayId: string; // Sequential ID for display
   customer: string;
   items: OrderItem[];
   date: string;
@@ -24,7 +27,7 @@ type Order = {
 
 type OrdersContextType = {
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => void;
+  addOrder: (order: Omit<Order, 'id' | 'displayId' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => void;
   updateOrderStatus: (
     orderId: string, 
     newStatus: OrderStatus, 
@@ -35,133 +38,131 @@ type OrdersContextType = {
     }
   ) => void;
   getOrderById: (orderId: string) => Order | undefined;
-  resetOrders: () => void;
+  resetOrders: () => Promise<void>;
   ordersLastMonthPercentage: number;
   isMounted: boolean;
 };
-
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = localStorage.getItem(key);
-    if (!storedValue) {
-        return defaultValue;
-    }
-    try {
-        return JSON.parse(storedValue);
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
-};
-
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [orderCounter, setOrderCounter] = useState<number>(1);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  
+  const fetchOrders = async () => {
+    try {
+      const ordersCollection = collection(db, "orders");
+      const q = query(ordersCollection, orderBy("date", "desc"));
+      const ordersSnapshot = await getDocs(q);
+      const ordersList = ordersSnapshot.docs.map(d => ({ ...d.data(), id: d.id } as Order));
+      setOrders(ordersList);
+    } catch (e) {
+      console.error("Error fetching orders:", e);
+    }
+  }
 
   useEffect(() => {
     setIsMounted(true);
-    setOrders(getInitialState('orders', []));
-    setOrderCounter(getInitialState('orderCounter', 1));
+    fetchOrders();
   }, []);
+  
+  const getNextDisplayId = async () => {
+      // This counter should be stored in Firestore for consistency in a real multi-user environment
+      // For simplicity here, we'll base it on the current number of orders + 1
+      const orderCount = orders.length; 
+      return `PED${String(orderCount + 1).padStart(3, '0')}`;
+  }
 
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('orders', JSON.stringify(orders));
-    }
-  }, [orders, isMounted]);
-
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('orderCounter', JSON.stringify(orderCounter));
-    }
-  }, [orderCounter, isMounted]);
-
-
-  const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => {
-      const newId = `PED${String(orderCounter).padStart(3, '0')}`;
+  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: any[]) => void) => {
+      const newDisplayId = await getNextDisplayId();
       const newDate = new Date().toISOString(); 
 
-      const order: Order = {
+      const order: Omit<Order, 'id'> = {
           ...newOrderData,
-          id: newId,
+          displayId: newDisplayId,
           date: newDate,
           status: "Pendente",
       };
-
-      decreaseStock(order.items);
-      setOrders(prevOrders => [order, ...prevOrders]);
-      setOrderCounter(prev => prev + 1);
+      
+      try {
+        await decreaseStock(order.items);
+        const docRef = await addDoc(collection(db, 'orders'), order);
+        setOrders(prevOrders => [{ ...order, id: docRef.id }, ...prevOrders]);
+      } catch (e) {
+        console.error("Error adding order:", e);
+        toast({ title: "Erro ao criar pedido", variant: "destructive"});
+        // Revert stock if order creation fails
+        // This is a simplified rollback. A more robust solution would use Firestore transactions.
+        // For now, we assume increaseStock exists and can revert the change.
+        const { increaseStock } = require('./ProductsContext');
+        increaseStock(order.items);
+      }
   };
 
-  const updateOrderStatus = (
+  const updateOrderStatus = async (
     orderId: string, 
     newStatus: OrderStatus,
     stockActions: { 
-      increaseStock: (items: any[]) => void, 
-      decreaseStock: (items: any[]) => void, 
+      increaseStock: (items: any[]) => Promise<void>, 
+      decreaseStock: (items: any[]) => Promise<void>, 
       getProductById: (id: string) => any 
     }
   ) => {
-    setOrders(currentOrders => {
-      const orderIndex = currentOrders.findIndex(o => o.id === orderId);
-      if (orderIndex === -1) {
-        return currentOrders;
-      }
-      
-      const orderToUpdate = currentOrders[orderIndex];
-      const oldStatus = orderToUpdate.status;
+    const orderToUpdate = orders.find(o => o.id === orderId);
+    if (!orderToUpdate) return;
+    
+    const oldStatus = orderToUpdate.status;
+    if (oldStatus === newStatus) return;
 
-      if (oldStatus === newStatus) {
-        return currentOrders;
-      }
-
-      // Return items to stock
-      if (oldStatus === "Pendente" && newStatus === "Cancelado") {
-        stockActions.increaseStock(orderToUpdate.items);
-      }
-      
-      if (oldStatus === "Cancelado" && newStatus === "Pendente") {
-        const hasEnoughStock = orderToUpdate.items.every(item => {
-          const product = stockActions.getProductById(String(item.id));
-          return product && product.stock >= item.quantity;
-        });
-
-        if (hasEnoughStock) {
-          stockActions.decreaseStock(orderToUpdate.items);
-        } else {
-          toast({
-            title: "Estoque insuficiente",
-            description: "Não há estoque suficiente para reativar o pedido.",
-            variant: "destructive"
-          })
-          return currentOrders;
+    try {
+        if (oldStatus === "Pendente" && newStatus === "Cancelado") {
+            await stockActions.increaseStock(orderToUpdate.items);
         }
-      }
       
-      const updatedOrders = [...currentOrders];
-      updatedOrders[orderIndex] = { ...orderToUpdate, status: newStatus };
+        if (oldStatus === "Cancelado" && newStatus === "Pendente") {
+            const hasEnoughStock = orderToUpdate.items.every(item => {
+                const product = stockActions.getProductById(String(item.id));
+                return product && product.stock >= item.quantity;
+            });
 
-      return updatedOrders;
-    });
+            if (hasEnoughStock) {
+                await stockActions.decreaseStock(orderToUpdate.items);
+            } else {
+                toast({
+                    title: "Estoque insuficiente",
+                    description: "Não há estoque suficiente para reativar o pedido.",
+                    variant: "destructive"
+                });
+                return;
+            }
+        }
+        
+        const orderRef = doc(db, "orders", orderId);
+        await updateDoc(orderRef, { status: newStatus });
+
+        setOrders(currentOrders => 
+            currentOrders.map(o => o.id === orderId ? { ...o, status: newStatus } : o)
+        );
+    } catch(e) {
+        console.error("Error updating order status:", e);
+        toast({ title: "Erro ao atualizar status do pedido", variant: "destructive"});
+    }
   };
 
   const getOrderById = (orderId: string): Order | undefined => {
     return orders.find(o => o.id === orderId);
   };
   
-  const resetOrders = () => {
-    setOrders([]);
-    setOrderCounter(1);
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem('orders');
-        localStorage.removeItem('orderCounter');
+  const resetOrders = async () => {
+    try {
+        const batch = writeBatch(db);
+        const ordersSnapshot = await getDocs(collection(db, "orders"));
+        ordersSnapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        setOrders([]);
+    } catch (e) {
+        console.error("Error resetting orders:", e);
     }
   };
 

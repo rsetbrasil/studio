@@ -32,7 +32,7 @@ export function DeleteSessionDialog({ isOpen, onClose, onConfirm, session }: Del
           <AlertDialogTitle>Excluir Registro de Caixa?</AlertDialogTitle>
           <AlertDialogDescription>
             Você tem certeza que deseja excluir o registro do caixa{' '}
-            <strong>#{session.id}</strong> (de {new Date(session.openingTime).toLocaleDateString('pt-BR')})? 
+            <strong>#{session.id.substring(0, 8)}...</strong> (de {new Date(session.openingTime).toLocaleDateString('pt-BR')})? 
             Esta ação não pode ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>

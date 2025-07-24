@@ -83,10 +83,10 @@ export default function OrdersPage() {
                 {orders.length > 0 ? (
                   orders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id}</TableCell>
+                      <TableCell className="font-medium">{order.displayId}</TableCell>
                       <TableCell>{order.customer}</TableCell>
                       <TableCell>{order.items.length} item(s)</TableCell>
-                      <TableCell>{order.date}</TableCell>
+                      <TableCell>{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>
                         <Select
                           value={order.status}

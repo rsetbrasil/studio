@@ -111,27 +111,27 @@ export default function CashRegisterPage() {
   }, [salesForCurrentSession, state.currentSession]);
   
 
-  const handleOpenRegister = () => {
+  const handleOpenRegister = async () => {
     const balance = parseCurrencyBRL(openingBalance);
     if (isNaN(balance) || balance < 0) {
       toast({ title: 'Valor inválido', description: 'Por favor, insira um valor de abertura válido.', variant: 'destructive' });
       return;
     }
-    openRegister(balance);
+    await openRegister(balance);
     toast({ title: 'Caixa Aberto!', description: `Caixa aberto com um saldo inicial de ${formatBRL(balance)}.` });
     setOpeningBalance('');
     setOpeningDialogOpen(false);
   };
 
-  const handleCloseRegister = () => {
-    closeRegister();
+  const handleCloseRegister = async () => {
+    await closeRegister();
     toast({ title: 'Caixa Fechado!', description: 'O caixa foi fechado com sucesso.' });
     setClosingDialogOpen(false);
   };
   
-  const handleAdjustment = (amount: number, reason: string) => {
+  const handleAdjustment = async (amount: number, reason: string) => {
     if (!adjustmentType) return;
-    addAdjustment({ type: adjustmentType, amount, reason });
+    await addAdjustment({ type: adjustmentType, amount, reason });
     toast({
       title: `${adjustmentType === 'suprimento' ? 'Suprimento' : 'Sangria'} realizado!`,
       description: `Valor de ${formatBRL(amount)} foi ${adjustmentType === 'suprimento' ? 'adicionado ao' : 'retirado do'} caixa.`
@@ -139,9 +139,9 @@ export default function CashRegisterPage() {
     setAdjustmentType(null);
   };
   
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (sessionToDelete) {
-      deleteSession(sessionToDelete.id);
+      await deleteSession(sessionToDelete.id);
       toast({
         title: "Registro Excluído",
         description: `O registro do caixa #${sessionToDelete.id} foi excluído.`,
@@ -307,7 +307,7 @@ export default function CashRegisterPage() {
                         {isMounted && history.length > 0 ? (
                             history.map(session => (
                                 <TableRow key={session.id}>
-                                    <TableCell>#{session.id}</TableCell>
+                                    <TableCell>#{session.id.substring(0, 8)}...</TableCell>
                                     <TableCell>{new Date(session.openingTime).toLocaleString('pt-BR')}</TableCell>
                                     <TableCell>{session.closingTime ? new Date(session.closingTime).toLocaleString('pt-BR') : '-'}</TableCell>
                                     <TableCell>{formatBRL(session.openingBalance)}</TableCell>
