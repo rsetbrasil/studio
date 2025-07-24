@@ -58,14 +58,11 @@ const initialProductsWithPrice = initialProducts.map(p => ({
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<Product[]>(initialProductsWithPrice);
-  const [productCounter, setProductCounter] = useState(initialProducts.length + 1);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productCounter, setProductCounter] = useState(1);
 
-  const initialCategories = useMemo(() => Array.from(new Set(initialProducts.map(p => p.category))).sort(), []);
-  const initialUnits = useMemo(() => Array.from(new Set(initialProducts.map(p => p.unitOfMeasure))).sort(), []);
-
-  const [categories, setCategories] = useState<string[]>(initialCategories);
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(initialUnits);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
   
   const { toast } = useToast();
 
