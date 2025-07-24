@@ -72,38 +72,46 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   
   const fetchProducts = async () => {
-    const productsCollection = collection(db, "products");
-    const productsSnapshot = await getDocs(productsCollection);
-    const productsList = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-    setProducts(productsList);
+    try {
+      const productsCollection = collection(db, "products");
+      const productsSnapshot = await getDocs(productsCollection);
+      const productsList = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+      setProducts(productsList);
+    } catch (e) {
+      console.error("Error fetching products:", e);
+    }
   };
 
   const fetchMetadata = async () => {
-    const categoriesSnapshot = await getDocs(collection(db, "categories"));
-    if (categoriesSnapshot.empty) {
-        const batch = writeBatch(db);
-        initialCategories.forEach(cat => {
-            const docRef = doc(collection(db, "categories"));
-            batch.set(docRef, { name: cat });
-        });
-        await batch.commit();
-        setCategories(initialCategories.sort());
-    } else {
-        setCategories(categoriesSnapshot.docs.map(doc => doc.data().name).sort());
-    }
+     try {
+        const categoriesSnapshot = await getDocs(collection(db, "categories"));
+        if (categoriesSnapshot.empty) {
+            const batch = writeBatch(db);
+            initialCategories.forEach(cat => {
+                const docRef = doc(collection(db, "categories"));
+                batch.set(docRef, { name: cat });
+            });
+            await batch.commit();
+            setCategories(initialCategories.sort());
+        } else {
+            setCategories(categoriesSnapshot.docs.map(doc => doc.data().name).sort());
+        }
 
-    const unitsSnapshot = await getDocs(collection(db, "unitsOfMeasure"));
-    if (unitsSnapshot.empty) {
-        const batch = writeBatch(db);
-        initialUnits.forEach(unit => {
-            const docRef = doc(collection(db, "unitsOfMeasure"));
-            batch.set(docRef, { name: unit });
-        });
-        await batch.commit();
-        setUnitsOfMeasure(initialUnits.sort());
-    } else {
-        setUnitsOfMeasure(unitsSnapshot.docs.map(doc => doc.data().name).sort());
-    }
+        const unitsSnapshot = await getDocs(collection(db, "unitsOfMeasure"));
+        if (unitsSnapshot.empty) {
+            const batch = writeBatch(db);
+            initialUnits.forEach(unit => {
+                const docRef = doc(collection(db, "unitsOfMeasure"));
+                batch.set(docRef, { name: unit });
+            });
+            await batch.commit();
+            setUnitsOfMeasure(initialUnits.sort());
+        } else {
+            setUnitsOfMeasure(unitsSnapshot.docs.map(doc => doc.data().name).sort());
+        }
+     } catch(e) {
+         console.error("Error fetching metadata:", e)
+     }
   };
   
   useEffect(() => {
@@ -145,8 +153,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteProduct = async (productId: string, sales: any[], orders: any[]) => {
     // This check should eventually be against Firestore data, not local context data
-    const isProductInSale = sales.some(sale => sale.items.some((item:any) => item.id === productId));
-    const isProductInOrder = orders.some(order => order.items.some((item:any) => item.id === productId));
+    const isProductInSale = sales.some(sale => sale.items.some((item:any) => String(item.id) === productId));
+    const isProductInOrder = orders.some(order => order.items.some((item:any) => String(item.id) === productId));
 
     if (isProductInSale || isProductInOrder) {
       toast({
@@ -178,10 +186,20 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
         // Ensure all categories and units from the import exist
         const newCategories = [...new Set(newProducts.map(p => p.category.toUpperCase()))];
+        const currentCategories = categories.map(c => c.toUpperCase());
+        for (const cat of newCategories) {
+          if (!currentCategories.includes(cat)) {
+            await addCategory(cat);
+          }
+        }
+
         const newUnits = [...new Set(newProducts.map(p => p.unitOfMeasure.toUpperCase()))];
-        
-        newCategories.forEach(cat => addCategory(cat));
-        newUnits.forEach(unit => addUnitOfMeasure(unit));
+        const currentUnits = unitsOfMeasure.map(u => u.toUpperCase());
+        for (const unit of newUnits) {
+          if (!currentUnits.includes(unit)) {
+            await addUnitOfMeasure(unit);
+          }
+        }
 
         // Add new products
         newProducts.forEach(p => {
@@ -252,7 +270,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   // --- Metadata Management ---
   const addCategory = async (category: string) => {
     const upperCategory = category.toUpperCase();
-    if (upperCategory && !categories.includes(upperCategory)) {
+    if (upperCategory && !categories.map(c=>c.toUpperCase()).includes(upperCategory)) {
       const q = query(collection(db, 'categories'), where("name", "==", upperCategory));
       const snapshot = await getDocs(q);
       if(snapshot.empty){
@@ -297,7 +315,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   
   const addUnitOfMeasure = async (unit: string) => {
     const upperUnit = unit.toUpperCase();
-    if (upperUnit && !unitsOfMeasure.includes(upperUnit)) {
+    if (upperUnit && !unitsOfMeasure.map(u=>u.toUpperCase()).includes(upperUnit)) {
        const q = query(collection(db, 'unitsOfMeasure'), where("name", "==", upperUnit));
         const snapshot = await getDocs(q);
         if(snapshot.empty){

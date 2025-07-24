@@ -94,7 +94,7 @@ export default function PosPage() {
       const order = getOrderById(orderIdToLoad);
       if (order && order.status === 'Pendente') {
         const cartItems: CartItem[] = order.items.map((item, index) => {
-            const product = getProductById(item.id);
+            const product = getProductById(String(item.id));
             return {
                 ...item,
                 stock: product?.stock ?? item.quantity,
@@ -139,7 +139,7 @@ export default function PosPage() {
     }, {} as Record<string, number>);
 
     for (const [productId, quantity] of Object.entries(aggregatedItems)) {
-        const productInStock = getProductById(Number(productId));
+        const productInStock = getProductById(String(productId));
         if (!productInStock || quantity > productInStock.stock) {
             toast({
                 title: "Pedido não criado",
@@ -151,7 +151,7 @@ export default function PosPage() {
     }
 
     const orderItems = cart.map(item => ({
-        id: item.id,
+        id: Number(item.id),
         name: item.name,
         price: item.salePrice,
         quantity: item.quantity,
@@ -177,7 +177,7 @@ export default function PosPage() {
     if (cart.length === 0) return;
     
     const saleItems = cart.map(item => ({
-        id: item.id,
+        id: Number(item.id),
         name: `${item.name}`,
         price: item.salePrice,
         quantity: item.quantity,
@@ -193,7 +193,7 @@ export default function PosPage() {
     
     addFiadoSale(newFiadoSale);
     
-    const itemsToDecrease = saleItems.map(({ id, quantity }) => ({ id, quantity }));
+    const itemsToDecrease = saleItems.map(({ id, quantity }) => ({ id: String(id), quantity }));
     decreaseStock(itemsToDecrease);
     
     toast({
@@ -342,7 +342,7 @@ export default function PosPage() {
     const aggregatedItemsForStock = cart.reduce((acc, item) => {
         acc[item.id] = (acc[item.id] || 0) + item.quantity;
         return acc;
-    }, {} as Record<number, number>);
+    }, {} as Record<string, number>);
 
     for (const [productId, quantity] of Object.entries(aggregatedItemsForStock)) {
         const productInStock = getProductById(String(productId));
@@ -367,7 +367,7 @@ export default function PosPage() {
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
 
     const saleItems = cart.map(item => ({
-        id: item.id,
+        id: Number(item.id),
         name: `${item.name}`,
         price: item.salePrice,
         quantity: item.quantity,

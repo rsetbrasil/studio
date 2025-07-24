@@ -31,7 +31,7 @@ type OrdersContextType = {
     stockActions: { 
       increaseStock: (items: any[]) => void, 
       decreaseStock: (items: any[]) => void, 
-      getProductById: (id: number) => any 
+      getProductById: (id: string) => any 
     }
   ) => void;
   getOrderById: (orderId: string) => Order | undefined;
@@ -106,7 +106,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     stockActions: { 
       increaseStock: (items: any[]) => void, 
       decreaseStock: (items: any[]) => void, 
-      getProductById: (id: number) => any 
+      getProductById: (id: string) => any 
     }
   ) => {
     setOrders(currentOrders => {
@@ -129,7 +129,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       
       if (oldStatus === "Cancelado" && newStatus === "Pendente") {
         const hasEnoughStock = orderToUpdate.items.every(item => {
-          const product = stockActions.getProductById(item.id);
+          const product = stockActions.getProductById(String(item.id));
           return product && product.stock >= item.quantity;
         });
 
