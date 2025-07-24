@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -98,7 +99,7 @@ export default function CashRegisterPage() {
     const salesMovements = salesForCurrentSession.map(sale => ({
       time: new Date(sale.date),
       type: 'Venda',
-      description: `Venda #${sale.displayId.replace('SALE', '')} para ${sale.customer}`,
+      description: `Venda ${sale.displayId} para ${sale.customer}`,
       amount: sale.amount
     }));
 

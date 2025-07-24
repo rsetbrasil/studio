@@ -80,7 +80,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
-      const newDisplayId = `SALE${String(sales.length + 1).padStart(5, '0')}`;
+      const newDisplayId = `venda-${sales.length + 1}`;
 
       const sale: Sale = {
           ...newSaleData,

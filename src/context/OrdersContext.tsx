@@ -83,7 +83,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       // This counter should be stored in Firestore for consistency in a real multi-user environment
       // For simplicity here, we'll base it on the current number of orders + 1
       const orderCount = orders.length; 
-      return `PED${String(orderCount + 1).padStart(3, '0')}`;
+      return `pedido-${orderCount + 1}`;
   }
 
   const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
