@@ -67,29 +67,47 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<Product[]>(() => getInitialState('products', []));
-  const [productCounter, setProductCounter] = useState<number>(() => getInitialState('productCounter', 1));
-  const [categories, setCategories] = useState<string[]>(() => getInitialState('categories', []));
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(() => getInitialState('unitsOfMeasure', []));
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productCounter, setProductCounter] = useState<number>(1);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const { toast } = useToast();
   
-  // Effect to save state to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
+    // Load from localStorage only on the client side after the component has mounted
+    setProducts(getInitialState('products', []));
+    setProductCounter(getInitialState('productCounter', 1));
+    setCategories(getInitialState('categories', []));
+    setUnitsOfMeasure(getInitialState('unitsOfMeasure', []));
+    setIsLoaded(true);
+  }, []);
+
+  // Effect to save state to localStorage whenever it changes, but only after initial load
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('products', JSON.stringify(products));
+    }
+  }, [products, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('productCounter', JSON.stringify(productCounter));
-  }, [productCounter]);
+    if (isLoaded) {
+      localStorage.setItem('productCounter', JSON.stringify(productCounter));
+    }
+  }, [productCounter, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
+    if (isLoaded) {
+      localStorage.setItem('categories', JSON.stringify(categories));
+    }
+  }, [categories, isLoaded]);
 
   useEffect(() => {
-    localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
-  }, [unitsOfMeasure]);
+    if (isLoaded) {
+      localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
+    }
+  }, [unitsOfMeasure, isLoaded]);
 
 
   const addProduct = (productData: Omit<Product, 'id' | 'price'>) => {
@@ -169,6 +187,12 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     setProductCounter(1);
     setCategories([]);
     setUnitsOfMeasure([]);
+    if(typeof window !== 'undefined'){
+        localStorage.removeItem('products');
+        localStorage.removeItem('productCounter');
+        localStorage.removeItem('categories');
+        localStorage.removeItem('unitsOfMeasure');
+    }
   }
 
   const addCategory = (category: string) => {
