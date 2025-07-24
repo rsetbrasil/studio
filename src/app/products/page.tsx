@@ -28,14 +28,14 @@ import { ProductDialog } from "@/components/products/product-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type CsvProductImport = {
-  id: string | number;
+  id: string;
   nome: string;
   categoria: string;
   unidade_medida: string;
-  preco_compra_fardo: string | number;
-  preco_venda_fardo: string | number;
-  unidades_por_fardo: string | number;
-  estoque_fardo: string | number;
+  preco_compra_fardo: string;
+  preco_venda_fardo: string;
+  unidades_por_fardo: string;
+  estoque_fardo: string;
 };
 
 
@@ -100,8 +100,9 @@ export default function ProductsPage() {
             } else {
                 const mappedProducts = results.data
                   .filter(csvProduct => {
+                    // Rigorous check to ensure we have a valid product
                     const id = Number(csvProduct.id);
-                    return csvProduct.nome && !isNaN(id) && id > 0;
+                    return csvProduct.nome && csvProduct.nome.trim() !== '' && !isNaN(id) && id > 0;
                   })
                   .map(csvProduct => ({
                     id: Number(csvProduct.id),
