@@ -650,7 +650,7 @@ export default function PosComponent() {
         
         <footer className="p-4 border-t bg-background print:hidden">
             <div className="flex items-center justify-end">
-                <span className="text-2xl font-bold text-primary">Total = {formatBRL(total)}</span>
+                <span className="text-2xl font-bold">Total = {formatBRL(total)}</span>
             </div>
         </footer>
 
