@@ -29,6 +29,7 @@ type CashRegisterContextType = {
   closeRegister: () => void;
   getSalesForCurrentSession: () => Sale[];
   resetHistory: () => void;
+  isMounted: boolean;
 };
 
 const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined);
@@ -49,17 +50,39 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
     }
 };
 
+const defaultState: CashRegisterState = { isOpen: false, currentSession: null };
+
 export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   const { sales } = useSales();
-  const [state, setState] = useState<CashRegisterState>(() => getInitialState('cashRegisterState', { isOpen: false, currentSession: null }));
-  const [history, setHistory] = useState<CashRegisterSession[]>(() => getInitialState('cashRegisterHistory', []));
-  const [sessionCounter, setSessionCounter] = useState<number>(() => getInitialState('cashRegisterCounter', 1));
+  const [state, setState] = useState<CashRegisterState>(defaultState);
+  const [history, setHistory] = useState<CashRegisterSession[]>([]);
+  const [sessionCounter, setSessionCounter] = useState<number>(1);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-      localStorage.setItem('cashRegisterState', JSON.stringify(state));
-      localStorage.setItem('cashRegisterHistory', JSON.stringify(history));
-      localStorage.setItem('cashRegisterCounter', JSON.stringify(sessionCounter));
-  }, [state, history, sessionCounter]);
+    setIsMounted(true);
+    setState(getInitialState('cashRegisterState', defaultState));
+    setHistory(getInitialState('cashRegisterHistory', []));
+    setSessionCounter(getInitialState('cashRegisterCounter', 1));
+  }, []);
+
+  useEffect(() => {
+      if(isMounted) {
+        localStorage.setItem('cashRegisterState', JSON.stringify(state));
+      }
+  }, [state, isMounted]);
+
+  useEffect(() => {
+      if(isMounted) {
+        localStorage.setItem('cashRegisterHistory', JSON.stringify(history));
+      }
+  }, [history, isMounted]);
+
+  useEffect(() => {
+      if(isMounted) {
+        localStorage.setItem('cashRegisterCounter', JSON.stringify(sessionCounter));
+      }
+  }, [sessionCounter, isMounted]);
 
 
   const openRegister = (openingBalance: number) => {
@@ -131,7 +154,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, resetHistory }}>
+    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, resetHistory, isMounted }}>
       {children}
     </CashRegisterContext.Provider>
   );

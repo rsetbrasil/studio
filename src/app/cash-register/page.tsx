@@ -15,9 +15,10 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CashRegisterPage() {
-  const { state, history, openRegister, closeRegister, getSalesForCurrentSession } = useCashRegister();
+  const { state, history, openRegister, closeRegister, getSalesForCurrentSession, isMounted } = useCashRegister();
   const [isOpeningDialogOpen, setOpeningDialogOpen] = useState(false);
   const [isClosingDialogOpen, setClosingDialogOpen] = useState(false);
   const [openingBalance, setOpeningBalance] = useState('');
@@ -68,16 +69,24 @@ export default function CashRegisterPage() {
             <div>
               <CardTitle>Controle de Caixa</CardTitle>
               <CardDescription>
-                {state.isOpen ? 'Caixa aberto. Acompanhe as movimentações.' : 'Caixa fechado. Abra para iniciar as vendas.'}
+                {!isMounted ? (
+                  <Skeleton className="h-4 w-72" />
+                ) : state.isOpen ? (
+                  'Caixa aberto. Acompanhe as movimentações.' 
+                ) : (
+                  'Caixa fechado. Abra para iniciar as vendas.'
+                )}
               </CardDescription>
             </div>
-            {state.isOpen ? (
-              <Button variant="destructive" onClick={() => setClosingDialogOpen(true)}>Fechar Caixa</Button>
-            ) : (
-              <Button onClick={() => setOpeningDialogOpen(true)}>Abrir Caixa</Button>
+            {isMounted && (
+              state.isOpen ? (
+                <Button variant="destructive" onClick={() => setClosingDialogOpen(true)}>Fechar Caixa</Button>
+              ) : (
+                <Button onClick={() => setOpeningDialogOpen(true)}>Abrir Caixa</Button>
+              )
             )}
           </CardHeader>
-          {state.isOpen && state.currentSession && (
+          {isMounted && state.isOpen && state.currentSession && (
             <CardContent>
               <div className="grid md:grid-cols-3 gap-4">
                 <Card>
