@@ -41,15 +41,15 @@ export default function CashRegisterPage() {
   const totalSales = useMemo(() => salesForCurrentSession.reduce((acc, sale) => acc + sale.amount, 0), [salesForCurrentSession]);
   
   const totalSuprimento = useMemo(() => 
-    state.currentSession?.adjustments
+    (state.currentSession?.adjustments || [])
       .filter(a => a.type === 'suprimento')
-      .reduce((acc, a) => acc + a.amount, 0) || 0, 
+      .reduce((acc, a) => acc + a.amount, 0),
   [state.currentSession]);
 
   const totalSangria = useMemo(() => 
-    state.currentSession?.adjustments
+    (state.currentSession?.adjustments || [])
       .filter(a => a.type === 'sangria')
-      .reduce((acc, a) => acc + a.amount, 0) || 0,
+      .reduce((acc, a) => acc + a.amount, 0),
   [state.currentSession]);
 
   const saldoEsperado = useMemo(() => 
@@ -79,7 +79,7 @@ export default function CashRegisterPage() {
       amount: sale.amount
     }));
 
-    const adjustmentMovements = state.currentSession.adjustments.map(adj => ({
+    const adjustmentMovements = (state.currentSession.adjustments || []).map(adj => ({
       time: new Date(adj.time),
       type: adj.type === 'suprimento' ? 'Suprimento' : 'Sangria',
       description: adj.reason || (adj.type === 'suprimento' ? 'Adição de valor' : 'Retirada de valor'),
@@ -368,5 +368,3 @@ export default function CashRegisterPage() {
     </AppShell>
   );
 }
-
-    
