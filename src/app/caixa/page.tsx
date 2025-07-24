@@ -206,13 +206,12 @@ export default function CashRegisterPage() {
                   </CardHeader>
                 </Card>
                  <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Lucro Bruto</CardTitle>
-                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <CardHeader className="pb-2">
+                      <CardDescription>Lucro Bruto</CardDescription>
+                      <CardTitle className="text-2xl text-teal-600">{formatBRL(grossProfit)}</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="text-2xl font-bold text-teal-600">{formatBRL(grossProfit)}</div>
-                    <p className="text-xs text-muted-foreground">Lucro das vendas no período</p>
+                  <CardContent className="p-0 px-6 pb-2">
+                     <p className="text-xs text-muted-foreground">Lucro das vendas no período</p>
                   </CardContent>
                 </Card>
                 <Card>
