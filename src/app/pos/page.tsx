@@ -80,6 +80,28 @@ export default function PosPage() {
     }
   }, [searchParams, getOrderById, updateOrderStatus, getProductById, toast]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "F2") {
+        event.preventDefault();
+        if (cart.length > 0) {
+          setPaymentModalOpen(true);
+        } else {
+            toast({
+                title: "Carrinho Vazio",
+                description: "Adicione produtos para finalizar a venda.",
+                variant: "destructive"
+            });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [cart.length, toast]);
+
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
   });
