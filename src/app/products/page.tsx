@@ -28,6 +28,7 @@ import { PlusCircle, Pencil, Search, Download, Upload, Trash } from "lucide-reac
 import { ProductDialog } from "@/components/products/product-dialog";
 import { DeleteProductDialog } from "@/components/products/delete-product-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type CsvProductImport = {
   id: string;
@@ -39,6 +40,8 @@ type CsvProductImport = {
   unidades_por_fardo: string;
   estoque_fardo: string;
 };
+
+type ProductFormData = Omit<Product, 'id' | 'price'>;
 
 export default function ProductsPage() {
   const { products, addProduct, updateProduct, loadProducts, deleteProduct, isMounted } = useProducts();
@@ -72,18 +75,18 @@ export default function ProductsPage() {
     setDeleteDialogOpen(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deletingProduct) {
-      deleteProduct(deletingProduct.id, sales, orders);
+      await deleteProduct(deletingProduct.id, sales, orders);
     }
     handleCloseDeleteDialog();
   };
 
-  const handleConfirm = (productData: Omit<Product, "id" | "price">) => {
+  const handleConfirm = async (productData: ProductFormData) => {
     if (editingProduct) {
-      updateProduct(editingProduct.id, productData);
+      await updateProduct(editingProduct.id, productData);
     } else {
-      addProduct(productData);
+      await addProduct(productData);
     }
     handleCloseDialog();
   };
@@ -137,7 +140,7 @@ export default function ProductsPage() {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        complete: (results) => {
+        complete: async (results) => {
           if (results.errors.length) {
             toast({
               title: "Erro na importação do CSV",
@@ -149,13 +152,11 @@ export default function ProductsPage() {
             return;
           }
 
-          const parsedProducts = (results.data as CsvProductImport[]).reduce((acc: Omit<Product, "price">[], row) => {
-              const id = Number(row.id);
+          const parsedProducts = (results.data as CsvProductImport[]).reduce((acc: ProductFormData[], row) => {
               const name = row.nome;
 
-              if (name && name.trim() !== "" && !isNaN(id) && id > 0) {
+              if (name && name.trim() !== "") {
                 acc.push({
-                  id: id,
                   name: name,
                   category: row.categoria || "Sem Categoria",
                   unitOfMeasure: row.unidade_medida || "Unidade",
@@ -167,17 +168,11 @@ export default function ProductsPage() {
               }
               return acc;
             }, [])
-            .filter((p): p is Omit<Product, "price"> => p.id != null);
+            .filter((p): p is ProductFormData => !!p.name);
 
-          loadProducts(parsedProducts);
-
-          toast({
-            title: "Importação Concluída!",
-            description: `${parsedProducts.length} produtos foram importados com sucesso.`,
-          });
+          await loadProducts(parsedProducts);
         },
       });
-      // Reset file input
       if (event.target) {
         event.target.value = "";
       }
@@ -242,11 +237,11 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isMounted && filteredProducts.length > 0 ? (
+                {isMounted && products.length > 0 ? (
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">
-                        {product.id}
+                        {product.id.substring(0, 5)}...
                       </TableCell>
                       <TableCell>{product.name}</TableCell>
                       <TableCell>{product.stock}</TableCell>
@@ -277,7 +272,22 @@ export default function ProductsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
-                      {isMounted ? "Nenhum produto encontrado." : "Carregando produtos..."}
+                      {!isMounted ? (
+                        <>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <TableRow key={i}>
+                              <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                              <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                              <TableCell><Skeleton className="h-9 w-48" /></TableCell>
+                            </TableRow>
+                          ))}
+                        </>
+                      ) : "Nenhum produto encontrado."}
                     </TableCell>
                   </TableRow>
                 )}

@@ -161,7 +161,7 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
               </div>
               <div>
                   <Label htmlFor="id">Código</Label>
-                  <Input id="id" value={product?.id ?? ''} readOnly disabled />
+                  <Input id="id" value={product?.id ? `${product.id.substring(0,5)}...` : ''} readOnly disabled />
               </div>
               <div>
                   <Label htmlFor="category">Categoria</Label>

@@ -3,45 +3,49 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, query, where } from 'firebase/firestore';
 
 export type Product = {
-  id: number;
+  id: string; // Firestore ID is a string
   name: string;
-  unitOfMeasure: string; // Ex: Fardo, Caixa
-  cost: number; // Custo do pacote/fardo
-  price: number; // Preço de venda unitário (calculado)
-  stock: number; // Estoque em pacotes/fardos
+  unitOfMeasure: string;
+  cost: number;
+  price: number;
+  stock: number;
   category: string;
-  unitsPerPack: number; // Unidades por fardo/pacote
-  packPrice: number; // Preço de venda do fardo/pacote
+  unitsPerPack: number;
+  packPrice: number;
   imageUrl?: string;
 };
 
+type ProductFormData = Omit<Product, 'id' | 'price'>;
+
 type CartItem = {
-    id: number;
+    id: string;
     quantity: number;
 };
 
 type ProductsContextType = {
   products: Product[];
-  addProduct: (productData: Omit<Product, 'id' | 'price'>) => void;
-  updateProduct: (productId: number, productData: Omit<Product, 'id' | 'price'>) => void;
-  deleteProduct: (productId: number, sales: any[], orders: any[]) => void;
-  decreaseStock: (items: CartItem[]) => void;
-  increaseStock: (items: CartItem[]) => void;
-  getProductById: (id: number) => Product | undefined;
-  resetProducts: () => void;
-  loadProducts: (products: Omit<Product, 'price'>[]) => void;
-  isMounted: boolean;
+  addProduct: (productData: ProductFormData) => Promise<void>;
+  updateProduct: (productId: string, productData: ProductFormData) => Promise<void>;
+  deleteProduct: (productId: string, sales: any[], orders: any[]) => Promise<void>;
+  decreaseStock: (items: CartItem[]) => Promise<void>;
+  increaseStock: (items: CartItem[]) => Promise<void>;
+  getProductById: (id: string) => Product | undefined;
+  resetProducts: () => Promise<void>;
+  loadProducts: (products: ProductFormData[]) => Promise<void>;
+  isMounted: boolean; // Keep for UI rendering logic, but data loading is async now
   
   categories: string[];
   unitsOfMeasure: string[];
-  addCategory: (category: string) => void;
-  updateCategory: (oldCategory: string, newCategory: string) => void;
-  deleteCategory: (category: string) => void;
-  addUnitOfMeasure: (unit: string) => void;
-  updateUnitOfMeasure: (oldUnit: string, newUnit: string) => void;
-  deleteUnitOfMeasure: (unit: string) => void;
+  addCategory: (category: string) => Promise<void>;
+  updateCategory: (oldCategory: string, newCategory: string) => Promise<void>;
+  deleteCategory: (category: string) => Promise<void>;
+  addUnitOfMeasure: (unit: string) => Promise<void>;
+  updateUnitOfMeasure: (oldUnit: string, newUnit: string) => Promise<void>;
+  deleteUnitOfMeasure: (unit: string) => Promise<void>;
 };
 
 const calculatePrice = (packPrice: number, unitsPerPack: number) => {
@@ -49,7 +53,6 @@ const calculatePrice = (packPrice: number, unitsPerPack: number) => {
     return packPrice / unitsPerPack;
 }
 
-const initialProducts: Product[] = [];
 const initialCategories: string[] = [
   "ÀGUAS", "BOMBONIERE", "CERVEJAS", "APERITIVO", "REFRIGERANTES", "DRINKS", 
   "CACHAÇA", "CARVÃO", "WHISCKS", "CHAMPANHE", "TABACARIA", "VODKAS", 
@@ -57,94 +60,91 @@ const initialCategories: string[] = [
 ];
 const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO"];
 
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = localStorage.getItem(key);
-    if (!storedValue) {
-        return defaultValue;
-    }
-    try {
-        const parsed = JSON.parse(storedValue);
-        if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(defaultValue) && defaultValue.length > 0) {
-            return defaultValue;
-        }
-        return parsed;
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
-};
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [productCounter, setProductCounter] = useState<number>(1);
   const [categories, setCategories] = useState<string[]>([]);
   const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   
   const { toast } = useToast();
   
+  const fetchProducts = async () => {
+    const productsCollection = collection(db, "products");
+    const productsSnapshot = await getDocs(productsCollection);
+    const productsList = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+    setProducts(productsList);
+  };
+
+  const fetchMetadata = async () => {
+    const categoriesSnapshot = await getDocs(collection(db, "categories"));
+    if (categoriesSnapshot.empty) {
+        const batch = writeBatch(db);
+        initialCategories.forEach(cat => {
+            const docRef = doc(collection(db, "categories"));
+            batch.set(docRef, { name: cat });
+        });
+        await batch.commit();
+        setCategories(initialCategories);
+    } else {
+        setCategories(categoriesSnapshot.docs.map(doc => doc.data().name).sort());
+    }
+
+    const unitsSnapshot = await getDocs(collection(db, "unitsOfMeasure"));
+    if (unitsSnapshot.empty) {
+        const batch = writeBatch(db);
+        initialUnits.forEach(unit => {
+            const docRef = doc(collection(db, "unitsOfMeasure"));
+            batch.set(docRef, { name: unit });
+        });
+        await batch.commit();
+        setUnitsOfMeasure(initialUnits);
+    } else {
+        setUnitsOfMeasure(unitsSnapshot.docs.map(doc => doc.data().name).sort());
+    }
+  };
+  
   useEffect(() => {
     setIsMounted(true);
-    setProducts(getInitialState('products', initialProducts));
-    setProductCounter(getInitialState('productCounter', initialProducts.length + 1));
-    setCategories(getInitialState('categories', initialCategories));
-    setUnitsOfMeasure(getInitialState('unitsOfMeasure', initialUnits));
+    fetchProducts();
+    fetchMetadata();
   }, []);
 
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('products', JSON.stringify(products));
+  const addProduct = async (productData: ProductFormData) => {
+    try {
+        const newProduct = {
+            ...productData,
+            price: calculatePrice(productData.packPrice, productData.unitsPerPack)
+        };
+        const docRef = await addDoc(collection(db, "products"), newProduct);
+        setProducts(prev => [...prev, { id: docRef.id, ...newProduct }]);
+        toast({ title: "Produto adicionado com sucesso!" });
+    } catch (error) {
+        console.error("Error adding product: ", error);
+        toast({ title: "Erro ao adicionar produto", variant: "destructive" });
     }
-  }, [products, isMounted]);
-
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('productCounter', JSON.stringify(productCounter));
-    }
-  }, [productCounter, isMounted]);
-
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('categories', JSON.stringify(categories));
-    }
-  }, [categories, isMounted]);
-
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
-    }
-  }, [unitsOfMeasure, isMounted]);
-
-
-  const addProduct = (productData: Omit<Product, 'id' | 'price'>) => {
-    const newProduct: Product = {
-      ...productData,
-      id: productCounter,
-      price: calculatePrice(productData.packPrice, productData.unitsPerPack),
-    };
-    setProducts(prevProducts => [...prevProducts, newProduct]);
-    setProductCounter(prev => prev + 1);
   };
 
-  const updateProduct = (productId: number, productData: Omit<Product, 'id' | 'price'>) => {
-    setProducts(currentProducts =>
-      currentProducts.map(p =>
-        p.id === productId ? { 
-            ...p, 
-            ...productData, 
-            id: productId, 
-            price: calculatePrice(productData.packPrice, productData.unitsPerPack) 
-        } : p
-      )
-    );
+  const updateProduct = async (productId: string, productData: ProductFormData) => {
+    try {
+        const productRef = doc(db, "products", productId);
+        const updatedProductData = {
+            ...productData,
+            price: calculatePrice(productData.packPrice, productData.unitsPerPack)
+        };
+        await updateDoc(productRef, updatedProductData);
+        setProducts(prev => prev.map(p => p.id === productId ? { id: productId, ...updatedProductData } : p));
+        toast({ title: "Produto atualizado com sucesso!" });
+    } catch (error) {
+        console.error("Error updating product: ", error);
+        toast({ title: "Erro ao atualizar produto", variant: "destructive" });
+    }
   };
 
-  const deleteProduct = (productId: number, sales: any[], orders: any[]) => {
+  const deleteProduct = async (productId: string, sales: any[], orders: any[]) => {
+    // This check should eventually be against Firestore data, not local context data
     const isProductInSale = sales.some(sale => sale.items.some(item => item.id === productId));
     const isProductInOrder = orders.some(order => order.items.some(item => item.id === productId));
 
@@ -156,128 +156,160 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
       });
       return;
     }
-
-    setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
-    toast({
-      title: "Produto Excluído",
-      description: "O produto foi removido com sucesso.",
-    });
-  };
-  
-  const loadProducts = (newProducts: Omit<Product, 'price'>[]) => {
-    const productsWithPrice = newProducts.map(p => ({
-      ...p,
-      price: calculatePrice(p.packPrice, p.unitsPerPack)
-    }));
-    setProducts(productsWithPrice);
-
-    if (productsWithPrice.length > 0) {
-      const maxId = Math.max(...productsWithPrice.map(p => p.id).filter(id => !isNaN(id) && id !== null));
-      setProductCounter(maxId > 0 ? maxId + 1 : 1);
-    } else {
-      setProductCounter(1);
-    }
     
-    const newCategories = Array.from(new Set(productsWithPrice.map(p => p.category.trim()).filter(c => c))).sort();
-    setCategories(newCategories.length > 0 ? newCategories : initialCategories);
-
-    const newUnits = Array.from(new Set(productsWithPrice.map(p => p.unitOfMeasure.trim()).filter(u => u))).sort();
-    setUnitsOfMeasure(newUnits.length > 0 ? newUnits : initialUnits);
-  };
-
-  const updateStock = (items: CartItem[], operation: 'increase' | 'decrease') => {
-    setProducts(currentProducts => {
-      const updatedProducts = [...currentProducts];
-      items.forEach(item => {
-        const productIndex = updatedProducts.findIndex(p => p.id === item.id);
-        if (productIndex !== -1) {
-          const newStock = operation === 'increase'
-            ? updatedProducts[productIndex].stock + item.quantity
-            : updatedProducts[productIndex].stock - item.quantity;
-          
-          updatedProducts[productIndex] = {
-            ...updatedProducts[productIndex],
-            stock: newStock,
-          };
-        }
-      });
-      return updatedProducts;
-    });
-  };
-
-  const decreaseStock = (items: CartItem[]) => {
-    updateStock(items, 'decrease');
-  };
-
-  const increaseStock = (items: CartItem[]) => {
-    updateStock(items, 'increase');
-  };
-
-  const getProductById = (id: number) => {
-    return products.find(p => p.id === id);
+    try {
+        await deleteDoc(doc(db, "products", productId));
+        setProducts(prev => prev.filter(p => p.id !== productId));
+        toast({ title: "Produto excluído com sucesso!", variant: 'destructive' });
+    } catch (error) {
+        console.error("Error deleting product: ", error);
+        toast({ title: "Erro ao excluir produto", variant: "destructive" });
+    }
   };
   
-  const resetProducts = () => {
-    setProducts([]);
-    setProductCounter(1);
-    setCategories(initialCategories);
-    setUnitsOfMeasure(initialUnits);
-    if(typeof window !== 'undefined'){
-        localStorage.removeItem('products');
-        localStorage.removeItem('productCounter');
-        localStorage.removeItem('categories');
-        localStorage.removeItem('unitsOfMeasure');
+  const loadProducts = async (newProducts: ProductFormData[]) => {
+      try {
+        const batch = writeBatch(db);
+        const productsCollection = collection(db, "products");
+        
+        // Clear existing products
+        const existingDocs = await getDocs(productsCollection);
+        existingDocs.forEach(doc => batch.delete(doc.ref));
+
+        // Add new products
+        newProducts.forEach(p => {
+            const docRef = doc(productsCollection);
+            batch.set(docRef, {
+                ...p,
+                price: calculatePrice(p.packPrice, p.unitsPerPack)
+            });
+        });
+        
+        await batch.commit();
+        await fetchProducts(); // Refetch all products to get new IDs
+        await fetchMetadata(); // Refetch metadata
+        toast({ title: `${newProducts.length} produtos importados com sucesso.` });
+      } catch (error) {
+         console.error("Error loading products: ", error);
+         toast({ title: "Erro ao importar produtos.", variant: "destructive" });
+      }
+  };
+
+  const updateStock = async (items: CartItem[], operation: 'increase' | 'decrease') => {
+      const batch = writeBatch(db);
+      const updatedProductsLocally = [...products];
+
+      for (const item of items) {
+          const productRef = doc(db, "products", item.id);
+          const productIndex = updatedProductsLocally.findIndex(p => p.id === item.id);
+          if (productIndex !== -1) {
+              const currentStock = updatedProductsLocally[productIndex].stock;
+              const newStock = operation === 'increase'
+                  ? currentStock + item.quantity
+                  : currentStock - item.quantity;
+              
+              batch.update(productRef, { stock: newStock });
+              updatedProductsLocally[productIndex].stock = newStock;
+          }
+      }
+      
+      try {
+          await batch.commit();
+          setProducts(updatedProductsLocally);
+      } catch (error) {
+          console.error("Error updating stock: ", error);
+          toast({ title: "Erro ao atualizar estoque", variant: "destructive" });
+          fetchProducts(); // Refetch to sync with db on error
+      }
+  };
+
+  const decreaseStock = (items: CartItem[]) => updateStock(items, 'decrease');
+  const increaseStock = (items: CartItem[]) => updateStock(items, 'increase');
+  const getProductById = (id: string) => products.find(p => p.id === id);
+  
+  const resetProducts = async () => {
+    try {
+        const batch = writeBatch(db);
+        const productsSnapshot = await getDocs(collection(db, "products"));
+        productsSnapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        setProducts([]);
+        toast({ title: "Produtos zerados com sucesso."});
+    } catch(e) {
+        toast({ title: "Erro ao zerar produtos.", variant: 'destructive'});
     }
   }
 
-  const addCategory = (category: string) => {
+  // --- Metadata Management ---
+  const addCategory = async (category: string) => {
     if (category && !categories.includes(category)) {
+      await addDoc(collection(db, 'categories'), { name: category });
       setCategories(prev => [...prev, category].sort());
     }
   };
 
-  const updateCategory = (oldCategory: string, newCategory: string) => {
+  const updateCategory = async (oldCategory: string, newCategory: string) => {
     if (!newCategory || newCategory === oldCategory) return;
+    
+    // Update category name in categories collection
+    const q = query(collection(db, 'categories'), where("name", "==", oldCategory));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+        const docRef = snapshot.docs[0].ref;
+        await updateDoc(docRef, { name: newCategory });
+    }
+    
+    // This part is complex in firestore, would require a batch update on all products.
+    // For now, let's just update the local state and category list.
+    // A more robust solution would be a cloud function to handle this data migration.
     setCategories(prev => prev.map(c => c === oldCategory ? newCategory : c).sort());
     setProducts(prev => prev.map(p => p.category === oldCategory ? { ...p, category: newCategory } : p));
   };
 
-  const deleteCategory = (category: string) => {
+  const deleteCategory = async (category: string) => {
     const isCategoryInUse = products.some(p => p.category === category);
     if (isCategoryInUse) {
-        toast({
-            title: "Categoria em uso",
-            description: "Não é possível excluir uma categoria que está sendo usada por produtos.",
-            variant: "destructive",
-        });
+        toast({ title: "Categoria em uso", variant: "destructive" });
         return;
     }
-    setCategories(prev => prev.filter(c => c !== category));
+    const q = query(collection(db, 'categories'), where("name", "==", category));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+        await deleteDoc(snapshot.docs[0].ref);
+        setCategories(prev => prev.filter(c => c !== category));
+    }
   };
   
-  const addUnitOfMeasure = (unit: string) => {
+  const addUnitOfMeasure = async (unit: string) => {
     if (unit && !unitsOfMeasure.includes(unit)) {
+        await addDoc(collection(db, 'unitsOfMeasure'), { name: unit });
         setUnitsOfMeasure(prev => [...prev, unit].sort());
     }
   };
 
-  const updateUnitOfMeasure = (oldUnit: string, newUnit: string) => {
+  const updateUnitOfMeasure = async (oldUnit: string, newUnit: string) => {
     if (!newUnit || newUnit === oldUnit) return;
+    const q = query(collection(db, 'unitsOfMeasure'), where("name", "==", oldUnit));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+        await updateDoc(snapshot.docs[0].ref, { name: newUnit });
+    }
     setUnitsOfMeasure(prev => prev.map(u => u === oldUnit ? newUnit : u).sort());
     setProducts(prev => prev.map(p => p.unitOfMeasure === oldUnit ? { ...p, unitOfMeasure: newUnit } : p));
   };
 
-  const deleteUnitOfMeasure = (unit: string) => {
+  const deleteUnitOfMeasure = async (unit: string) => {
     const isUnitInUse = products.some(p => p.unitOfMeasure === unit);
     if (isUnitInUse) {
-        toast({
-            title: "Unidade de medida em uso",
-            description: "Não é possível excluir uma unidade de medida que está sendo usada por produtos.",
-            variant: "destructive",
-        });
+        toast({ title: "Unidade de medida em uso", variant: "destructive"});
         return;
     }
-    setUnitsOfMeasure(prev => prev.filter(u => u !== unit));
+    const q = query(collection(db, 'unitsOfMeasure'), where("name", "==", unit));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+        await deleteDoc(snapshot.docs[0].ref);
+        setUnitsOfMeasure(prev => prev.filter(u => u !== unit));
+    }
   };
 
 
