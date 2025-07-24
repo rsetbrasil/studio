@@ -10,6 +10,7 @@ import { FinancialProvider } from "@/context/FinancialContext";
 import { CashRegisterProvider } from "@/context/CashRegisterContext";
 import { UsersProvider } from "@/context/UsersContext";
 import { CompanyProvider } from "@/context/CompanyContext";
+import { AuthProvider } from "@/context/AuthContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -27,19 +28,21 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <UsersProvider>
-          <CompanyProvider>
-            <SalesProvider>
-              <OrdersProvider>
-                <ProductsProvider>
-                  <FinancialProvider>
-                    <CashRegisterProvider>
-                      {children}
-                    </CashRegisterProvider>
-                  </FinancialProvider>
-                </ProductsProvider>
-              </OrdersProvider>
-            </SalesProvider>
-          </CompanyProvider>
+          <AuthProvider>
+            <CompanyProvider>
+              <SalesProvider>
+                <OrdersProvider>
+                  <ProductsProvider>
+                    <FinancialProvider>
+                      <CashRegisterProvider>
+                        {children}
+                      </CashRegisterProvider>
+                    </FinancialProvider>
+                  </ProductsProvider>
+                </OrdersProvider>
+              </SalesProvider>
+            </CompanyProvider>
+          </AuthProvider>
         </UsersProvider>
         <Toaster />
       </body>

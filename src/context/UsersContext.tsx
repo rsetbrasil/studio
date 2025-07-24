@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -43,7 +44,8 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 };
 
 const initialUsers: User[] = [
-  { id: 1, name: 'Admin User', email: 'admin@pdvrset.com', role: 'Administrador' },
+  { id: 1, name: 'Admin User', email: 'admin@pdvrset.com', role: 'Administrador', password: 'admin123' },
+  { id: 2, name: 'Vendedor Exemplo', email: 'vendedor@example.com', role: 'Vendedor', password: 'vendedor123' },
 ];
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
@@ -73,9 +75,17 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
 
   const updateUser = (userId: number, userData: Omit<User, 'id'>) => {
     setUsers(currentUsers =>
-      currentUsers.map(u =>
-        u.id === userId ? { ...u, ...userData, id: userId } : u
-      )
+      currentUsers.map(u => {
+        if (u.id === userId) {
+          const { password, ...rest } = userData;
+          const updatedUser = { ...u, ...rest };
+          if (password) {
+            updatedUser.password = password;
+          }
+          return updatedUser;
+        }
+        return u;
+      })
     );
     toast({ title: "Usuário atualizado com sucesso!" });
   };

@@ -40,25 +40,33 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { PDVRsetLogo } from "./icons";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Painel" },
-  { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda" },
-  { href: "/cash-register", icon: Landmark, label: "Caixa" },
-  { href: "/sales", icon: Tag, label: "Vendas" },
-  { href: "/reports", icon: FileText, label: "Relatórios" },
-  { href: "/orders", icon: ListOrdered, label: "Pedidos" },
-  { href: "/products", icon: Package, label: "Produtos" },
-  { href: "/suppliers", icon: Truck, label: "Fornecedores" },
-  { href: "/financial", icon: DollarSign, label: "Financeiro" },
-  { href: "/users", icon: Users, label: "Usuários" },
-  { href: "/account", icon: Settings, label: "Configurações" },
+  { href: "/dashboard", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
+  { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/cash-register", icon: Landmark, label: "Caixa", roles: ["Administrador", "Gerente"] },
+  { href: "/sales", icon: Tag, label: "Vendas", roles: ["Administrador", "Gerente"] },
+  { href: "/reports", icon: FileText, label: "Relatórios", roles: ["Administrador", "Gerente"] },
+  { href: "/orders", icon: ListOrdered, label: "Pedidos", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/products", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
+  { href: "/suppliers", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
+  { href: "/financial", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
+  { href: "/users", icon: Users, label: "Usuários", roles: ["Administrador"] },
+  { href: "/account", icon: Settings, label: "Configurações", roles: ["Administrador"] },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const accessibleNavItems = React.useMemo(() => {
+    if (!user) return [];
+    return navItems.filter(item => item.roles.includes(user.role));
+  }, [user]);
+
   const pageTitle =
-    navItems.find((item) => item.href === pathname)?.label || "PDVRset";
+    accessibleNavItems.find((item) => pathname.startsWith(item.href))?.label || "Página";
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -74,7 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <div className="flex-1 overflow-auto py-2">
           <nav className="grid items-start gap-1 px-4 text-sm font-medium">
-            {navItems.map((item) => (
+            {accessibleNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -112,7 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <PDVRsetLogo className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">PDVRset</span>
                 </Link>
-                {navItems.map((item) => (
+                {accessibleNavItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
@@ -154,7 +162,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Link href="/account" className="w-full h-full">Configurações</Link>
@@ -162,8 +170,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuItem>Suporte</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild variant="outline" size="sm">
-               <Link href="/">
+            <Button asChild variant="outline" size="sm" onClick={logout}>
+               <Link href="/login">
                 <LogOut className="mr-2 h-4 w-4" />
                 Sair
               </Link>

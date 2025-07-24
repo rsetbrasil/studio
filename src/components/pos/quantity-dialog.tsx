@@ -17,6 +17,7 @@ import type { Product } from '@/context/ProductsContext';
 import { formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { useAuth } from '@/context/AuthContext';
 
 type QuantityDialogProps = {
   onClose: () => void;
@@ -28,6 +29,9 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
   const [quantity, setQuantity] = useState('1');
   const [priceStr, setPriceStr] = useState('');
   const [unitOfSale, setUnitOfSale] = useState(product.unitOfMeasure);
+  const { user } = useAuth();
+  
+  const canEditPrice = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const quantityInputRef = useRef<HTMLInputElement>(null);
   const priceInputRef = useRef<HTMLInputElement>(null);
@@ -78,8 +82,12 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
     if (e.key === 'Enter') {
       e.preventDefault();
       if (document.activeElement === quantityInputRef.current) {
-        priceInputRef.current?.focus();
-        priceInputRef.current?.select();
+        if(canEditPrice) {
+            priceInputRef.current?.focus();
+            priceInputRef.current?.select();
+        } else {
+            handleConfirm();
+        }
       } else if (document.activeElement === priceInputRef.current) {
         handleConfirm();
       }
@@ -134,6 +142,7 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
                 onChange={(e) => setPriceStr(formatCurrencyInput(e.target.value))}
                 type="text"
                 inputMode="decimal"
+                readOnly={!canEditPrice}
               />
             </div>
           </div>

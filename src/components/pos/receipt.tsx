@@ -4,10 +4,12 @@
 import React from 'react';
 import { formatBRL } from '@/lib/utils';
 import type { Sale, SaleItem } from '@/context/SalesContext';
+import type { User } from '@/context/UsersContext';
 import { useCompany } from '@/context/CompanyContext';
 
 type ReceiptProps = {
   sale: Sale & { change: number, totalPaid: number };
+  user: User | null;
 };
 
 const ReceiptItem = ({ item }: { item: SaleItem }) => (
@@ -27,7 +29,7 @@ const ReceiptItem = ({ item }: { item: SaleItem }) => (
 );
 
 export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
-  ({ sale }, ref) => {
+  ({ sale, user }, ref) => {
     const { companyInfo } = useCompany();
     const subtotal = sale.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
@@ -97,7 +99,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
         </div>
         
         <div className="mt-1 px-1">
-          <p>VENDEDOR(A): VENDEDOR 1</p>
+          <p>VENDEDOR(A): {user?.name || 'Não identificado'}</p>
         </div>
 
         <div className="text-center mt-2 relative h-16">
