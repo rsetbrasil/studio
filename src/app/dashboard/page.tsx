@@ -22,12 +22,15 @@ import { useSales } from "@/context/SalesContext";
 import { useOrders } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function DashboardPage() {
-  const { sales, totalSalesValue, salesLastMonthPercentage } = useSales();
-  const { orders, ordersLastMonthPercentage } = useOrders();
-  const { products } = useProducts();
+  const { sales, totalSalesValue, salesLastMonthPercentage, isMounted: salesMounted } = useSales();
+  const { orders, ordersLastMonthPercentage, isMounted: ordersMounted } = useOrders();
+  const { products, isMounted: productsMounted } = useProducts();
+
+  const isMounted = salesMounted && ordersMounted && productsMounted;
 
   const lowStockProducts = products.filter(p => p.stock < 10).length;
   const recentSales = sales.slice(0, 5);
@@ -43,10 +46,19 @@ export default function DashboardPage() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatBRL(totalSalesValue)}</div>
-              <p className="text-xs text-muted-foreground">
-                {salesLastMonthPercentage > 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
-              </p>
+              {isMounted ? (
+                <>
+                  <div className="text-2xl font-bold">{formatBRL(totalSalesValue)}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {salesLastMonthPercentage >= 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-1" />
+                </>
+              )}
             </CardContent>
           </Card>
           <Card>
@@ -57,10 +69,19 @@ export default function DashboardPage() {
               <ListOrdered className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{orders.length}</div>
-               <p className="text-xs text-muted-foreground">
-                {ordersLastMonthPercentage > 0 ? `+${ordersLastMonthPercentage.toFixed(1)}%` : `${ordersLastMonthPercentage.toFixed(1)}%`} do mês passado
-              </p>
+               {isMounted ? (
+                <>
+                  <div className="text-2xl font-bold">+{orders.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {ordersLastMonthPercentage >= 0 ? `+${ordersLastMonthPercentage.toFixed(1)}%` : `${ordersLastMonthPercentage.toFixed(1)}%`} do mês passado
+                  </p>
+                </>
+               ) : (
+                <>
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-1" />
+                </>
+               )}
             </CardContent>
           </Card>
           <Card>
@@ -69,10 +90,19 @@ export default function DashboardPage() {
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">+{sales.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {salesLastMonthPercentage > 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
-              </p>
+              {isMounted ? (
+                <>
+                  <div className="text-2xl font-bold">+{sales.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {salesLastMonthPercentage >= 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
+                  </p>
+                </>
+               ) : (
+                <>
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-1" />
+                </>
+               )}
             </CardContent>
           </Card>
           <Card>
@@ -83,10 +113,19 @@ export default function DashboardPage() {
               <PackageX className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{lowStockProducts}</div>
-              <p className="text-xs text-muted-foreground">
-                Produtos com menos de 10 unidades
-              </p>
+              {isMounted ? (
+                <>
+                  <div className="text-2xl font-bold">{lowStockProducts}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Produtos com menos de 10 unidades
+                  </p>
+                </>
+              ) : (
+                 <>
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-1/2 mt-1" />
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -96,7 +135,7 @@ export default function DashboardPage() {
               <CardTitle>Visão Geral de Vendas</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
-              <OverviewChart />
+              {isMounted ? <OverviewChart /> : <Skeleton className="w-full h-[350px]" />}
             </CardContent>
           </Card>
           <Card>
@@ -108,26 +147,39 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                 {recentSales.length > 0 ? (
-                  recentSales.map(sale => (
-                    <div className="flex items-center" key={sale.id}>
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
-                        <AvatarFallback>{sale.customer.substring(0,2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {sale.customer}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(sale.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                        </p>
+                 {isMounted ? (
+                  recentSales.length > 0 ? (
+                    recentSales.map(sale => (
+                      <div className="flex items-center" key={sale.id}>
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src="https://placehold.co/36x36.png" alt="Avatar" data-ai-hint="person" />
+                          <AvatarFallback>{sale.customer.substring(0,2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="ml-4 space-y-1">
+                          <p className="text-sm font-medium leading-none">
+                            {sale.customer}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(sale.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                          </p>
+                        </div>
+                        <div className="ml-auto font-medium">{formatBRL(sale.amount)}</div>
                       </div>
-                      <div className="ml-auto font-medium">{formatBRL(sale.amount)}</div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center">Nenhuma venda recente.</p>
+                  )
+                ) : (
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div className="flex items-center" key={index}>
+                      <Skeleton className="h-9 w-9 rounded-full" />
+                      <div className="ml-4 space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                      <Skeleton className="h-5 w-16 ml-auto" />
                     </div>
                   ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center">Nenhuma venda recente.</p>
                 )}
               </div>
             </CardContent>

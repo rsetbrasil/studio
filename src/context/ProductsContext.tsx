@@ -32,6 +32,7 @@ type ProductsContextType = {
   getProductById: (id: number) => Product | undefined;
   resetProducts: () => void;
   loadProducts: (products: Omit<Product, 'price'>[]) => void;
+  isMounted: boolean;
   
   categories: string[];
   unitsOfMeasure: string[];
@@ -79,28 +80,45 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<Product[]>(() => getInitialState('products', initialProducts));
-  const [productCounter, setProductCounter] = useState<number>(() => getInitialState('productCounter', initialProducts.length + 1));
-  const [categories, setCategories] = useState<string[]>(() => getInitialState('categories', initialCategories));
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(() => getInitialState('unitsOfMeasure', initialUnits));
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productCounter, setProductCounter] = useState<number>(1);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   
   const { toast } = useToast();
   
   useEffect(() => {
-    localStorage.setItem('products', JSON.stringify(products));
-  }, [products]);
+    setIsMounted(true);
+    setProducts(getInitialState('products', initialProducts));
+    setProductCounter(getInitialState('productCounter', initialProducts.length + 1));
+    setCategories(getInitialState('categories', initialCategories));
+    setUnitsOfMeasure(getInitialState('unitsOfMeasure', initialUnits));
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('productCounter', JSON.stringify(productCounter));
-  }, [productCounter]);
+    if (isMounted) {
+      localStorage.setItem('products', JSON.stringify(products));
+    }
+  }, [products, isMounted]);
 
   useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
+    if (isMounted) {
+      localStorage.setItem('productCounter', JSON.stringify(productCounter));
+    }
+  }, [productCounter, isMounted]);
 
   useEffect(() => {
-    localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
-  }, [unitsOfMeasure]);
+    if (isMounted) {
+      localStorage.setItem('categories', JSON.stringify(categories));
+    }
+  }, [categories, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
+    }
+  }, [unitsOfMeasure, isMounted]);
 
 
   const addProduct = (productData: Omit<Product, 'id' | 'price'>) => {
@@ -265,7 +283,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ProductsContext.Provider value={{ 
-      products, addProduct, updateProduct, deleteProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts,
+      products, addProduct, updateProduct, deleteProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts, isMounted,
       categories, unitsOfMeasure, addCategory, updateCategory, deleteCategory,
       addUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure
     }}>

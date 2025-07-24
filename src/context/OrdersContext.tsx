@@ -37,6 +37,7 @@ type OrdersContextType = {
   getOrderById: (orderId: string) => Order | undefined;
   resetOrders: () => void;
   ordersLastMonthPercentage: number;
+  isMounted: boolean;
 };
 
 const getInitialState = <T,>(key: string, defaultValue: T): T => {
@@ -59,17 +60,28 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
-  const [orders, setOrders] = useState<Order[]>(() => getInitialState('orders', []));
-  const [orderCounter, setOrderCounter] = useState(() => getInitialState('orderCounter', 1));
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [orderCounter, setOrderCounter] = useState<number>(1);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    localStorage.setItem('orders', JSON.stringify(orders));
-  }, [orders]);
+    setIsMounted(true);
+    setOrders(getInitialState('orders', []));
+    setOrderCounter(getInitialState('orderCounter', 1));
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('orderCounter', JSON.stringify(orderCounter));
-  }, [orderCounter]);
+    if (isMounted) {
+      localStorage.setItem('orders', JSON.stringify(orders));
+    }
+  }, [orders, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('orderCounter', JSON.stringify(orderCounter));
+    }
+  }, [orderCounter, isMounted]);
 
 
   const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => {
@@ -170,7 +182,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
       {children}
     </OrdersContext.Provider>
   );
