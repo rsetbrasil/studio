@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -7,7 +8,6 @@ import { Calendar as CalendarIcon, File } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
-import { AppShell } from "@/components/app-shell"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -66,7 +66,6 @@ export default function ReportsPage() {
   }, [sales, date]);
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -160,6 +159,5 @@ export default function ReportsPage() {
           </CardContent>
         </Card>
       </div>
-    </AppShell>
   )
 }

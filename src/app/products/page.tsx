@@ -1,9 +1,9 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
 import Papa from "papaparse";
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -187,7 +187,6 @@ export default function ProductsPage() {
 
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -300,6 +299,5 @@ export default function ProductsPage() {
         onConfirm={handleConfirmDelete}
         product={deletingProduct}
        />
-    </AppShell>
   );
 }

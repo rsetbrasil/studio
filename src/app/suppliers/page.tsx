@@ -1,10 +1,9 @@
-import { AppShell } from "@/components/app-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Truck } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SuppliersPage() {
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader>
@@ -21,6 +20,5 @@ export default function SuppliersPage() {
           </CardContent>
         </Card>
       </div>
-    </AppShell>
   );
 }

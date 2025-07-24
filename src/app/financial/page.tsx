@@ -1,11 +1,11 @@
 
+
 "use client";
 
 import React, { useState, useMemo } from "react";
 import { addDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
-import { AppShell } from "@/components/app-shell";
 import {
   Card,
   CardContent,
@@ -73,7 +73,6 @@ export default function FinancialPage() {
   };
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
 
         <Card>
@@ -219,6 +218,5 @@ export default function FinancialPage() {
         onClose={() => setDialogOpen(false)}
         onConfirm={handleConfirm}
       />
-    </AppShell>
   );
 }

@@ -1,7 +1,7 @@
 
+
 "use client";
 
-import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuth } from "@/context/AuthContext";
 import { useOrders, type OrderStatus } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
@@ -35,6 +36,9 @@ import Link from "next/link";
 export default function OrdersPage() {
   const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
   const { increaseStock, decreaseStock, getProductById } = useProducts();
+  const { user } = useAuth();
+  
+  const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -54,7 +58,6 @@ export default function OrdersPage() {
   };
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader>
@@ -90,7 +93,7 @@ export default function OrdersPage() {
                           onValueChange={(newStatus) =>
                             handleStatusChange(order.id, newStatus as OrderStatus)
                           }
-                          disabled={order.status === "Finalizado"}
+                          disabled={!canEditStatus || order.status === "Finalizado"}
                         >
                           <SelectTrigger className="w-auto border-0 p-0 focus:ring-0 focus:ring-offset-0">
                             <Badge variant={getStatusVariant(order.status) as any}>
@@ -131,6 +134,5 @@ export default function OrdersPage() {
           </CardContent>
         </Card>
       </div>
-    </AppShell>
   );
 }

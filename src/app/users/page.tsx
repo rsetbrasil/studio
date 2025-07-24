@@ -1,8 +1,8 @@
 
+
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -97,7 +97,6 @@ export default function UsersPage() {
 
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -190,6 +189,5 @@ export default function UsersPage() {
         onConfirm={handleConfirmDelete}
         user={deletingUser}
        />
-    </AppShell>
   );
 }

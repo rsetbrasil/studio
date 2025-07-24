@@ -1,8 +1,8 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -27,6 +27,7 @@ import { XCircle, Printer } from "lucide-react";
 import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Receipt } from "@/components/pos/receipt";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SalesPage() {
   const { sales, cancelSale, isMounted } = useSales();
@@ -35,6 +36,7 @@ export default function SalesPage() {
   const [saleToPrint, setSaleToPrint] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleCancelClick = (sale: Sale) => {
     setSaleToCancel(sale);
@@ -79,7 +81,6 @@ export default function SalesPage() {
   };
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader>
@@ -156,10 +157,7 @@ export default function SalesPage() {
         sale={saleToCancel}
       />
       <div className="hidden print:block">
-        {saleToPrint && <Receipt ref={receiptRef} sale={saleToPrint} />}
+        {saleToPrint && <Receipt ref={receiptRef} sale={saleToPrint} user={user} />}
       </div>
-    </AppShell>
   );
 }
-
-    

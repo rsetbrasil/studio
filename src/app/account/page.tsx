@@ -1,8 +1,8 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -79,7 +79,6 @@ export default function AccountPage() {
   };
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
         <Card>
           <CardHeader>
@@ -220,6 +219,5 @@ export default function AccountPage() {
         onClose={() => setResetProductsDialogOpen(false)}
         onConfirm={handleResetProducts}
       />
-    </AppShell>
   );
 }

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
@@ -11,7 +12,6 @@ import {
 } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
 
-import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,7 @@ import { QuantityDialog } from "@/components/pos/quantity-dialog";
 import { ProductSearch } from "@/components/pos/product-search";
 import { Receipt } from "@/components/pos/receipt";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/context/AuthContext";
 
 type CartItem = Product & {
   cartId: string;
@@ -53,6 +54,7 @@ export default function PosPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [lastSale, setLastSale] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
+  const { user } = useAuth();
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -72,6 +74,7 @@ export default function PosPage() {
     if (lastSale && receiptRef.current) {
         handlePrint();
         setCart([]);
+        setCustomerName("Cliente Balcão");
         setLastSale(null);
     }
   }, [lastSale]);
@@ -161,6 +164,7 @@ export default function PosPage() {
     });
 
     setCart([]);
+    setCustomerName("Cliente Balcão");
   };
 
   useEffect(() => {
@@ -332,7 +336,6 @@ export default function PosPage() {
 
 
   return (
-    <AppShell>
       <div className="flex flex-col h-full bg-muted/40" id="pos-page">
         <header className="flex items-center gap-4 p-4 border-b bg-background flex-wrap print:hidden">
           <ProductSearch 
@@ -453,11 +456,8 @@ export default function PosPage() {
         )}
 
         <div className="hidden print:block">
-            {lastSale && <Receipt ref={receiptRef} sale={lastSale} />}
+            {lastSale && <Receipt ref={receiptRef} sale={lastSale} user={user} />}
         </div>
       </div>
-    </AppShell>
   );
 }
-
-    

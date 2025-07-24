@@ -1,8 +1,8 @@
 
+
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCashRegister } from '@/context/CashRegisterContext';
@@ -121,7 +121,6 @@ export default function CashRegisterPage() {
   };
 
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
         <Card>
           <CardHeader className="flex flex-row items-start justify-between">
@@ -366,6 +365,5 @@ export default function CashRegisterPage() {
           />
         )}
       </div>
-    </AppShell>
   );
 }

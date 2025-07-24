@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -8,7 +9,6 @@ import {
   ListOrdered,
 } from "lucide-react";
 
-import { AppShell } from "@/components/app-shell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
@@ -33,7 +33,6 @@ export default function DashboardPage() {
   const recentSales = sales.slice(0, 5);
   
   return (
-    <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-4 md:space-y-8">
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
           <Card>
@@ -135,6 +134,5 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </AppShell>
   );
 }
