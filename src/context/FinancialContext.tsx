@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 export type Transaction = {
   id: number;
@@ -18,13 +18,35 @@ type FinancialContextType = {
   resetTransactions: () => void;
 };
 
-const initialTransactions: Transaction[] = [];
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    const storedValue = localStorage.getItem(key);
+    if (!storedValue) {
+        return defaultValue;
+    }
+    try {
+        return JSON.parse(storedValue);
+    } catch (error) {
+        console.error(`Error parsing localStorage key "${key}":`, error);
+        return defaultValue;
+    }
+};
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
 
 export const FinancialProvider = ({ children }: { children: ReactNode }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions);
-  const [transactionCounter, setTransactionCounter] = useState(initialTransactions.length + 1);
+  const [transactions, setTransactions] = useState<Transaction[]>(() => getInitialState('transactions', []));
+  const [transactionCounter, setTransactionCounter] = useState(() => getInitialState('transactionCounter', 1));
+
+  useEffect(() => {
+      localStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [transactions]);
+  
+  useEffect(() => {
+    localStorage.setItem('transactionCounter', JSON.stringify(transactionCounter));
+  }, [transactionCounter]);
 
   const addTransaction = (transactionData: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
@@ -38,6 +60,10 @@ export const FinancialProvider = ({ children }: { children: ReactNode }) => {
   const resetTransactions = () => {
     setTransactions([]);
     setTransactionCounter(1);
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('transactions');
+        localStorage.removeItem('transactionCounter');
+    }
   };
 
   return (

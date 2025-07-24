@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
+import { useSales } from "@/context/SalesContext";
+import { useOrders } from "@/context/OrdersContext";
 import { formatBRL } from "@/lib/utils";
 import { PlusCircle, Pencil, Search, Download, Upload, Trash } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
@@ -41,6 +43,8 @@ type CsvProductImport = {
 
 export default function ProductsPage() {
   const { products, addProduct, updateProduct, loadProducts, deleteProduct } = useProducts();
+  const { sales } = useSales();
+  const { orders } = useOrders();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -71,7 +75,7 @@ export default function ProductsPage() {
 
   const handleConfirmDelete = () => {
     if (deletingProduct) {
-      deleteProduct(deletingProduct.id);
+      deleteProduct(deletingProduct.id, sales, orders);
     }
     handleCloseDeleteDialog();
   };

@@ -31,7 +31,11 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
         return defaultValue;
     }
     try {
-        return JSON.parse(storedValue);
+        const parsed = JSON.parse(storedValue);
+        if (Array.isArray(parsed) && parsed.length === 0 && key === 'users') {
+          return defaultValue;
+        }
+        return parsed;
     } catch (error) {
         console.error(`Error parsing localStorage key "${key}":`, error);
         return defaultValue;
@@ -45,28 +49,17 @@ const initialUsers: User[] = [
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
 
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [userCounter, setUserCounter] = useState<number>(1);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [users, setUsers] = useState<User[]>(() => getInitialState('users', initialUsers));
+  const [userCounter, setUserCounter] = useState<number>(() => getInitialState('userCounter', initialUsers.length + 1));
   const { toast } = useToast();
 
   useEffect(() => {
-    setUsers(getInitialState('users', initialUsers));
-    setUserCounter(getInitialState('userCounter', initialUsers.length + 1));
-    setIsLoaded(true);
-  }, []);
+    localStorage.setItem('users', JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('users', JSON.stringify(users));
-    }
-  }, [users, isLoaded]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('userCounter', JSON.stringify(userCounter));
-    }
-  }, [userCounter, isLoaded]);
+    localStorage.setItem('userCounter', JSON.stringify(userCounter));
+  }, [userCounter]);
 
   const addUser = (userData: Omit<User, 'id'>) => {
     const newUser: User = {

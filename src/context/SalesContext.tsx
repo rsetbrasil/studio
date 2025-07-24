@@ -1,9 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-// We are removing useProducts import to avoid circular dependency
-// import { useProducts } from './ProductsContext';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 
 type SaleItem = {
   id: number;
@@ -24,20 +22,43 @@ export type Sale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>, increaseStock: (items: any[]) => void) => Sale;
+  addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
   resetSales: () => void;
   totalSalesValue: number;
   salesLastMonthPercentage: number;
 };
 
-const initialSales: Sale[] = [];
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    const storedValue = localStorage.getItem(key);
+    if (!storedValue) {
+        return defaultValue;
+    }
+    try {
+        return JSON.parse(storedValue);
+    } catch (error) {
+        console.error(`Error parsing localStorage key "${key}":`, error);
+        return defaultValue;
+    }
+};
 
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
 
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
-  const [sales, setSales] = useState<Sale[]>(initialSales);
-  const [saleCounter, setSaleCounter] = useState(sales.length + 1);
+  const [sales, setSales] = useState<Sale[]>(() => getInitialState('sales', []));
+  const [saleCounter, setSaleCounter] = useState<number>(() => getInitialState('saleCounter', 1));
+  
+  useEffect(() => {
+    localStorage.setItem('sales', JSON.stringify(sales));
+  }, [sales]);
+
+  useEffect(() => {
+    localStorage.setItem('saleCounter', JSON.stringify(saleCounter));
+  }, [saleCounter]);
+
 
   const addSale = (newSaleData: Omit<Sale, 'id' | 'date' | 'status'>): Sale => {
       const newId = `SALE${String(saleCounter).padStart(3, '0')}`;
@@ -71,6 +92,10 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const resetSales = () => {
     setSales([]);
     setSaleCounter(1);
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('sales');
+        localStorage.removeItem('saleCounter');
+    }
   };
 
   const totalSalesValue = useMemo(() => sales.reduce((acc, sale) => sale.status === 'Finalizada' ? acc + sale.amount : acc, 0), [sales]);
@@ -93,7 +118,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage } as any}>
+    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage }}>
       {children}
     </SalesContext.Provider>
   );

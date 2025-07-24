@@ -28,7 +28,7 @@ import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SalesPage() {
-  const { sales, cancelSale: cancelSaleFromContext } = useSales();
+  const { sales, cancelSale } = useSales();
   const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const { toast } = useToast();
@@ -39,7 +39,7 @@ export default function SalesPage() {
 
   const handleConfirmCancel = () => {
     if (saleToCancel) {
-      cancelSaleFromContext(saleToCancel.id, increaseStock);
+      cancelSale(saleToCancel.id, increaseStock);
       toast({
         title: "Venda Cancelada!",
         description: `A venda ${saleToCancel.id} foi cancelada e os itens retornaram ao estoque.`,

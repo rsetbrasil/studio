@@ -60,6 +60,14 @@ export default function PosPage() {
 
   const stockActions = { increaseStock, decreaseStock, getProductById };
 
+  const handlePrint = useReactToPrint({
+    content: () => receiptRef.current,
+    onAfterPrint: () => {
+      setCart([]);
+      setLastSale(null);
+    },
+  });
+
   useEffect(() => {
     searchInputRef.current?.focus();
 
@@ -145,6 +153,12 @@ export default function PosPage() {
 
     setCart([]);
   };
+  
+  useEffect(() => {
+    if (lastSale && receiptRef.current) {
+      handlePrint();
+    }
+  }, [lastSale, handlePrint]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -170,22 +184,8 @@ export default function PosPage() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart.length, toast]);
+  }, [cart, customerName, total]);
 
-  const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
-    onAfterPrint: () => {
-      setCart([]);
-      setLastSale(null);
-    },
-  });
-  
-  useEffect(() => {
-    if(lastSale && receiptRef.current) {
-        handlePrint();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastSale]);
 
   const handleProductSelect = (product: Product) => {
     setProductForQuantity(product);
@@ -319,7 +319,7 @@ export default function PosPage() {
       amount: finalTotal,
       paymentMethod: paymentMethodsUsed,
     };
-    const newSale = addSale(newSaleData, increaseStock);
+    const newSale = addSale(newSaleData);
     
     toast({
       title: "Venda Finalizada!",

@@ -33,59 +33,33 @@ type CashRegisterContextType = {
 
 const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined);
 
-const getInitialState = (): CashRegisterState => {
-    if (typeof window !== 'undefined') {
-        const storedState = localStorage.getItem('cashRegisterState');
-        if (storedState) {
-            return JSON.parse(storedState);
-        }
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
     }
-    return { isOpen: false, currentSession: null };
-};
-
-const getInitialHistory = (): CashRegisterSession[] => {
-    if (typeof window !== 'undefined') {
-        const storedHistory = localStorage.getItem('cashRegisterHistory');
-        if (storedHistory) {
-            return JSON.parse(storedHistory);
-        }
+    const storedValue = localStorage.getItem(key);
+    if (!storedValue) {
+        return defaultValue;
     }
-    return [];
-};
-
-const getInitialCounter = (): number => {
-    if (typeof window !== 'undefined') {
-        const storedCounter = localStorage.getItem('cashRegisterCounter');
-        if (storedCounter) {
-            return JSON.parse(storedCounter);
-        }
+    try {
+        return JSON.parse(storedValue);
+    } catch (error) {
+        console.error(`Error parsing localStorage key "${key}":`, error);
+        return defaultValue;
     }
-    return 1;
 };
-
 
 export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   const { sales } = useSales();
-  const [state, setState] = useState<CashRegisterState>(getInitialState);
-  const [history, setHistory] = useState<CashRegisterSession[]>(getInitialHistory);
-  const [sessionCounter, setSessionCounter] = useState<number>(getInitialCounter);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [state, setState] = useState<CashRegisterState>(() => getInitialState('cashRegisterState', { isOpen: false, currentSession: null }));
+  const [history, setHistory] = useState<CashRegisterSession[]>(() => getInitialState('cashRegisterHistory', []));
+  const [sessionCounter, setSessionCounter] = useState<number>(() => getInitialState('cashRegisterCounter', 1));
 
   useEffect(() => {
-    // This ensures we only read from localStorage on the client-side after hydration.
-    setState(getInitialState());
-    setHistory(getInitialHistory());
-    setSessionCounter(getInitialCounter());
-    setIsLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (isLoaded) {
       localStorage.setItem('cashRegisterState', JSON.stringify(state));
       localStorage.setItem('cashRegisterHistory', JSON.stringify(history));
       localStorage.setItem('cashRegisterCounter', JSON.stringify(sessionCounter));
-    }
-  }, [state, history, sessionCounter, isLoaded]);
+  }, [state, history, sessionCounter]);
 
 
   const openRegister = (openingBalance: number) => {

@@ -3,8 +3,6 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useSales } from './SalesContext'; 
-import { useOrders } from './OrdersContext';
 
 export type Product = {
   id: number;
@@ -28,7 +26,7 @@ type ProductsContextType = {
   products: Product[];
   addProduct: (productData: Omit<Product, 'id' | 'price'>) => void;
   updateProduct: (productId: number, productData: Omit<Product, 'id' | 'price'>) => void;
-  deleteProduct: (productId: number) => void;
+  deleteProduct: (productId: number, sales: any[], orders: any[]) => void;
   decreaseStock: (items: CartItem[]) => void;
   increaseStock: (items: CartItem[]) => void;
   getProductById: (id: number) => Product | undefined;
@@ -51,7 +49,6 @@ const calculatePrice = (packPrice: number, unitsPerPack: number) => {
 }
 
 const initialProducts: Product[] = [];
-
 const initialCategories: string[] = [
   "ÀGUAS", "BOMBONIERE", "CERVEJAS", "APERITIVO", "REFRIGERANTES", "DRINKS", 
   "CACHAÇA", "CARVÃO", "WHISCKS", "CHAMPANHE", "TABACARIA", "VODKAS", 
@@ -59,75 +56,51 @@ const initialCategories: string[] = [
 ];
 const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO"];
 
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    const storedValue = localStorage.getItem(key);
+    if (!storedValue) {
+        return defaultValue;
+    }
+    try {
+        const parsed = JSON.parse(storedValue);
+        if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(defaultValue) && defaultValue.length > 0) {
+            return defaultValue;
+        }
+        return parsed;
+    } catch (error) {
+        console.error(`Error parsing localStorage key "${key}":`, error);
+        return defaultValue;
+    }
+};
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
-// Helper functions to get initial state from localStorage
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window !== 'undefined') {
-        const storedValue = localStorage.getItem(key);
-        if (storedValue) {
-            try {
-                // Ensure that for arrays, we don't return an empty one if defaultValue has items
-                const parsed = JSON.parse(storedValue);
-                if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(defaultValue) && defaultValue.length > 0) {
-                    return defaultValue;
-                }
-                return parsed;
-            } catch (error) {
-                console.error(`Error parsing localStorage key "${key}":`, error);
-                return defaultValue;
-            }
-        }
-    }
-    return defaultValue;
-};
-
-
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const { sales } = useSales();
-  const { orders } = useOrders();
-  
-  const [products, setProducts] = useState<Product[]>([]);
-  const [productCounter, setProductCounter] = useState<number>(1);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [products, setProducts] = useState<Product[]>(() => getInitialState('products', initialProducts));
+  const [productCounter, setProductCounter] = useState<number>(() => getInitialState('productCounter', initialProducts.length + 1));
+  const [categories, setCategories] = useState<string[]>(() => getInitialState('categories', initialCategories));
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(() => getInitialState('unitsOfMeasure', initialUnits));
   
   const { toast } = useToast();
   
   useEffect(() => {
-    setProducts(getInitialState('products', initialProducts));
-    setProductCounter(getInitialState('productCounter', initialProducts.length + 1));
-    setCategories(getInitialState('categories', initialCategories));
-    setUnitsOfMeasure(getInitialState('unitsOfMeasure', initialUnits));
-    setIsLoaded(true);
-  }, []);
-
-  // Effect to save state to localStorage whenever it changes, but only after initial load
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('products', JSON.stringify(products));
-    }
-  }, [products, isLoaded]);
+    localStorage.setItem('products', JSON.stringify(products));
+  }, [products]);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('productCounter', JSON.stringify(productCounter));
-    }
-  }, [productCounter, isLoaded]);
+    localStorage.setItem('productCounter', JSON.stringify(productCounter));
+  }, [productCounter]);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('categories', JSON.stringify(categories));
-    }
-  }, [categories, isLoaded]);
+    localStorage.setItem('categories', JSON.stringify(categories));
+  }, [categories]);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
-    }
-  }, [unitsOfMeasure, isLoaded]);
+    localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
+  }, [unitsOfMeasure]);
 
 
   const addProduct = (productData: Omit<Product, 'id' | 'price'>) => {
@@ -153,7 +126,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
-  const deleteProduct = (productId: number) => {
+  const deleteProduct = (productId: number, sales: any[], orders: any[]) => {
     const isProductInSale = sales.some(sale => sale.items.some(item => item.id === productId));
     const isProductInOrder = orders.some(order => order.items.some(item => item.id === productId));
 
@@ -229,8 +202,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const resetProducts = () => {
     setProducts([]);
     setProductCounter(1);
-    setCategories([]);
-    setUnitsOfMeasure([]);
+    setCategories(initialCategories);
+    setUnitsOfMeasure(initialUnits);
     if(typeof window !== 'undefined'){
         localStorage.removeItem('products');
         localStorage.removeItem('productCounter');
@@ -292,7 +265,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ProductsContext.Provider value={{ 
-      products, addProduct, updateProduct, deleteProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts,
+      products, addProduct, updateProduct, deleteProduct: () => {}, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts,
       categories, unitsOfMeasure, addCategory, updateCategory, deleteCategory,
       addUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure
     }}>

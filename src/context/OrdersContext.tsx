@@ -1,8 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-// import { useProducts } from './ProductsContext'; // To avoid circular dependency
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 type OrderItem = {
@@ -40,13 +39,38 @@ type OrdersContextType = {
   ordersLastMonthPercentage: number;
 };
 
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') {
+        return defaultValue;
+    }
+    const storedValue = localStorage.getItem(key);
+    if (!storedValue) {
+        return defaultValue;
+    }
+    try {
+        return JSON.parse(storedValue);
+    } catch (error) {
+        console.error(`Error parsing localStorage key "${key}":`, error);
+        return defaultValue;
+    }
+};
+
+
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [orderCounter, setOrderCounter] = useState(1);
-  // const { decreaseStock, increaseStock, getProductById: getProductStockById } = useProducts();
+  const [orders, setOrders] = useState<Order[]>(() => getInitialState('orders', []));
+  const [orderCounter, setOrderCounter] = useState(() => getInitialState('orderCounter', 1));
   const { toast } = useToast();
+
+  useEffect(() => {
+    localStorage.setItem('orders', JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('orderCounter', JSON.stringify(orderCounter));
+  }, [orderCounter]);
+
 
   const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => {
       const newId = `PED${String(orderCounter).padStart(3, '0')}`;
@@ -123,6 +147,10 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const resetOrders = () => {
     setOrders([]);
     setOrderCounter(1);
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('orders');
+        localStorage.removeItem('orderCounter');
+    }
   };
 
   const ordersLastMonthPercentage = useMemo(() => {
@@ -142,7 +170,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage } as any}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage }}>
       {children}
     </OrdersContext.Provider>
   );
