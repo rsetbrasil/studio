@@ -25,14 +25,14 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
     const subtotal = sale.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     return (
-      <div ref={ref} className="p-2 bg-white text-black text-xs font-mono w-[300px] print-container">
+      <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container">
         <div className="text-center mb-2">
             <h1 className="text-sm font-bold">NOME DE FANTASIA</h1>
             <p>NOME DA RAZÃO SOCIAL COM. DE INFORMÁTICA LTDA-ME</p>
             <p>Rua dos Equipamentos, 9 - Sobreloja 101 e 102</p>
             <p>Centro - 20000-000 - Rio de Janeiro/RJ</p>
             <p>(21) 1111-2222 / 3344-5566</p>
-            <div className="flex justify-between mt-1">
+            <div className="flex justify-between mt-1 px-1">
               <span>CNPJ: 11.111.111/0001-11</span>
               <span>IE: 11.222.333</span>
             </div>
@@ -40,7 +40,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
         
         <hr className="border-t border-dashed border-black" />
 
-        <div className="my-1">
+        <div className="my-1 px-1">
             <div className="flex justify-between">
                 <span>{new Date(sale.date).toLocaleDateString('pt-BR')} {new Date(sale.date).toLocaleTimeString('pt-BR')}</span>
                 <span>COMPROVANTE DE VENDA</span>
@@ -56,9 +56,9 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
         <table className="w-full mt-1">
           <thead>
             <tr className="text-left border-b border-dashed border-black">
-              <th className="font-normal">CODIGO</th>
-              <th className="font-normal">DESCRIÇÃO</th>
-              <th className="font-normal text-right">VALOR</th>
+              <th className="font-normal px-1">CODIGO</th>
+              <th className="font-normal px-1">DESCRIÇÃO</th>
+              <th className="font-normal text-right px-1">VALOR</th>
             </tr>
           </thead>
           <tbody>
@@ -70,7 +70,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
 
         <hr className="border-t border-dashed border-black mt-1" />
 
-        <div className="mt-1 space-y-0.5">
+        <div className="mt-1 space-y-0.5 px-1">
           <div className="flex justify-between">
             <span>Total da Nota R$</span>
             <span>{formatBRL(subtotal)}</span>
@@ -85,11 +85,11 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
           </div>
         </div>
 
-        <div className="mt-1">
+        <div className="mt-1 px-1">
             <p>FORMA DE PGTO.: {sale.paymentMethod}</p>
         </div>
         
-        <div className="mt-1">
+        <div className="mt-1 px-1">
           <p>VENDEDOR(A): VENDEDOR 1</p>
         </div>
 
@@ -108,5 +108,3 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
 );
 
 Receipt.displayName = 'Receipt';
-
-    
