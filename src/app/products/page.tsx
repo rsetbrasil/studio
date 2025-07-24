@@ -104,7 +104,6 @@ export default function ProductsPage() {
               const id = Number(csvProduct.id);
               const name = csvProduct.nome;
 
-              // Rigorous check to ensure only valid products are pushed
               if (name && name.trim() !== '' && !isNaN(id) && id > 0) {
                 acc.push({
                   id: id,
@@ -120,12 +119,13 @@ export default function ProductsPage() {
               return acc;
             }, []);
 
+            const finalProducts = mappedProducts.filter(p => p.id != null && p.id > 0);
 
-            if (mappedProducts.length > 0) {
-              loadProducts(mappedProducts);
+            if (finalProducts.length > 0) {
+              loadProducts(finalProducts);
               toast({
                   title: "Produtos Importados!",
-                  description: `${mappedProducts.length} produtos foram carregados com sucesso.`,
+                  description: `${finalProducts.length} produtos foram carregados com sucesso.`,
               });
             } else {
                 toast({
