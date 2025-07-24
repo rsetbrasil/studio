@@ -173,7 +173,6 @@ export default function PosPage() {
   }, [cart.length, toast]);
 
   const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
     onAfterPrint: () => {
       setCart([]);
       setLastSale(null);
@@ -182,10 +181,10 @@ export default function PosPage() {
   
   useEffect(() => {
     if(lastSale && receiptRef.current) {
-        handlePrint();
+        handlePrint(null, () => receiptRef.current);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastSale]);
+  }, [lastSale, handlePrint]);
 
   const handleProductSelect = (product: Product) => {
     setProductForQuantity(product);
@@ -199,44 +198,32 @@ export default function PosPage() {
 
     const existingCartItem = cart.find(item => item.id === product.id && item.salePrice === price && item.unitOfSale === unitOfSale);
     
-    const quantityInCart = cart
-        .filter(item => item.id === product.id)
-        .reduce((acc, item) => {
-            const quantityInPacks = item.unitOfSale === product.unitOfMeasure ? item.quantity : item.quantity / product.unitsPerPack;
-            return acc + quantityInPacks;
-        }, 0);
-    
-    const newQuantityInPacks = unitOfSale === product.unitOfMeasure ? quantity : quantity / product.unitsPerPack;
-    const totalQuantityInPacks = quantityInCart + newQuantityInPacks;
+    if (existingCartItem) {
+      const newQuantity = existingCartItem.quantity + quantity;
+      updateQuantity(existingCartItem.cartId, newQuantity);
+    } else {
+        const quantityInCart = cart
+            .filter(item => item.id === product.id)
+            .reduce((acc, item) => acc + item.quantity, 0);
 
-
-    if (totalQuantityInPacks > product.stock) {
-        toast({
-            title: "Estoque Insuficiente",
-            description: `A quantidade total para ${product.name} excede o estoque de ${product.stock} ${product.unitOfMeasure}(s).`,
-            variant: "destructive",
-        });
-        return;
-    }
-    
-    setCart((currentCart) => {
-        if (existingCartItem) {
-            return currentCart.map((item) =>
-                item.cartId === existingCartItem.cartId
-                    ? { ...item, quantity: item.quantity + quantity }
-                    : item
-            );
-        } else {
-            const newItem: CartItem = {
-                ...product,
-                cartId: `${product.id}-${Date.now()}`,
-                quantity: quantity,
-                salePrice: price,
-                unitOfSale: unitOfSale
-            };
-            return [...currentCart, newItem];
+        if (quantity + quantityInCart > product.stock) {
+            toast({
+                title: "Estoque Insuficiente",
+                description: `A quantidade total para ${product.name} excede o estoque de ${product.stock}.`,
+                variant: "destructive",
+            });
+            return;
         }
-    });
+
+        const newItem: CartItem = {
+            ...product,
+            cartId: `${product.id}-${Date.now()}`,
+            quantity: quantity,
+            salePrice: price,
+            unitOfSale: unitOfSale
+        };
+        setCart((currentCart) => [...currentCart, newItem]);
+    }
 
     handleCloseQuantityDialog();
 };
@@ -264,10 +251,14 @@ export default function PosPage() {
     const product = getProductById(cartItem.id);
     if (!product) return;
 
-    if (newQuantity > product.stock) {
+    const quantityInCart = cart
+        .filter(item => item.id === product.id && item.cartId !== cartId)
+        .reduce((acc, item) => acc + item.quantity, 0);
+
+    if (newQuantity + quantityInCart > product.stock) {
       toast({
         title: "Estoque Insuficiente",
-        description: `A quantidade máxima em estoque para ${product.name} é ${product.stock} ${product.unitOfMeasure}(s).`,
+        description: `A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
         variant: "destructive",
       });
       return;
@@ -359,7 +350,7 @@ export default function PosPage() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             {lastSale && (
-                <Button size="sm" onClick={handlePrint} variant="outline">
+                <Button size="sm" onClick={() => handlePrint(null, () => receiptRef.current)} variant="outline">
                     <Printer className="mr-2 h-4 w-4" /> Imprimir Último Comprovante
                 </Button>
             )}
