@@ -36,10 +36,10 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
       <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container relative">
         <div className="text-center mb-2">
             <h1 className="text-sm font-bold">{companyInfo.tradeName}</h1>
-            <p>{companyInfo.businessName}</p>
-            <p>{companyInfo.address}</p>
-            <p>{companyInfo.cityStateZip}</p>
-            <p>{companyInfo.phone}</p>
+            <p className="whitespace-nowrap">{companyInfo.businessName}</p>
+            <p className="whitespace-nowrap">{companyInfo.address}</p>
+            <p className="whitespace-nowrap">{companyInfo.cityStateZip}</p>
+            <p className="whitespace-nowrap">{companyInfo.phone}</p>
             <div className="flex justify-between mt-1 px-1">
               <span>CNPJ: {companyInfo.cnpj}</span>
               <span>IE: {companyInfo.ie}</span>
@@ -51,7 +51,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
         <div className="my-1 px-1">
             <div className="flex justify-between">
                 <span>{new Date(sale.date).toLocaleDateString('pt-BR')} {new Date(sale.date).toLocaleTimeString('pt-BR')}</span>
-                <span>COMPROVANTE DE VENDA</span>
+                <span className="whitespace-nowrap">COMPROVANTE DE VENDA</span>
             </div>
             <div className="flex justify-between">
                 <span>CLIENTE: {sale.customer}</span>
