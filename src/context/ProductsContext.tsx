@@ -71,6 +71,10 @@ const initialProducts: Omit<Product, 'price'>[] = [
     { id: 26, name: "ENERGETICO RED BULL 250ML", category: "ENERGETICO", unitOfMeasure: "FARDO", cost: 96.00, packPrice: 120.00, unitsPerPack: 24, stock: 30 },
     { id: 27, name: "ENERGETICO MONSTER 473ML", category: "ENERGETICO", unitOfMeasure: "FARDO", cost: 85.00, packPrice: 105.00, unitsPerPack: 12, stock: 25 },
     { id: 28, name: "GATORADE LIMAO 500ML", category: "ISOTONICO", unitOfMeasure: "FARDO", cost: 33.00, packPrice: 45.00, unitsPerPack: 6, stock: 25 },
+    { id: 296, name: 'HEINEKEN L/N 24X330ML', category: 'CERVEJA', unitOfMeasure: 'CAIXA', cost: 110.00, packPrice: 134.90, unitsPerPack: 24, stock: 356 },
+    { id: 297, name: 'HEINEKEN L/N 330ML MERCEARIA', category: 'CERVEJA', unitOfMeasure: 'UNIDADE', cost: 5.50, packPrice: 7.00, unitsPerPack: 1, stock: 8 },
+    { id: 298, name: 'HEINEKEN LATA 12X350ML', category: 'CERVEJA', unitOfMeasure: 'FARDO', cost: 45.00, packPrice: 53.90, unitsPerPack: 12, stock: 174 },
+    { id: 351, name: 'MEIA HEINEKEN L/N 12X330ML', category: 'CERVEJA', unitOfMeasure: 'FARDO', cost: 58.00, packPrice: 68.00, unitsPerPack: 12, stock: 6 },
 ];
 
 
