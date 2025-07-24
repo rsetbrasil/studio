@@ -38,7 +38,7 @@ export default function OrdersPage() {
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
   
-  const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente' || user?.role === 'Vendedor';
+  const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
   const canInvoice = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const getStatusVariant = (status: string) => {
