@@ -73,6 +73,13 @@ export default function PosPage() {
   }, [cart]);
 
   useEffect(() => {
+    if (lastSale && handlePrint) {
+        handlePrint();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSale]);
+
+  useEffect(() => {
     searchInputRef.current?.focus();
 
     const orderIdToLoad = searchParams.get('orderId');
@@ -102,7 +109,7 @@ export default function PosPage() {
         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
       }
     }
-  }, [searchParams, getOrderById, updateOrderStatus, getProductById, toast]);
+  }, [searchParams, getOrderById, updateOrderStatus, getProductById, toast, stockActions]);
 
   const handleCreateOrder = () => {
     if (cart.length === 0) {
@@ -181,7 +188,7 @@ export default function PosPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder]);
+  }, [cart, customerName, total, handleCreateOrder, toast]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -321,9 +328,7 @@ export default function PosPage() {
     
     setPaymentModalOpen(false);
     
-    setLastSale({ ...newSale, change }, () => {
-        handlePrint();
-    });
+    setLastSale({ ...newSale, change });
   };
 
 
