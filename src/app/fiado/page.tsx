@@ -124,23 +124,25 @@ export default function FiadoPage() {
                       <TableCell className="text-right font-bold text-destructive">
                         {formatBRL(account.balance)}
                       </TableCell>
-                      <TableCell className="text-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setViewingAccount(account)}
-                        >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Extrato
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => setPayingAccount(account)}
-                          disabled={!cashRegisterState.isOpen}
-                        >
-                          <DollarSign className="mr-2 h-4 w-4" />
-                          Receber
-                        </Button>
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-2">
+                            <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setViewingAccount(account)}
+                            >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Extrato
+                            </Button>
+                            <Button
+                            size="sm"
+                            onClick={() => setPayingAccount(account)}
+                            disabled={!cashRegisterState.isOpen}
+                            >
+                            <DollarSign className="mr-2 h-4 w-4" />
+                            Receber
+                            </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
