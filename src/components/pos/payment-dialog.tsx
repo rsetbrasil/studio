@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
@@ -72,7 +73,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     if (isOpen) {
       const initialTotal = subtotal + tax;
       setPaymentAmounts({ 'Dinheiro': initialTotal });
-      setPaymentAmountStrings({ 'Dinheiro': initialTotal.toFixed(2).replace('.', ',') });
+      setPaymentAmountStrings({ 'Dinheiro': formatBRL(initialTotal) });
       setFocusedIndex(0); 
     } else {
       setPaymentAmounts({});
@@ -98,6 +99,10 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     }
   }, [focusedIndex, isOpen]);
 
+  const updatePaymentAmount = (method: string, amount: number) => {
+    setPaymentAmounts(prev => ({...prev, [method]: amount }));
+    setPaymentAmountStrings(prev => ({...prev, [method]: amount.toFixed(2).replace('.',',')}));
+  }
 
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
@@ -110,7 +115,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             }
         } else {
             const paidSoFar = Object.values(newAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
-            const currentTotal = subtotal + tax + cardFee;
+            const currentTotal = subtotal + tax; // Use initial total, cardFee will be calculated
             const remaining = currentTotal - paidSoFar;
             newAmounts[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
         }
