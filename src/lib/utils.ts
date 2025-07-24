@@ -7,6 +7,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatBRL(value: number) {
+  if (value === null || value === undefined) {
+    return (0).toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  }
   return value.toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
