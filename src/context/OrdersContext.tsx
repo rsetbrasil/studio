@@ -3,6 +3,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 import { useProducts } from './ProductsContext';
+import { useToast } from '@/hooks/use-toast';
 
 type OrderItem = {
   id: number;
@@ -37,6 +38,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderCounter, setOrderCounter] = useState(1);
   const { decreaseStock, increaseStock, getProductById: getProductStockById } = useProducts();
+  const { toast } = useToast();
 
   const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>) => {
       const newId = `PED${String(orderCounter).padStart(3, '0')}`;
@@ -73,7 +75,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         increaseStock(orderToUpdate.items);
       }
       
-      // Decrease stock from inventory (only when creating an order, not when just changing status from Cancelled to Pending)
       if (oldStatus === "Cancelado" && newStatus === "Pendente") {
         const hasEnoughStock = orderToUpdate.items.every(item => {
           const product = getProductStockById(item.id);
@@ -83,8 +84,11 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         if (hasEnoughStock) {
           decreaseStock(orderToUpdate.items);
         } else {
-          console.error("Not enough stock to change order status back to Pending.");
-          // Maybe show a toast message to the user
+          toast({
+            title: "Estoque insuficiente",
+            description: "Não há estoque suficiente para reativar o pedido.",
+            variant: "destructive"
+          })
           return currentOrders;
         }
       }

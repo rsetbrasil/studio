@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -17,11 +19,43 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSales } from "@/context/SalesContext";
+import { useSales, type Sale } from "@/context/SalesContext";
 import { formatBRL } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { XCircle } from "lucide-react";
+import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SalesPage() {
-  const { sales } = useSales();
+  const { sales, cancelSale } = useSales();
+  const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
+  const { toast } = useToast();
+
+  const handleCancelClick = (sale: Sale) => {
+    setSaleToCancel(sale);
+  };
+
+  const handleConfirmCancel = () => {
+    if (saleToCancel) {
+      cancelSale(saleToCancel.id);
+      toast({
+        title: "Venda Cancelada!",
+        description: `A venda ${saleToCancel.id} foi cancelada e os itens retornaram ao estoque.`,
+      });
+      setSaleToCancel(null);
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "Finalizada":
+        return "default";
+      case "Cancelada":
+        return "destructive";
+      default:
+        return "secondary";
+    }
+  };
 
   return (
     <AppShell>
@@ -30,7 +64,7 @@ export default function SalesPage() {
           <CardHeader>
             <CardTitle>Vendas Finalizadas</CardTitle>
             <CardDescription>
-              Consulte o histórico de todas as vendas finalizadas.
+              Consulte e gerencie o histórico de todas as vendas.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -43,6 +77,7 @@ export default function SalesPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="w-[120px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -52,18 +87,29 @@ export default function SalesPage() {
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
                       <TableCell>{sale.items.length} item(s)</TableCell>
-                      <TableCell>{sale.date}</TableCell>
+                      <TableCell>{new Date(sale.date).toLocaleString('pt-BR')}</TableCell>
                       <TableCell>
-                        <Badge variant="default">{sale.status}</Badge>
+                        <Badge variant={getStatusVariant(sale.status) as any}>{sale.status}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {formatBRL(sale.amount)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={sale.status === 'Cancelada'}
+                          onClick={() => handleCancelClick(sale)}
+                        >
+                          <XCircle className="mr-2 h-4 w-4" />
+                          Cancelar
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhuma venda registrada.
                     </TableCell>
                   </TableRow>
@@ -73,6 +119,12 @@ export default function SalesPage() {
           </CardContent>
         </Card>
       </div>
+      <CancelSaleDialog
+        isOpen={!!saleToCancel}
+        onClose={() => setSaleToCancel(null)}
+        onConfirm={handleConfirmCancel}
+        sale={saleToCancel}
+      />
     </AppShell>
   );
 }
