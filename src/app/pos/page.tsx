@@ -1,6 +1,5 @@
 
-
-"use client";
+'use client';
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
@@ -37,6 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import { useFiado } from "@/context/FiadoContext";
 import { ConfirmFiadoDialog } from "@/components/pos/confirm-fiado-dialog";
+
+export const dynamic = 'force-dynamic';
 
 type CartItem = Product & {
   cartId: string;
@@ -135,7 +136,7 @@ export default function PosPage() {
     const aggregatedItems = itemsForStockCheck.reduce((acc, item) => {
         acc[item.id] = (acc[item.id] || 0) + item.quantity;
         return acc;
-    }, {} as Record<number, number>);
+    }, {} as Record<string, number>);
 
     for (const [productId, quantity] of Object.entries(aggregatedItems)) {
         const productInStock = getProductById(Number(productId));
@@ -344,7 +345,7 @@ export default function PosPage() {
     }, {} as Record<number, number>);
 
     for (const [productId, quantity] of Object.entries(aggregatedItemsForStock)) {
-        const productInStock = getProductById(Number(productId));
+        const productInStock = getProductById(String(productId));
         if (!productInStock || quantity > productInStock.stock) {
             toast({
                 title: "Venda não realizada",
@@ -356,7 +357,7 @@ export default function PosPage() {
     }
 
     const itemsToDecrease = Object.entries(aggregatedItemsForStock).map(([id, quantity]) => ({
-        id: Number(id),
+        id: String(id),
         quantity
     }));
     decreaseStock(itemsToDecrease);
