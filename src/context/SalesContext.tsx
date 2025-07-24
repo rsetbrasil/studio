@@ -50,8 +50,8 @@ type SalesContextType = {
   getSaleById: (saleId: string) => Sale | undefined;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
   resetSales: () => Promise<void>;
-  totalSalesValue: number;
-  salesLastMonthPercentage: number;
+  totalSalesToday: number;
+  salesYesterdayPercentage: number;
   isMounted: boolean;
 };
 
@@ -186,28 +186,40 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error resetting sales:", error);
     }
   };
+  
+  const { totalSalesToday, salesYesterdayPercentage } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-  const totalSalesValue = useMemo(() => sales.reduce((acc, sale) => sale.status === 'Finalizada' ? acc + sale.amount : acc, 0), [sales]);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
 
-  const salesLastMonthPercentage = useMemo(() => {
-    const now = new Date();
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    
-    const lastMonthSales = sales.filter(s => new Date(s.date) >= lastMonth && new Date(s.date) <= lastMonthEnd).length;
-    const twoMonthsAgoSales = sales.filter(s => new Date(s.date) >= twoMonthsAgo && new Date(s.date) < lastMonth).length;
-    
-    if (twoMonthsAgoSales === 0) {
-      return lastMonthSales > 0 ? 100 : 0;
+    const todaySales = sales.filter(s => new Date(s.date) >= today && s.status === 'Finalizada');
+    const yesterdaySales = sales.filter(s => {
+        const saleDate = new Date(s.date);
+        return saleDate >= yesterday && saleDate < today && s.status === 'Finalizada';
+    });
+
+    const totalToday = todaySales.reduce((acc, s) => acc + s.amount, 0);
+    const totalYesterday = yesterdaySales.reduce((acc, s) => acc + s.amount, 0);
+
+    let percentage = 0;
+    if (totalYesterday > 0) {
+        percentage = ((totalToday - totalYesterday) / totalYesterday) * 100;
+    } else if (totalToday > 0) {
+        percentage = 100;
     }
     
-    return ((lastMonthSales - twoMonthsAgoSales) / twoMonthsAgoSales) * 100;
+    return {
+      totalSalesToday: totalToday,
+      salesYesterdayPercentage: percentage,
+    };
   }, [sales]);
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale: addSale as any, updateSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus, getSaleById }}>
+    <SalesContext.Provider value={{ sales, addSale: addSale as any, updateSale, cancelSale, resetSales, totalSalesToday, salesYesterdayPercentage, isMounted, updateSaleStatus, getSaleById }}>
       {children}
     </SalesContext.Provider>
   );

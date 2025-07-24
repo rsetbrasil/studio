@@ -26,8 +26,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function DashboardPage() {
-  const { sales, totalSalesValue, salesLastMonthPercentage, isMounted: salesMounted } = useSales();
-  const { orders, ordersLastMonthPercentage, isMounted: ordersMounted } = useOrders();
+  const { sales, totalSalesToday, salesYesterdayPercentage, isMounted: salesMounted } = useSales();
+  const { orders, totalOrdersToday, ordersYesterdayPercentage, isMounted: ordersMounted } = useOrders();
   const { products, isMounted: productsMounted } = useProducts();
 
   const isMounted = salesMounted && ordersMounted && productsMounted;
@@ -41,16 +41,16 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Receita Total
+                Receita (Hoje)
               </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {isMounted ? (
                 <>
-                  <div className="text-2xl font-bold">{formatBRL(totalSalesValue)}</div>
+                  <div className="text-2xl font-bold">{formatBRL(totalSalesToday)}</div>
                   <p className="text-xs text-muted-foreground">
-                    {salesLastMonthPercentage >= 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
+                    {salesYesterdayPercentage >= 0 ? `+${salesYesterdayPercentage.toFixed(1)}%` : `${salesYesterdayPercentage.toFixed(1)}%`} em relação a ontem
                   </p>
                 </>
               ) : (
@@ -64,16 +64,16 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Total de Pedidos
+                Pedidos (Hoje)
               </CardTitle>
               <ListOrdered className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
                {isMounted ? (
                 <>
-                  <div className="text-2xl font-bold">+{orders.length}</div>
+                  <div className="text-2xl font-bold">+{totalOrdersToday}</div>
                   <p className="text-xs text-muted-foreground">
-                    {ordersLastMonthPercentage >= 0 ? `+${ordersLastMonthPercentage.toFixed(1)}%` : `${ordersLastMonthPercentage.toFixed(1)}%`} do mês passado
+                     {ordersYesterdayPercentage >= 0 ? `+${ordersYesterdayPercentage.toFixed(1)}%` : `${ordersYesterdayPercentage.toFixed(1)}%`} em relação a ontem
                   </p>
                 </>
                ) : (
@@ -86,15 +86,15 @@ export default function DashboardPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
+              <CardTitle className="text-sm font-medium">Vendas (Hoje)</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               {isMounted ? (
                 <>
-                  <div className="text-2xl font-bold">+{sales.length}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {salesLastMonthPercentage >= 0 ? `+${salesLastMonthPercentage.toFixed(1)}%` : `${salesLastMonthPercentage.toFixed(1)}%`} do mês passado
+                  <div className="text-2xl font-bold">+{sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).length}</div>
+                   <p className="text-xs text-muted-foreground">
+                    {salesYesterdayPercentage >= 0 ? `+${salesYesterdayPercentage.toFixed(1)}%` : `${salesYesterdayPercentage.toFixed(1)}%`} em relação a ontem
                   </p>
                 </>
                ) : (
@@ -132,7 +132,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
           <Card className="xl:col-span-2">
             <CardHeader>
-              <CardTitle>Visão Geral de Vendas</CardTitle>
+              <CardTitle>Visão Geral de Vendas (Hoje)</CardTitle>
             </CardHeader>
             <CardContent className="pl-2">
               {isMounted ? <OverviewChart /> : <Skeleton className="w-full h-[350px]" />}

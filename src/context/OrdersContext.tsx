@@ -50,7 +50,8 @@ type OrdersContextType = {
   ) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
   resetOrders: () => Promise<void>;
-  ordersLastMonthPercentage: number;
+  totalOrdersToday: number;
+  ordersYesterdayPercentage: number;
   isMounted: boolean;
 };
 
@@ -219,24 +220,36 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const ordersLastMonthPercentage = useMemo(() => {
-    const now = new Date();
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-    const twoMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    
-    const lastMonthOrders = orders.filter(o => new Date(o.date) >= lastMonth && new Date(o.date) <= lastMonthEnd).length;
-    const twoMonthsAgoOrders = orders.filter(o => new Date(o.date) >= twoMonthsAgo && new Date(o.date) < lastMonth).length;
-    
-    if (twoMonthsAgoOrders === 0) {
-      return lastMonthOrders > 0 ? 100 : 0;
+  const { totalOrdersToday, ordersYesterdayPercentage } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    const todayOrdersCount = orders.filter(o => new Date(o.date) >= today).length;
+    const yesterdayOrdersCount = orders.filter(o => {
+        const orderDate = new Date(o.date);
+        return orderDate >= yesterday && orderDate < today;
+    }).length;
+
+    let percentage = 0;
+    if (yesterdayOrdersCount > 0) {
+        percentage = ((todayOrdersCount - yesterdayOrdersCount) / yesterdayOrdersCount) * 100;
+    } else if (todayOrdersCount > 0) {
+        percentage = 100;
     }
     
-    return ((lastMonthOrders - twoMonthsAgoOrders) / twoMonthsAgoOrders) * 100;
+    return {
+      totalOrdersToday: todayOrdersCount,
+      ordersYesterdayPercentage: percentage,
+    };
   }, [orders]);
 
+
   return (
-    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus: updateOrderStatus as any, updateOrder, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
+    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus: updateOrderStatus as any, updateOrder, getOrderById, resetOrders, totalOrdersToday, ordersYesterdayPercentage, isMounted }}>
       {children}
     </OrdersContext.Provider>
   );

@@ -10,22 +10,33 @@ export function OverviewChart() {
   const { sales } = useSales();
 
   const data = useMemo(() => {
-    const monthlySales: { [key: string]: number } = {
-      "Jan": 0, "Fev": 0, "Mar": 0, "Abr": 0, "Mai": 0, "Jun": 0, 
-      "Jul": 0, "Ago": 0, "Set": 0, "Out": 0, "Nov": 0, "Dez": 0
-    };
+    // Initialize hourly sales for a 24-hour period
+    const hourlySales: { [key: string]: number } = {};
+    for (let i = 0; i < 24; i++) {
+        hourlySales[`${String(i).padStart(2, '0')}:00`] = 0;
+    }
 
-    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    sales.forEach(sale => {
-      const monthIndex = new Date(sale.date).getUTCMonth();
-      const monthName = monthNames[monthIndex];
-      monthlySales[monthName] += sale.amount;
+    // Filter sales for the current day
+    const todaySales = sales.filter(sale => {
+      const saleDate = new Date(sale.date);
+      return saleDate >= today;
     });
 
-    return Object.keys(monthlySales).map(name => ({
+    // Aggregate sales by hour
+    todaySales.forEach(sale => {
+      const saleHour = new Date(sale.date).getHours();
+      const hourKey = `${String(saleHour).padStart(2, '0')}:00`;
+      if (hourKey in hourlySales) {
+        hourlySales[hourKey] += sale.amount;
+      }
+    });
+
+    return Object.keys(hourlySales).map(name => ({
       name,
-      total: monthlySales[name]
+      total: hourlySales[name]
     }));
 
   }, [sales]);
