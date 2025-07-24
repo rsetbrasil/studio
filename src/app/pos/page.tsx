@@ -173,6 +173,7 @@ export default function PosPage() {
   }, [cart.length, toast]);
 
   const handlePrint = useReactToPrint({
+    content: () => receiptRef.current,
     onAfterPrint: () => {
       setCart([]);
       setLastSale(null);
@@ -181,10 +182,10 @@ export default function PosPage() {
   
   useEffect(() => {
     if(lastSale && receiptRef.current) {
-        handlePrint(null, () => receiptRef.current);
+        handlePrint();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastSale, handlePrint]);
+  }, [lastSale]);
 
   const handleProductSelect = (product: Product) => {
     setProductForQuantity(product);
@@ -350,7 +351,7 @@ export default function PosPage() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             {lastSale && (
-                <Button size="sm" onClick={() => handlePrint(null, () => receiptRef.current)} variant="outline">
+                <Button size="sm" onClick={() => handlePrint()} variant="outline">
                     <Printer className="mr-2 h-4 w-4" /> Imprimir Último Comprovante
                 </Button>
             )}
