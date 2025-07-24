@@ -157,12 +157,6 @@ export default function PosPage() {
 
     setCart([]);
   };
-  
-  useEffect(() => {
-    if (lastSale && receiptRef.current) {
-      handlePrint();
-    }
-  }, [lastSale, handlePrint]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -187,8 +181,7 @@ export default function PosPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart, customerName, total]);
+  }, [cart, customerName, total, handleCreateOrder]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -327,8 +320,10 @@ export default function PosPage() {
     });
     
     setPaymentModalOpen(false);
-    // This will trigger the useEffect to print
-    setLastSale({ ...newSale, change }); 
+    
+    setLastSale({ ...newSale, change }, () => {
+        handlePrint();
+    });
   };
 
 
