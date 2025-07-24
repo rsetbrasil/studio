@@ -35,139 +35,142 @@ type PaymentDialogProps = {
 };
 
 export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }: PaymentDialogProps) {
-  const [paymentAmountStrings, setPaymentAmountStrings] = useState<Record<string, string>>({});
-  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
-  const [focusedIndex, setFocusedIndex] = useState(0);
-  
-  const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
-  const paymentButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+    const [selectedMethods, setSelectedMethods] = useState<Set<string>>(new Set(['Dinheiro']));
+    const [paymentAmountStrings, setPaymentAmountStrings] = useState<Record<string, string>>({});
+    const [focusedIndex, setFocusedIndex] = useState(0);
 
-  const { toast } = useToast();
+    const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+    const paymentButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
-  const cardFee = useMemo(() => {
-    let fee = 0;
-    if (paymentAmounts['Crédito'] > 0) {
-        fee = Math.max(fee, paymentAmounts['Crédito'] * CREDIT_FEE_RATE);
-    }
-    if (paymentAmounts['Débito'] > 0) {
-        fee = Math.max(fee, paymentAmounts['Débito'] * DEBIT_FEE_RATE);
-    }
-    return fee;
-  }, [paymentAmounts]);
-  
-  const total = useMemo(() => subtotal + tax + cardFee, [subtotal, tax, cardFee]);
+    const { toast } = useToast();
 
-  const totalPaid = useMemo(() => {
-    return Object.values(paymentAmounts).reduce((acc, amount) => acc + (amount || 0), 0);
-  }, [paymentAmounts]);
+    // Recalculate everything when amounts or selection changes
+    const { total, cardFee, totalPaid, balance, change, numericAmounts } = useMemo(() => {
+        const amounts: Record<string, number> = {};
+        for (const method of selectedMethods) {
+            amounts[method] = parseCurrencyBRL(paymentAmountStrings[method] || '0');
+        }
 
-  const balance = total - totalPaid;
-  const change = balance < -0.001 ? Math.abs(balance) : 0;
-  
-  useEffect(() => {
-    if (isOpen) {
-        // Reset state on open
-        setPaymentAmounts({});
-        setPaymentAmountStrings({});
-        setFocusedIndex(0);
+        let calculatedCardFee = 0;
+        if (amounts['Crédito'] > 0) {
+            calculatedCardFee = Math.max(calculatedCardFee, amounts['Crédito'] * CREDIT_FEE_RATE);
+        }
+        if (amounts['Débito'] > 0) {
+            calculatedCardFee = Math.max(calculatedCardFee, amounts['Débito'] * DEBIT_FEE_RATE);
+        }
 
-        const initialTotal = subtotal + tax;
-        // Pre-select "Dinheiro" with the full amount
-        setPaymentAmounts({ 'Dinheiro': initialTotal });
-        setPaymentAmountStrings({ 'Dinheiro': formatCurrencyInput(String(initialTotal * 100)) });
-
-        setTimeout(() => paymentButtonRefs.current[0]?.focus(), 100);
-    }
-  }, [isOpen, subtotal, tax]);
+        const calculatedTotal = subtotal + tax + calculatedCardFee;
+        const calculatedTotalPaid = Object.values(amounts).reduce((acc, amount) => acc + (amount || 0), 0);
+        const calculatedBalance = calculatedTotal - calculatedTotalPaid;
+        const calculatedChange = calculatedBalance < -0.001 ? Math.abs(calculatedBalance) : 0;
+        
+        return {
+            total: calculatedTotal,
+            cardFee: calculatedCardFee,
+            totalPaid: calculatedTotalPaid,
+            balance: calculatedBalance,
+            change: calculatedChange,
+            numericAmounts: amounts
+        };
+    }, [paymentAmountStrings, selectedMethods, subtotal, tax]);
 
 
-  const handleSelectPaymentMethod = (method: string) => {
-    setPaymentAmounts(prevAmounts => {
-        const newAmountsNum: Record<string, number> = { ...prevAmounts };
-        const isSelected = newAmountsNum[method] !== undefined && newAmountsNum[method] > 0;
+    // Effect to run only when the dialog opens
+    useEffect(() => {
+        if (isOpen) {
+            const initialTotal = subtotal + tax;
+            setSelectedMethods(new Set(['Dinheiro']));
+            setPaymentAmountStrings({ 'Dinheiro': formatCurrencyInput(String(initialTotal * 100)) });
+            setFocusedIndex(0);
+            setTimeout(() => paymentButtonRefs.current[0]?.focus(), 100);
+        }
+    }, [isOpen, subtotal, tax]);
 
-        if (isSelected) {
-            // Deselect only if it's not the only one selected or if total is covered
-             if (Object.keys(newAmountsNum).length > 1) {
-                delete newAmountsNum[method];
+
+    const handleSelectPaymentMethod = (method: string) => {
+        const newSelectedMethods = new Set(selectedMethods);
+        const isCurrentlySelected = newSelectedMethods.has(method);
+
+        if (isCurrentlySelected) {
+            // Deselect if it's not the only one selected
+             if (newSelectedMethods.size > 1) {
+                newSelectedMethods.delete(method);
              }
         } else {
-            // Select and fill with remaining balance
-            const paidSoFar = Object.values(newAmountsNum).reduce((sum, amt) => sum + (amt || 0), 0);
-            const remaining = total - paidSoFar;
-             if (remaining > 0.001) {
-               newAmountsNum[method] = remaining;
-             } else {
-                // If paidSoFar already covers total, just add the new method with 0
-                newAmountsNum[method] = 0;
-             }
+            // Select
+            newSelectedMethods.add(method);
         }
         
-        // Recalculate string values from numeric values
-        const newAmountsStr: Record<string, string> = {};
-        Object.keys(newAmountsNum).forEach(key => {
-          newAmountsStr[key] = formatCurrencyInput(String(newAmountsNum[key] * 100));
+        setSelectedMethods(newSelectedMethods);
+        
+        // Recalculate and distribute balance
+        const currentPaid = Object.entries(paymentAmountStrings)
+            .filter(([key]) => newSelectedMethods.has(key) && key !== method)
+            .reduce((sum, [, value]) => sum + parseCurrencyBRL(value), 0);
+
+        const remainingBalance = total - currentPaid;
+        
+        const newAmountStrings = {...paymentAmountStrings};
+        
+        if (!isCurrentlySelected) { // If we just selected it
+            newAmountStrings[method] = formatCurrencyInput(String(remainingBalance * 100));
+             // Focus the input of the newly selected method
+            setTimeout(() => {
+                const inputElement = paymentInputRefs.current[method];
+                if (inputElement) {
+                    inputElement.focus();
+                    inputElement.select();
+                }
+            }, 100);
+        } else { // If we just deselected it
+            delete newAmountStrings[method];
+        }
+
+        setPaymentAmountStrings(newAmountStrings);
+    };
+
+    const handlePaymentAmountChange = (method: string, value: string) => {
+        const formattedValue = formatCurrencyInput(value);
+        setPaymentAmountStrings(prev => ({ ...prev, [method]: formattedValue }));
+    };
+
+    const handleFinish = () => {
+        if (balance > 0.001) {
+        toast({
+            title: "Pagamento Incompleto",
+            description: `Ainda falta pagar ${formatBRL(balance)}.`,
+            variant: "destructive",
         });
-        setPaymentAmountStrings(newAmountsStr);
+        return;
+        }
+        const finalAmounts = Object.fromEntries(Object.entries(numericAmounts).filter(([, value]) => value > 0));
 
-        // Focus the input of the selected method
-        setTimeout(() => {
-            const inputElement = paymentInputRefs.current[method];
-            if (inputElement) {
-                inputElement.focus();
-                inputElement.select();
-            }
-        }, 100);
-
-        return newAmountsNum;
-    });
-  };
-
-
-  const handlePaymentAmountChange = (method: string, value: string) => {
-    const formattedValue = formatCurrencyInput(value);
-    setPaymentAmountStrings(prev => ({ ...prev, [method]: formattedValue }));
-
-    const numericValue = parseCurrencyBRL(formattedValue);
-    setPaymentAmounts(prev => ({ ...prev, [method]: numericValue }));
-  };
-
-  const handleFinish = () => {
-    if (balance > 0.001) {
-      toast({
-        title: "Pagamento Incompleto",
-        description: `Ainda falta pagar ${formatBRL(balance)}.`,
-        variant: "destructive",
-      });
-      return;
-    }
-    const finalAmounts = Object.fromEntries(Object.entries(paymentAmounts).filter(([, value]) => value > 0));
-
-    onConfirmSale({ paymentAmounts: finalAmounts, change, cardFee });
-  };
+        onConfirmSale({ paymentAmounts: finalAmounts, change, cardFee });
+    };
   
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    const isInputFocused = document.activeElement?.tagName === 'INPUT';
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        const isInputFocused = document.activeElement?.tagName === 'INPUT';
 
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const nextIndex = (focusedIndex + 1) % paymentOptions.length;
-      setFocusedIndex(nextIndex);
-      paymentButtonRefs.current[nextIndex]?.focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prevIndex = (focusedIndex - 1 + paymentOptions.length) % paymentOptions.length;
-      setFocusedIndex(prevIndex);
-       paymentButtonRefs.current[prevIndex]?.focus();
-    } else if ((e.key === 'Enter' || e.key === ' ') && !isInputFocused) {
-       e.preventDefault();
-       const currentMethod = paymentOptions[focusedIndex].value;
-       handleSelectPaymentMethod(currentMethod);
-    } else if (e.key === 'Enter' && isInputFocused) {
-        handleFinish();
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = (focusedIndex + 1) % paymentOptions.length;
+            setFocusedIndex(nextIndex);
+            paymentButtonRefs.current[nextIndex]?.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = (focusedIndex - 1 + paymentOptions.length) % paymentOptions.length;
+            setFocusedIndex(prevIndex);
+            paymentButtonRefs.current[prevIndex]?.focus();
+        } else if ((e.key === 'Enter' || e.key === ' ') && !isInputFocused) {
+            e.preventDefault();
+            const currentMethod = paymentOptions[focusedIndex].value;
+            handleSelectPaymentMethod(currentMethod);
+        } else if (e.key === 'Enter' && isInputFocused) {
+            e.preventDefault();
+            handleFinish();
+        }
     }
-  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -185,7 +188,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
         </button>
         <div className="flex flex-col px-6 pb-6 gap-2">
             {paymentOptions.map(({ value, label, icon: Icon }, index) => {
-                const isSelected = paymentAmounts[value] !== undefined;
+                const isSelected = selectedMethods.has(value);
                 return (
                     <button 
                         type="button"
