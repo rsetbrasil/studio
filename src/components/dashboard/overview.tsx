@@ -11,11 +11,11 @@ export function OverviewChart() {
 
   const data = useMemo(() => {
     const monthlySales: { [key: string]: number } = {
-      "Jan": 0, "Feb": 0, "Mar": 0, "Apr": 0, "May": 0, "Jun": 0, 
-      "Jul": 0, "Aug": 0, "Sep": 0, "Oct": 0, "Nov": 0, "Dec": 0
+      "Jan": 0, "Fev": 0, "Mar": 0, "Abr": 0, "Mai": 0, "Jun": 0, 
+      "Jul": 0, "Ago": 0, "Set": 0, "Out": 0, "Nov": 0, "Dez": 0
     };
 
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     sales.forEach(sale => {
       const monthIndex = new Date(sale.date).getUTCMonth();
@@ -48,7 +48,7 @@ export function OverviewChart() {
           axisLine={false}
           tickFormatter={(value) => formatBRL(value as number)}
         />
-        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill="var(--color-1)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   )
