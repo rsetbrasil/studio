@@ -67,50 +67,63 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   
   useEffect(() => {
     if (isOpen) {
-      const initialTotal = subtotal + tax;
-      setPaymentAmounts({ 'Dinheiro': initialTotal });
-      setPaymentAmountStrings({ 'Dinheiro': formatBRL(initialTotal).replace('R$', '').trim() });
-      setTimeout(() => paymentButtonRefs.current[0]?.focus(), 100);
-    } else {
-      setPaymentAmounts({});
-      setPaymentAmountStrings({});
-      setFocusedIndex(0);
+        // Reset state on open
+        setPaymentAmounts({});
+        setPaymentAmountStrings({});
+        setFocusedIndex(0);
+
+        const initialTotal = subtotal + tax;
+        // Pre-select "Dinheiro" with the full amount
+        setPaymentAmounts({ 'Dinheiro': initialTotal });
+        setPaymentAmountStrings({ 'Dinheiro': formatCurrencyInput(String(initialTotal * 100)) });
+
+        setTimeout(() => paymentButtonRefs.current[0]?.focus(), 100);
     }
   }, [isOpen, subtotal, tax]);
+
 
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
         const newAmountsNum: Record<string, number> = { ...prevAmounts };
-        const isSelected = newAmountsNum[method] !== undefined;
+        const isSelected = newAmountsNum[method] !== undefined && newAmountsNum[method] > 0;
 
         if (isSelected) {
-            // Deselect if it's not the only one selected
-            if (Object.keys(newAmountsNum).length > 1) {
-              delete newAmountsNum[method];
-            }
+            // Deselect only if it's not the only one selected or if total is covered
+             if (Object.keys(newAmountsNum).length > 1) {
+                delete newAmountsNum[method];
+             }
         } else {
             // Select and fill with remaining balance
             const paidSoFar = Object.values(newAmountsNum).reduce((sum, amt) => sum + (amt || 0), 0);
             const remaining = total - paidSoFar;
-            newAmountsNum[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
+             if (remaining > 0.001) {
+               newAmountsNum[method] = remaining;
+             } else {
+                // If paidSoFar already covers total, just add the new method with 0
+                newAmountsNum[method] = 0;
+             }
         }
-
+        
+        // Recalculate string values from numeric values
         const newAmountsStr: Record<string, string> = {};
         Object.keys(newAmountsNum).forEach(key => {
           newAmountsStr[key] = formatCurrencyInput(String(newAmountsNum[key] * 100));
         });
         setPaymentAmountStrings(newAmountsStr);
+
+        // Focus the input of the selected method
+        setTimeout(() => {
+            const inputElement = paymentInputRefs.current[method];
+            if (inputElement) {
+                inputElement.focus();
+                inputElement.select();
+            }
+        }, 100);
+
         return newAmountsNum;
     });
-
-    setTimeout(() => {
-        const inputElement = paymentInputRefs.current[method];
-        if (inputElement) {
-            inputElement.focus();
-            inputElement.select();
-        }
-    }, 100);
   };
+
 
   const handlePaymentAmountChange = (method: string, value: string) => {
     const formattedValue = formatCurrencyInput(value);
@@ -147,14 +160,11 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       const prevIndex = (focusedIndex - 1 + paymentOptions.length) % paymentOptions.length;
       setFocusedIndex(prevIndex);
        paymentButtonRefs.current[prevIndex]?.focus();
-    } else if (e.key === 'Enter' || e.key === ' ') {
-        if (!isInputFocused) {
-           e.preventDefault();
-           const currentMethod = paymentOptions[focusedIndex].value;
-           handleSelectPaymentMethod(currentMethod);
-        }
-    }
-    if (e.key === 'Enter' && isInputFocused) {
+    } else if ((e.key === 'Enter' || e.key === ' ') && !isInputFocused) {
+       e.preventDefault();
+       const currentMethod = paymentOptions[focusedIndex].value;
+       handleSelectPaymentMethod(currentMethod);
+    } else if (e.key === 'Enter' && isInputFocused) {
         handleFinish();
     }
   }
