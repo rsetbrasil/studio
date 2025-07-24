@@ -37,6 +37,15 @@ type OrderForSale = {
 type SalesContextType = {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale;
+  updateSale: (
+    saleId: string, 
+    updatedData: Partial<Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>>,
+    originalItems: SaleItem[],
+    stockActions: {
+      increaseStock: (items: any[]) => Promise<void>;
+      decreaseStock: (items: any[]) => Promise<void>;
+    }
+    ) => Promise<void>;
   updateSaleStatus: (saleId: string, status: SaleStatus) => void;
   getSaleById: (saleId: string) => Sale | undefined;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
@@ -100,6 +109,35 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
       
       return sale;
   };
+
+  const updateSale = async (
+    saleId: string, 
+    updatedData: Partial<Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>>,
+    originalItems: SaleItem[],
+    stockActions: {
+      increaseStock: (items: any[]) => Promise<void>;
+      decreaseStock: (items: any[]) => Promise<void>;
+    }
+  ) => {
+      try {
+        // Revert stock for original items
+        await stockActions.increaseStock(originalItems.map(item => ({ id: String(item.id), quantity: item.quantity })));
+        
+        // Decrease stock for new/updated items
+        if(updatedData.items) {
+          await stockActions.decreaseStock(updatedData.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
+        }
+
+        const saleRef = doc(db, 'sales', saleId);
+        await updateDoc(saleRef, updatedData);
+
+        setSales(prevSales => prevSales.map(s => s.id === saleId ? { ...s, ...updatedData } : s));
+
+      } catch (error) {
+          console.error("Error updating sale: ", error);
+          // Optional: Add logic to revert stock changes on failure
+      }
+  }
   
   const updateSaleStatus = async (saleId: string, status: SaleStatus) => {
      try {
@@ -169,7 +207,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale: addSale as any, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus, getSaleById }}>
+    <SalesContext.Provider value={{ sales, addSale: addSale as any, updateSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus, getSaleById }}>
       {children}
     </SalesContext.Provider>
   );

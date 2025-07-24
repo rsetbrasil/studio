@@ -23,11 +23,12 @@ import { useSales, type Sale } from "@/context/SalesContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { XCircle, Printer } from "lucide-react";
+import { XCircle, Printer, Pencil } from "lucide-react";
 import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Receipt } from "@/components/pos/receipt";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function SalesPage() {
   const { sales, cancelSale, isMounted, getSaleById } = useSales();
@@ -37,8 +38,9 @@ export default function SalesPage() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  const router = useRouter();
   
-  const canCancelSale = user?.role === 'Administrador' || user?.role === 'Gerente';
+  const canManageSale = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const handleCancelClick = (sale: Sale) => {
     setSaleToCancel(sale);
@@ -61,6 +63,10 @@ export default function SalesPage() {
       // Assuming 0 change and total paid equals amount for reprint of already finalized/fiado sales
       setSaleToPrint({ ...sale, change: 0, totalPaid: sale.amount }); 
     }
+  };
+
+  const handleEditRequest = (saleId: string) => {
+    router.push(`/pdv?saleId=${saleId}`);
   };
   
   const handleActualPrint = () => {
@@ -133,10 +139,20 @@ export default function SalesPage() {
                           <Printer className="mr-2 h-4 w-4" />
                           Imprimir
                         </Button>
+                        {canManageSale && sale.status === 'Finalizada' && (
+                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditRequest(sale.id)}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Alterar
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={sale.status === 'Cancelada' || sale.status === 'Fiado' || !canCancelSale}
+                          disabled={sale.status === 'Cancelada' || sale.status === 'Fiado' || !canManageSale}
                           onClick={() => handleCancelClick(sale)}
                         >
                           <XCircle className="mr-2 h-4 w-4" />
