@@ -5,6 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookUser,
   DollarSign,
   FileText,
   Home,
@@ -52,6 +53,7 @@ const navItems = [
   { href: "/products", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
   { href: "/suppliers", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
   { href: "/financial", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
+  { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente"] },
   { href: "/users", icon: Users, label: "Usuários", roles: ["Administrador"] },
   { href: "/account", icon: Settings, label: "Configurações", roles: ["Administrador"] },
 ];
