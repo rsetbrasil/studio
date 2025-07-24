@@ -60,8 +60,9 @@ export default function CashRegisterPage() {
   const paymentMethodTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     salesForCurrentSession.forEach(sale => {
+      // Handle combined payment methods like "Dinheiro e PIX"
       const methods = sale.paymentMethod.split(' e ');
-      const amountPerMethod = sale.amount / methods.length; // Simplification
+      const amountPerMethod = sale.amount / methods.length; // Simplification: split amount equally
       methods.forEach(method => {
         totals[method] = (totals[method] || 0) + amountPerMethod;
       });
