@@ -45,13 +45,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (email: string, pass: string): boolean => {
     const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    // In a real app, you'd hash and compare passwords. Here we do a simple check.
-    // The default password for seeded users is their role + '123'
-    const defaultPassword = (foundUser?.role.toLowerCase() || "") + "123";
-    const userPassword = foundUser?.password || defaultPassword;
 
-    if (foundUser && pass === userPassword) {
+    if (foundUser && foundUser.password && pass === foundUser.password) {
       setUser(foundUser);
       return true;
     }
