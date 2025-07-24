@@ -170,6 +170,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </BreadcrumbList>
           </Breadcrumb>
           <div className="relative ml-auto flex items-center gap-2 md:grow-0">
+             <span className="hidden sm:inline-flex text-sm font-medium text-muted-foreground">{user?.name}</span>
              <Button
                 variant="ghost"
                 size="sm"
