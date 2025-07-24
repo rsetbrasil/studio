@@ -15,7 +15,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
     const subtotal = sale.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     return (
-      <div ref={ref} className="p-4 bg-white text-black text-sm font-mono w-[300px]">
+      <div ref={ref} className="p-4 bg-white text-black text-sm font-mono w-[300px] print-container">
         <div className="text-center mb-4">
             <PDVRsetLogo className="h-8 w-8 mx-auto text-black" />
             <h2 className="text-lg font-bold">PDVRset</h2>

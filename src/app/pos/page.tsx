@@ -31,7 +31,6 @@ import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { QuantityDialog } from "@/components/pos/quantity-dialog";
 import { ProductSearch } from "@/components/pos/product-search";
-import { useReactToPrint } from "react-to-print";
 import { Receipt } from "@/components/pos/receipt";
 import { Badge } from "@/components/ui/badge";
 
@@ -60,24 +59,34 @@ export default function PosPage() {
 
   const stockActions = { increaseStock, decreaseStock, getProductById };
 
-  const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
-    onAfterPrint: () => {
-      setCart([]);
-      setLastSale(null);
-    },
-  });
-
   const total = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
   }, [cart]);
 
+  const handlePrint = () => {
+    const printContents = receiptRef.current?.innerHTML;
+    if (printContents) {
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      // Re-attach event listeners might be needed depending on the app's complexity,
+      // but for this specific flow, we are navigating or resetting state, so it's okay.
+      setCart([]);
+      setLastSale(null);
+      // We need to reload to re-initialize the React app in the body
+      window.location.reload(); 
+    }
+  };
+
+
   useEffect(() => {
-    if (lastSale && handlePrint) {
+    if (lastSale && receiptRef.current) {
         handlePrint();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastSale]);
+
 
   useEffect(() => {
     searchInputRef.current?.focus();
@@ -188,7 +197,8 @@ export default function PosPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart, customerName, total]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -334,8 +344,8 @@ export default function PosPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-col h-full bg-muted/40">
-        <header className="flex items-center gap-4 p-4 border-b bg-background flex-wrap">
+      <div className="flex flex-col h-full bg-muted/40" id="pos-page">
+        <header className="flex items-center gap-4 p-4 border-b bg-background flex-wrap print:hidden">
           <ProductSearch 
             ref={searchInputRef}
             onProductSelect={handleProductSelect} 
@@ -370,7 +380,7 @@ export default function PosPage() {
           </div>
         </header>
 
-        <main className="flex-1 flex flex-col p-4 gap-4">
+        <main className="flex-1 flex flex-col p-4 gap-4 print:hidden">
           <div className="flex-1 rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden">
             <ScrollArea className="h-full">
                 <Table>
@@ -434,7 +444,7 @@ export default function PosPage() {
           </div>
         </main>
         
-        <footer className="p-4 border-t bg-background">
+        <footer className="p-4 border-t bg-background print:hidden">
             <div className="flex items-center justify-end">
                 <span className="text-2xl font-bold text-primary">Total = {formatBRL(total)}</span>
             </div>
@@ -458,7 +468,7 @@ export default function PosPage() {
             />
         )}
 
-        <div className="hidden">
+        <div className="hidden print:block">
             {lastSale && <Receipt ref={receiptRef} sale={lastSale} />}
         </div>
       </div>
