@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
@@ -434,7 +433,7 @@ export default function ProductsPage() {
             packPrice: Number(String(row.preco_venda_fardo).replace(',','.')) || 0,
             unitsPerPack: Number(row.unidades_por_fardo) || 1,
             stock: Number(row.estoque_fardo) || 0,
-          })).filter(p => p.name.trim() !== "");
+          })).filter(p => p.name.trim() !== "";
 
           await loadProducts(parsedProducts as ProductFormData[]);
         },
@@ -581,4 +580,3 @@ export default function ProductsPage() {
     </>
   );
 }
-
