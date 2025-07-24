@@ -6,7 +6,7 @@ import { User, useUsers } from './UsersContext';
 
 type AuthContextType = {
   user: User | null;
-  login: (email: string, pass: string) => boolean;
+  login: (username: string, pass: string) => boolean;
   logout: () => void;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
@@ -22,9 +22,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check for a logged-in user in localStorage to persist session
-    const loggedInUserEmail = localStorage.getItem('loggedInUser');
-    if (loggedInUserEmail && users.length > 0) {
-      const foundUser = users.find(u => u.email === loggedInUserEmail);
+    const loggedInUserName = localStorage.getItem('loggedInUser');
+    if (loggedInUserName && users.length > 0) {
+      const foundUser = users.find(u => u.name === loggedInUserName);
       if (foundUser) {
         setUser(foundUser);
         setIsAuthenticated(true);
@@ -34,12 +34,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [users]);
 
 
-  const login = (email: string, pass: string): boolean => {
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
+  const login = (username: string, pass: string): boolean => {
+    const foundUser = users.find(u => u.name.toLowerCase() === username.toLowerCase() && u.password === pass);
     if (foundUser) {
       setUser(foundUser);
       setIsAuthenticated(true);
-      localStorage.setItem('loggedInUser', foundUser.email);
+      localStorage.setItem('loggedInUser', foundUser.name);
       return true;
     }
     return false;

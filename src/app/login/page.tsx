@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AppLogo } from '@/components/icons';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useAuth();
   const { companyInfo } = useCompany();
@@ -28,13 +28,13 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(email, password);
+    const success = login(username, password);
     if (success) {
       router.push('/painel');
     } else {
       toast({
         title: 'Falha no Login',
-        description: 'E-mail ou senha inválidos. Por favor, tente novamente.',
+        description: 'Usuário ou senha inválidos. Por favor, tente novamente.',
         variant: 'destructive',
       });
     }
@@ -49,21 +49,21 @@ export default function LoginPage() {
             </div>
           <CardTitle className="text-2xl">{companyInfo.systemName}</CardTitle>
           <CardDescription>
-            Digite seu e-mail e senha para acessar o painel.
+            Digite seu usuário e senha para acessar o painel.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="username">Usuário</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@exemplo.com"
+                  id="username"
+                  type="text"
+                  placeholder="admin"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
