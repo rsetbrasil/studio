@@ -131,7 +131,7 @@ export default function FinancialPage() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total de Receitas (Pagas)</CardTitle>
-                  <ArrowUpCircle className="h-4 w-4 text-green-500" />
+                  <ArrowUpCircle className="h-4 w-4 text-yellow-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{formatBRL(totalReceitasPagas)}</div>
@@ -148,13 +148,13 @@ export default function FinancialPage() {
                   <p className="text-xs text-muted-foreground">Saídas no período</p>
                 </CardContent>
               </Card>
-              <Card className={fluxoDeCaixaLiquido >= 0 ? 'border-green-500' : 'border-red-500'}>
+              <Card className={fluxoDeCaixaLiquido >= 0 ? 'border-yellow-500' : 'border-red-500'}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Fluxo de Caixa Líquido</CardTitle>
-                  <DollarSign className={`h-4 w-4 ${fluxoDeCaixaLiquido >= 0 ? 'text-green-500' : 'text-red-500'}`} />
+                  <DollarSign className={`h-4 w-4 ${fluxoDeCaixaLiquido >= 0 ? 'text-yellow-500' : 'text-red-500'}`} />
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-2xl font-bold ${fluxoDeCaixaLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatBRL(fluxoDeCaixaLiquido)}</div>
+                  <div className={`text-2xl font-bold ${fluxoDeCaixaLiquido >= 0 ? 'text-yellow-600' : 'text-red-600'}`}>{formatBRL(fluxoDeCaixaLiquido)}</div>
                   <p className="text-xs text-muted-foreground">Resultado do período selecionado</p>
                 </CardContent>
               </Card>
@@ -187,7 +187,7 @@ export default function FinancialPage() {
                       <TableCell>{new Date(transaction.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell className="font-medium">{transaction.description}</TableCell>
                       <TableCell>
-                        <span className={`flex items-center ${transaction.type === 'Receita' ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`flex items-center ${transaction.type === 'Receita' ? 'text-yellow-600' : 'text-red-600'}`}>
                           {transaction.type === 'Receita' ? <ArrowUpCircle className="mr-2 h-4 w-4" /> : <ArrowDownCircle className="mr-2 h-4 w-4" />}
                           {transaction.type}
                         </span>
@@ -197,7 +197,7 @@ export default function FinancialPage() {
                           {transaction.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className={`text-right font-medium ${transaction.type === 'Receita' ? 'text-green-600' : 'text-red-600'}`}>
+                      <TableCell className={`text-right font-medium ${transaction.type === 'Receita' ? 'text-yellow-600' : 'text-red-600'}`}>
                         {transaction.type === 'Despesa' && '- '}{formatBRL(transaction.amount)}
                       </TableCell>
                     </TableRow>

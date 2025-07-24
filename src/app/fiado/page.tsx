@@ -199,7 +199,7 @@ export default function FiadoPage() {
                                                     <TableCell>
                                                         {tx.type === 'sale' ? `Venda #${tx.id.replace('SALE', '')}` : `Pagamento via ${tx.paymentMethod}`}
                                                     </TableCell>
-                                                    <TableCell className={`text-right font-medium ${tx.type === 'sale' ? 'text-destructive' : 'text-green-600'}`}>
+                                                    <TableCell className={`text-right font-medium ${tx.type === 'sale' ? 'text-destructive' : 'text-yellow-600'}`}>
                                                     {formatBRL(Math.abs(tx.amount))}
                                                     </TableCell>
                                                     <TableCell className="text-center">

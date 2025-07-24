@@ -205,7 +205,7 @@ export default function CashRegisterPage() {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Vendas</CardDescription>
-                    <CardTitle className="text-2xl text-green-600">{formatBRL(totalSales)}</CardTitle>
+                    <CardTitle className="text-2xl text-yellow-600">{formatBRL(totalSales)}</CardTitle>
                   </CardHeader>
                 </Card>
                  <Card>
@@ -266,7 +266,7 @@ export default function CashRegisterPage() {
                                       <Badge variant={mov.type === 'Venda' ? 'default' : mov.type === 'Suprimento' ? 'secondary' : 'destructive'}>{mov.type}</Badge>
                                     </TableCell>
                                     <TableCell>{mov.description}</TableCell>
-                                    <TableCell className={`text-right font-medium ${mov.type === 'Sangria' ? 'text-red-600' : 'text-green-600'}`}>
+                                    <TableCell className={`text-right font-medium ${mov.type === 'Sangria' ? 'text-red-600' : 'text-yellow-600'}`}>
                                       {mov.type === 'Sangria' ? '-' : ''}{formatBRL(mov.amount)}
                                     </TableCell>
                                 </TableRow>
@@ -278,7 +278,7 @@ export default function CashRegisterPage() {
                         )}
                          <TableRow className="bg-muted/50 hover:bg-muted/50">
                            <TableCell colSpan={3} className="font-bold">Abertura de Caixa</TableCell>
-                           <TableCell className="text-right font-bold text-green-600">{formatBRL(state.currentSession?.openingBalance || 0)}</TableCell>
+                           <TableCell className="text-right font-bold text-yellow-600">{formatBRL(state.currentSession?.openingBalance || 0)}</TableCell>
                          </TableRow>
                     </TableBody>
                 </Table>
@@ -381,7 +381,7 @@ export default function CashRegisterPage() {
                 <Separator />
                 <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                    <div className="flex justify-between"><span>Saldo Inicial:</span> <span className="font-medium">{formatBRL(state.currentSession.openingBalance)}</span></div>
-                   <div className="flex justify-between"><span>(+) Vendas:</span> <span className="font-medium text-green-600">{formatBRL(totalSales)}</span></div>
+                   <div className="flex justify-between"><span>(+) Vendas:</span> <span className="font-medium text-yellow-600">{formatBRL(totalSales)}</span></div>
                    <div className="flex justify-between"><span>(+) Suprimentos:</span> <span className="font-medium text-blue-600">{formatBRL(totalSuprimento)}</span></div>
                    <div className="flex justify-between"><span>(-) Sangrias:</span> <span className="font-medium text-red-600">{formatBRL(totalSangria)}</span></div>
                 </div>
