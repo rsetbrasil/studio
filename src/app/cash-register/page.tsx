@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -16,8 +15,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowDownLeft, ArrowUpRight, DollarSign, MinusCircle, PlusCircle } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, DollarSign, MinusCircle, PlusCircle, Trash } from 'lucide-react';
 import { AdjustmentDialog } from '@/components/cash-register/adjustment-dialog';
+import { DeleteSessionDialog } from '@/components/cash-register/delete-session-dialog';
+import type { CashRegisterSession } from '@/context/CashRegisterContext';
 
 export default function CashRegisterPage() {
   const { 
@@ -27,13 +28,16 @@ export default function CashRegisterPage() {
     closeRegister, 
     getSalesForCurrentSession, 
     isMounted,
-    addAdjustment
+    addAdjustment,
+    deleteSession,
   } = useCashRegister();
 
   const [isOpeningDialogOpen, setOpeningDialogOpen] = useState(false);
   const [isClosingDialogOpen, setClosingDialogOpen] = useState(false);
   const [openingBalance, setOpeningBalance] = useState('');
   const [adjustmentType, setAdjustmentType] = useState<'suprimento' | 'sangria' | null>(null);
+  const [sessionToDelete, setSessionToDelete] = useState<CashRegisterSession | null>(null);
+
 
   const { toast } = useToast();
 
@@ -58,17 +62,26 @@ export default function CashRegisterPage() {
   );
   
   const paymentMethodTotals = useMemo(() => {
+    if (!state.currentSession) return {};
+
     const totals: Record<string, number> = {};
+    // Initialize with all possible payment methods to ensure they appear even if value is 0
+    ['Dinheiro', 'PIX', 'Crédito', 'Débito'].forEach(method => totals[method] = 0);
+    
+    // Add opening balance to Dinheiro
+    totals['Dinheiro'] = state.currentSession.openingBalance;
+
     salesForCurrentSession.forEach(sale => {
-      // Handle combined payment methods like "Dinheiro e PIX"
       const methods = sale.paymentMethod.split(' e ');
-      const amountPerMethod = sale.amount / methods.length; // Simplification: split amount equally
+      const amountPerMethod = sale.amount / methods.length;
       methods.forEach(method => {
-        totals[method] = (totals[method] || 0) + amountPerMethod;
+        if (method in totals) {
+          totals[method] = (totals[method] || 0) + amountPerMethod;
+        }
       });
     });
     return totals;
-  }, [salesForCurrentSession]);
+  }, [salesForCurrentSession, state.currentSession]);
 
   const allMovements = useMemo(() => {
     if (!state.currentSession) return [];
@@ -119,6 +132,19 @@ export default function CashRegisterPage() {
     });
     setAdjustmentType(null);
   };
+  
+  const handleConfirmDelete = () => {
+    if (sessionToDelete) {
+      deleteSession(sessionToDelete.id);
+      toast({
+        title: "Registro Excluído",
+        description: `O registro do caixa #${sessionToDelete.id} foi excluído.`,
+        variant: "destructive",
+      });
+      setSessionToDelete(null);
+    }
+  };
+
 
   return (
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
@@ -259,10 +285,11 @@ export default function CashRegisterPage() {
                             <TableHead>Saldo Inicial</TableHead>
                             <TableHead>Vendas</TableHead>
                             <TableHead>Saldo Final</TableHead>
+                            <TableHead>Ações</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {history.length > 0 ? (
+                        {isMounted && history.length > 0 ? (
                             history.map(session => (
                                 <TableRow key={session.id}>
                                     <TableCell>#{session.id}</TableCell>
@@ -271,11 +298,21 @@ export default function CashRegisterPage() {
                                     <TableCell>{formatBRL(session.openingBalance)}</TableCell>
                                     <TableCell>{formatBRL(session.totalSales)}</TableCell>
                                     <TableCell>{session.closingBalance ? formatBRL(session.closingBalance) : '-'}</TableCell>
+                                    <TableCell>
+                                        <Button
+                                          variant="destructive"
+                                          size="sm"
+                                          onClick={() => setSessionToDelete(session)}
+                                        >
+                                          <Trash className="mr-2 h-4 w-4" />
+                                          Excluir
+                                        </Button>
+                                    </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">Nenhum histórico de caixa encontrado.</TableCell>
+                                <TableCell colSpan={7} className="h-24 text-center">Nenhum histórico de caixa encontrado.</TableCell>
                             </TableRow>
                         )}
                     </TableBody>
@@ -316,7 +353,7 @@ export default function CashRegisterPage() {
               <DialogTitle>Fechar Caixa</DialogTitle>
               <DialogDescription>Confira o resumo antes de fechar o caixa. Esta ação não pode ser desfeita.</DialogDescription>
             </DialogHeader>
-            {state.currentSession && (
+            {isMounted && state.currentSession && (
               <div className="py-4 space-y-4">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Horário de Abertura:</span>
@@ -336,11 +373,11 @@ export default function CashRegisterPage() {
                 </div>
                 <Separator />
                  <div>
-                    <h4 className="font-medium mb-2">Resumo por Forma de Pagamento (Vendas)</h4>
+                    <h4 className="font-medium mb-2">Resumo por Forma de Pagamento</h4>
                     <div className="space-y-1 text-sm">
                         {Object.keys(paymentMethodTotals).length > 0 ? Object.entries(paymentMethodTotals).map(([method, total]) => (
                             <div key={method} className="flex justify-between">
-                                <span className="text-muted-foreground">{method}:</span>
+                                <span className="text-muted-foreground">{method === 'Dinheiro' ? 'Dinheiro (+ Abertura):' : `${method}:`}</span>
                                 <span>{formatBRL(total)}</span>
                             </div>
                         )) : <p className="text-xs text-muted-foreground">Nenhuma venda registrada no período.</p>}
@@ -362,6 +399,15 @@ export default function CashRegisterPage() {
             isOpen={!!adjustmentType}
             onClose={() => setAdjustmentType(null)}
             onConfirm={handleAdjustment}
+          />
+        )}
+        
+        {sessionToDelete && (
+          <DeleteSessionDialog
+            isOpen={!!sessionToDelete}
+            onClose={() => setSessionToDelete(null)}
+            onConfirm={handleConfirmDelete}
+            session={sessionToDelete}
           />
         )}
       </div>

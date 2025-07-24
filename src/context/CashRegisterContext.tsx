@@ -38,6 +38,7 @@ type CashRegisterContextType = {
   openRegister: (openingBalance: number) => void;
   closeRegister: () => void;
   addAdjustment: (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => void;
+  deleteSession: (sessionId: number) => void;
   getSalesForCurrentSession: () => Sale[];
   resetHistory: () => void;
   isMounted: boolean;
@@ -175,6 +176,10 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
   
+  const deleteSession = (sessionId: number) => {
+    setHistory(prev => prev.filter(session => session.id !== sessionId));
+  };
+  
   const resetHistory = () => {
     setHistory([]);
     setSessionCounter(1);
@@ -189,7 +194,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, addAdjustment, resetHistory, isMounted }}>
+    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, addAdjustment, deleteSession, resetHistory, isMounted }}>
       {children}
     </CashRegisterContext.Provider>
   );
