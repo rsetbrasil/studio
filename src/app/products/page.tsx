@@ -114,7 +114,7 @@ export default function ProductsPage() {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        newline: '',
+        newline: "",
         complete: (results) => {
           if (results.errors.length) {
             toast({
@@ -132,7 +132,7 @@ export default function ProductsPage() {
               const id = Number(row.id);
               const name = row.nome;
 
-              if (name && name.trim() !== '' && !isNaN(id) && id > 0) {
+              if (name && name.trim() !== "" && !isNaN(id) && id > 0) {
                 acc.push({
                   id: id,
                   name: name,
@@ -167,44 +167,42 @@ export default function ProductsPage() {
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
-                <CardTitle>Gestão de Produtos</CardTitle>
-                <CardDescription>
-                  Visualize, adicione, importe e exporte seus produtos.
-                </CardDescription>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative w-full sm:max-w-xs">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10"
-                  />
-                </div>
-                <input
-                  type="file"
-                  accept=".csv"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+            <div>
+              <CardTitle>Gestão de Produtos</CardTitle>
+              <CardDescription>
+                Visualize, adicione, importe e exporte seus produtos.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10"
                 />
-                <Button variant="outline" onClick={handleImportClick}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Importar
-                </Button>
-                <Button variant="outline" onClick={handleExport}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Exportar
-                </Button>
-                <Button onClick={() => handleOpenDialog()}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Adicionar Produto
-                </Button>
               </div>
+              <input
+                type="file"
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <Button variant="outline" onClick={handleImportClick}>
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Button>
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+              <Button onClick={() => handleOpenDialog()}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Produto
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
