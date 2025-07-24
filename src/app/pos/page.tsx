@@ -29,13 +29,17 @@ import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { QuantityDialog } from "@/components/pos/quantity-dialog";
+import { QuantityDialog, type SaleUnit } from "@/components/pos/quantity-dialog";
 import { ProductSearch } from "@/components/pos/product-search";
 import { useReactToPrint } from "react-to-print";
 import { Receipt } from "@/components/pos/receipt";
+import { Badge } from "@/components/ui/badge";
 
 type CartItem = Product & {
+  cartId: string;
   quantity: number;
+  saleUnit: SaleUnit; // 'unit' or 'pack'
+  salePrice: number;
 };
 
 export default function PosPage() {
@@ -64,10 +68,17 @@ export default function PosPage() {
     if (orderIdToLoad) {
       const order = getOrderById(orderIdToLoad);
       if (order && order.status === 'Pendente') {
-        const cartItems: CartItem[] = order.items.map(item => ({
-            ...item,
-            stock: getProductById(item.id)?.stock ?? item.quantity,
-        }));
+        const cartItems: CartItem[] = order.items.map((item, index) => {
+            const product = getProductById(item.id);
+            const isPackSale = item.price === product?.packPrice;
+            return {
+                ...item,
+                stock: product?.stock ?? item.quantity,
+                cartId: `${item.id}-${index}`,
+                saleUnit: isPackSale ? 'pack' : 'unit',
+                salePrice: item.price,
+            }
+        });
         setCart(cartItems);
         setCustomerName(order.customer);
         updateOrderStatus(order.id, 'Finalizado', stockActions);
@@ -92,22 +103,41 @@ export default function PosPage() {
       });
       return;
     }
+    
+    // Convert cart items for stock check (always in packs)
+    const itemsForStockCheck = cart.map(item => ({
+        id: item.id,
+        quantity: item.saleUnit === 'pack' ? item.quantity : item.quantity / item.unitsPerPack,
+    }));
 
-    for (const item of cart) {
-        const productInStock = getProductById(item.id);
-        if (!productInStock || item.quantity > productInStock.stock) {
+    // Aggregate quantities for the same product
+    const aggregatedItems = itemsForStockCheck.reduce((acc, item) => {
+        acc[item.id] = (acc[item.id] || 0) + item.quantity;
+        return acc;
+    }, {} as Record<number, number>);
+
+    for (const [productId, quantity] of Object.entries(aggregatedItems)) {
+        const productInStock = getProductById(Number(productId));
+        if (!productInStock || quantity > productInStock.stock) {
             toast({
                 title: "Pedido não criado",
-                description: `Estoque de ${item.name} insuficiente.`,
+                description: `Estoque de ${productInStock?.name} insuficiente.`,
                 variant: "destructive",
             });
             return;
         }
     }
 
+    const orderItems = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.salePrice,
+        quantity: item.quantity,
+    }));
+
     const newOrder = {
       customer: customerName || "Cliente Balcão",
-      items: cart,
+      items: orderItems,
       total: total,
     };
     addOrder(newOrder, decreaseStock);
@@ -153,41 +183,32 @@ export default function PosPage() {
     setProductForQuantity(product);
   };
   
-  const handleAddToCart = (product: Product, quantityToAdd: number, price: number) => {
-    if (quantityToAdd <= 0) {
+  const handleAddToCart = (product: Product, quantity: number, price: number, saleUnit: SaleUnit) => {
+    if (quantity <= 0) {
       setProductForQuantity(null);
       return;
     }
 
-    if (quantityToAdd > product.stock) {
+    const stockNeededInPacks = saleUnit === 'pack' ? quantity : quantity / product.unitsPerPack;
+
+    if (stockNeededInPacks > product.stock) {
         toast({
             title: "Estoque Insuficiente",
-            description: `A quantidade máxima para ${product.name} é ${product.stock}.`,
+            description: `A quantidade máxima para ${product.name} é ${product.stock} ${product.unitOfMeasure}(s).`,
             variant: "destructive",
         });
         return;
     }
 
     setCart((currentCart) => {
-      const existingItem = currentCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + quantityToAdd;
-        if (newQuantity > product.stock) {
-          toast({
-            title: "Estoque Insuficiente",
-            description: `Você já tem ${existingItem.quantity} no carrinho. A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
-            variant: "destructive",
-          });
-          return currentCart;
-        }
-        return currentCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: newQuantity, price: price }
-            : item
-        );
-      } else {
-        return [...currentCart, { ...product, quantity: quantityToAdd, price: price }];
-      }
+      const newItem: CartItem = {
+        ...product,
+        cartId: `${product.id}-${Date.now()}`, // Unique ID for each addition
+        quantity: quantity,
+        salePrice: price,
+        saleUnit: saleUnit,
+      };
+      return [...currentCart, newItem];
     });
 
     handleCloseQuantityDialog();
@@ -198,69 +219,90 @@ export default function PosPage() {
     setTimeout(() => searchInputRef.current?.focus(), 100);
   }
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (cartId: string) => {
     setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== productId)
+      currentCart.filter((item) => item.cartId !== cartId)
     );
   };
 
-  const updateQuantity = (productId: number, newQuantity: number) => {
+  const updateQuantity = (cartId: string, newQuantity: number) => {
+    const cartItem = cart.find(item => item.cartId === cartId);
+    if (!cartItem) return;
+
     if (newQuantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartId);
       return;
     }
-
-    const product = getProductById(productId);
+    
+    const product = getProductById(cartItem.id);
     if (!product) return;
 
-    if (newQuantity > product.stock) {
+    const stockNeededInPacks = cartItem.saleUnit === 'pack' ? newQuantity : newQuantity / product.unitsPerPack;
+
+    if (stockNeededInPacks > product.stock) {
       toast({
         title: "Estoque Insuficiente",
-        description: `A quantidade máxima em estoque para ${product.name} é ${product.stock}.`,
+        description: `A quantidade máxima em estoque para ${product.name} é ${product.stock} ${product.unitOfMeasure}(s).`,
         variant: "destructive",
       });
-      setCart((currentCart) =>
-        currentCart.map((item) =>
-          item.id === productId ? { ...item, quantity: product.stock } : item
-        )
-      );
-      return;
+      return; // Do not update if stock is insufficient
     }
     
     setCart((currentCart) =>
       currentCart.map((item) =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
+        item.cartId === cartId ? { ...item, quantity: newQuantity } : item
       )
     );
   };
   
   const total = useMemo(() => {
-    return cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
   }, [cart]);
 
   const handleConfirmSale = ({ paymentAmounts, change, cardFee }: { paymentAmounts: Record<string, number>; change: number; cardFee: number }) => {
     if (cart.length === 0) return;
 
-    for (const item of cart) {
-        const productInStock = getProductById(item.id);
-        if (!productInStock || item.quantity > productInStock.stock) {
+    // Aggregate quantities for stock check
+    const aggregatedItemsForStock = cart.reduce((acc, item) => {
+        const quantityInPacks = item.saleUnit === 'pack' ? item.quantity : item.quantity / item.unitsPerPack;
+        acc[item.id] = (acc[item.id] || 0) + quantityInPacks;
+        return acc;
+    }, {} as Record<number, number>);
+
+    // Check stock for each product
+    for (const [productId, quantity] of Object.entries(aggregatedItemsForStock)) {
+        const productInStock = getProductById(Number(productId));
+        if (!productInStock || quantity > productInStock.stock) {
             toast({
                 title: "Venda não realizada",
-                description: `Estoque de ${item.name} insuficiente.`,
+                description: `Estoque de ${productInStock?.name} insuficiente.`,
                 variant: "destructive",
             });
             return;
         }
     }
 
-    decreaseStock(cart.map(item => ({ id: item.id, quantity: item.quantity })));
+    // Decrease stock
+    const itemsToDecrease = Object.entries(aggregatedItemsForStock).map(([id, quantity]) => ({
+        id: Number(id),
+        quantity
+    }));
+    decreaseStock(itemsToDecrease);
+
 
     const finalTotal = total + cardFee;
     const paymentMethodsUsed = Object.keys(paymentAmounts).join(" e ");
 
+    const saleItems = cart.map(item => ({
+        id: item.id,
+        name: `${item.name} ${item.saleUnit === 'pack' ? `(${item.unitOfMeasure})` : ''}`.trim(),
+        price: item.salePrice,
+        quantity: item.quantity,
+    }));
+
     const newSaleData = {
       customer: customerName || "Cliente Balcão",
-      items: cart,
+      items: saleItems,
       amount: finalTotal,
       paymentMethod: paymentMethodsUsed,
     };
@@ -332,28 +374,33 @@ export default function PosPage() {
                 <TableBody>
                     {cart.length > 0 ? (
                     cart.map((item, index) => (
-                        <TableRow key={item.id}>
+                        <TableRow key={item.cartId}>
                         <TableCell className="font-medium">{String(index + 1).padStart(2, '0')}</TableCell>
-                        <TableCell className="font-medium">{item.name}</TableCell>
+                        <TableCell className="font-medium">
+                            {item.name}
+                            {item.saleUnit === 'pack' && (
+                                <Badge variant="secondary" className="ml-2">{item.unitOfMeasure}</Badge>
+                            )}
+                        </TableCell>
                         <TableCell>
                             <Input
                             type="number"
                             value={item.quantity}
                             onChange={(e) =>
-                                updateQuantity(item.id, parseInt(e.target.value) || 0)
+                                updateQuantity(item.cartId, parseInt(e.target.value) || 0)
                             }
                             className="h-8 w-24"
                             min="1"
                             />
                         </TableCell>
-                        <TableCell>{formatBRL(item.price)}</TableCell>
-                        <TableCell className="text-right">{formatBRL(item.price * item.quantity)}</TableCell>
+                        <TableCell>{formatBRL(item.salePrice)}</TableCell>
+                        <TableCell className="text-right">{formatBRL(item.salePrice * item.quantity)}</TableCell>
                         <TableCell>
                             <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item.cartId)}
                             >
                             <X className="h-4 w-4" />
                             </Button>
