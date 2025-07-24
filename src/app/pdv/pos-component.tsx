@@ -135,6 +135,7 @@ export default function PosComponent() {
                     salePrice: item.price,
                     unitOfSale: item.unit,
                     cartId: `${item.id}-${Date.now()}-${index}`,
+                    cost: product?.cost || 0
                 }
              });
              setCart(cartItems);
