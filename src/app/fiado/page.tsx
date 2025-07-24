@@ -39,7 +39,7 @@ export default function FiadoPage() {
   const [payingAccount, setPayingAccount] = useState<FiadoAccount | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [paymentToPrint, setPaymentToPrint] = useState<{ account: FiadoAccount, transaction: FiadoTransaction } | null>(null);
-  const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
+  const [saleToPrint, setSaleToPrint] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
 
   const paymentReceiptRef = useRef<HTMLDivElement>(null);
   const saleReceiptRef = useRef<HTMLDivElement>(null);
@@ -93,7 +93,7 @@ export default function FiadoPage() {
     const sale = getSaleById(saleId);
     if (sale) {
       setPaymentToPrint(null);
-      setSaleToPrint(sale);
+       setSaleToPrint({ ...sale, change: 0, totalPaid: sale.amount });
     }
   };
   
@@ -263,7 +263,7 @@ export default function FiadoPage() {
         {saleToPrint && user && (
             <Receipt
                 ref={saleReceiptRef}
-                sale={{ ...saleToPrint, change: 0, totalPaid: saleToPrint.amount }}
+                sale={saleToPrint}
                 user={user}
             />
         )}
