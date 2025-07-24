@@ -62,12 +62,12 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
 
   useEffect(() => {
     if (product) {
-      setName(product.name);
-      setCategory(product.category);
+      setName(product.name || '');
+      setCategory(product.category || '');
       setCostStr(formatCurrencyInput(String(product.cost * 100)));
-      setStock(String(product.stock));
-      setUnitOfMeasure(product.unitOfMeasure);
-      setUnitsPerPack(String(product.unitsPerPack));
+      setStock(String(product.stock || ''));
+      setUnitOfMeasure(product.unitOfMeasure || '');
+      setUnitsPerPack(String(product.unitsPerPack || ''));
       setPackPriceStr(formatCurrencyInput(String(product.packPrice * 100)));
     } else {
       setName('');
