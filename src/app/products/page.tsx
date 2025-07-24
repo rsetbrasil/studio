@@ -100,14 +100,14 @@ export default function ProductsPage() {
                 console.error("CSV Parsing Errors:", results.errors);
             } else {
                 const mappedProducts = results.data.map(csvProduct => ({
-                    id: csvProduct.id,
+                    id: Number(csvProduct.id),
                     name: csvProduct.nome,
                     category: csvProduct.categoria,
                     unitOfMeasure: csvProduct.unidade_medida,
-                    cost: csvProduct.preco_compra_fardo,
-                    packPrice: csvProduct.preco_venda_fardo,
-                    unitsPerPack: csvProduct.unidades_por_fardo,
-                    stock: csvProduct.estoque_fardo,
+                    cost: Number(csvProduct.preco_compra_fardo),
+                    packPrice: Number(csvProduct.preco_venda_fardo),
+                    unitsPerPack: Number(csvProduct.unidades_por_fardo),
+                    stock: Number(csvProduct.estoque_fardo),
                 }));
 
                 loadProducts(mappedProducts);
