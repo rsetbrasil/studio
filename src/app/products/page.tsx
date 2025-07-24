@@ -235,7 +235,7 @@ export default function ProductsPage() {
                   <TableHead>Preço (Fardo)</TableHead>
                   <TableHead>Preço (Unit.)</TableHead>
                   <TableHead>Categoria</TableHead>
-                  <TableHead className="w-[200px]">Ações</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -251,7 +251,7 @@ export default function ProductsPage() {
                       <TableCell>{formatBRL(product.packPrice)}</TableCell>
                       <TableCell>{formatBRL(product.price)}</TableCell>
                       <TableCell>{product.category}</TableCell>
-                      <TableCell className="space-x-2">
+                      <TableCell className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
