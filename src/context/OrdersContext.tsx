@@ -1,10 +1,12 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy } from 'firebase/firestore';
+import { useSales } from './SalesContext';
 
 export type OrderItem = {
   id: number;
@@ -13,7 +15,7 @@ export type OrderItem = {
   quantity: number;
 };
 
-export type OrderStatus = "Pendente" | "Finalizado" | "Cancelado";
+export type OrderStatus = "Pendente" | "Faturado" | "Cancelado";
 
 type Order = {
   id: string; // Firestore ID
@@ -47,6 +49,7 @@ type OrdersContextType = {
     }
   ) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
+  faturarPedido: (orderId: string) => void;
   resetOrders: () => Promise<void>;
   ordersLastMonthPercentage: number;
   isMounted: boolean;
@@ -58,6 +61,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const { addSaleFromOrder } = useSales();
   
   const fetchOrders = async () => {
     try {
@@ -203,6 +207,20 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     return orders.find(o => o.id === orderId);
   };
   
+  const faturarPedido = async (orderId: string) => {
+    const order = getOrderById(orderId);
+    if (!order || order.status !== 'Pendente') return;
+
+    try {
+        await addSaleFromOrder(order);
+        const orderRef = doc(db, "orders", orderId);
+        await updateDoc(orderRef, { status: 'Faturado' });
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'Faturado' } : o));
+    } catch (e) {
+        console.error("Error invoicing order:", e);
+    }
+  };
+  
   const resetOrders = async () => {
     try {
         const batch = writeBatch(db);
@@ -232,7 +250,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus, updateOrder, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
+    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus, updateOrder, getOrderById, resetOrders, faturarPedido, ordersLastMonthPercentage, isMounted }}>
       {children}
     </OrdersContext.Provider>
   );

@@ -30,21 +30,22 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrders, type OrderStatus } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil, Trash, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
 export default function OrdersPage() {
-  const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
+  const { orders, updateOrderStatus: updateOrderStatusFromContext, faturarPedido } = useOrders();
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
+  const canEditOrder = user?.role === 'Administrador' || user?.role === 'Gerente' || user?.role === 'Vendedor';
+  const canManageStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
   
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case "Finalizado":
+      case "Faturado":
         return "default";
       case "Cancelado":
         return "destructive";
@@ -54,13 +55,17 @@ export default function OrdersPage() {
         return "outline";
     }
   };
-
-  const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    updateOrderStatusFromContext(orderId, newStatus, { increaseStock, decreaseStock, getProductById });
-  };
   
+  const handleFaturar = (orderId: string) => {
+      faturarPedido(orderId);
+      toast({
+        title: "Pedido Faturado!",
+        description: "O pedido foi faturado e uma venda foi gerada."
+      });
+  };
+
   const handleDelete = (orderId: string) => {
-      handleStatusChange(orderId, 'Cancelado');
+      updateOrderStatusFromContext(orderId, 'Cancelado', { increaseStock, decreaseStock, getProductById });
       toast({
           title: "Pedido Cancelado",
           description: "O pedido foi cancelado e os itens retornaram ao estoque."
@@ -98,30 +103,9 @@ export default function OrdersPage() {
                       <TableCell>{order.items.length} item(s)</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>
-                        {canEditStatus ? (
-                            <Select
-                                value={order.status}
-                                onValueChange={(newStatus) =>
-                                handleStatusChange(order.id, newStatus as OrderStatus)
-                                }
-                                disabled={order.status === "Finalizado"}
-                            >
-                                <SelectTrigger className="w-auto border-0 p-0 focus:ring-0 focus:ring-offset-0 disabled:border-0 disabled:opacity-100">
-                                    <Badge variant={getStatusVariant(order.status) as any}>
-                                    {order.status}
-                                    </Badge>
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Pendente">Pendente</SelectItem>
-                                    <SelectItem value="Finalizado">Finalizado</SelectItem>
-                                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        ) : (
-                             <Badge variant={getStatusVariant(order.status) as any}>
-                                {order.status}
-                            </Badge>
-                        )}
+                        <Badge variant={getStatusVariant(order.status) as any}>
+                          {order.status}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
@@ -129,16 +113,26 @@ export default function OrdersPage() {
                        <TableCell className="text-center">
                         {order.status === 'Pendente' && (
                             <div className="flex gap-2 justify-center">
-                                <Button asChild size="sm" variant="outline">
-                                    <Link href={`/pdv?orderId=${order.id}`}>
-                                        <Pencil className="mr-2 h-4 w-4" />
-                                        Alterar
-                                    </Link>
-                                </Button>
-                                <Button onClick={() => handleDelete(order.id)} size="sm" variant="destructive">
-                                    <Trash className="mr-2 h-4 w-4" />
-                                    Excluir
-                                </Button>
+                                {canEditOrder && (
+                                  <Button asChild size="sm" variant="outline">
+                                      <Link href={`/pdv?orderId=${order.id}`}>
+                                          <Pencil className="mr-2 h-4 w-4" />
+                                          Alterar
+                                      </Link>
+                                  </Button>
+                                )}
+                                {canManageStatus && (
+                                   <Button onClick={() => handleFaturar(order.id)} size="sm">
+                                      <CheckCircle className="mr-2 h-4 w-4" />
+                                      Faturar
+                                  </Button>
+                                )}
+                                 {canEditOrder && (
+                                  <Button onClick={() => handleDelete(order.id)} size="sm" variant="destructive">
+                                      <Trash className="mr-2 h-4 w-4" />
+                                      Excluir
+                                  </Button>
+                                )}
                             </div>
                         )}
                       </TableCell>

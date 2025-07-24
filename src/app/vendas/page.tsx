@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -101,7 +102,7 @@ export default function SalesPage() {
                 <TableRow>
                   <TableHead>ID da Venda</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Itens</TableHead>
+                  <TableHead>Forma de Pgto.</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
@@ -112,9 +113,9 @@ export default function SalesPage() {
                 {isMounted && sales.length > 0 ? (
                   sales.map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell className="font-medium">{sale.id}</TableCell>
+                      <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
-                      <TableCell>{sale.items.length} item(s)</TableCell>
+                      <TableCell>{sale.paymentMethod}</TableCell>
                       <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(sale.status) as any}>{sale.status}</Badge>
