@@ -2,6 +2,7 @@
 "use client"
 
 import { useSales } from "@/context/SalesContext";
+import { formatBRL } from "@/lib/utils";
 import { useMemo } from "react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 
@@ -17,7 +18,7 @@ export function OverviewChart() {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
     sales.forEach(sale => {
-      const monthIndex = new Date(sale.date).getMonth();
+      const monthIndex = new Date(sale.date).getUTCMonth();
       const monthName = monthNames[monthIndex];
       monthlySales[monthName] += sale.amount;
     });
@@ -45,7 +46,7 @@ export function OverviewChart() {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `R$${value}`}
+          tickFormatter={(value) => formatBRL(value as number)}
         />
         <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
       </BarChart>
