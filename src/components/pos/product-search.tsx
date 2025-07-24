@@ -63,7 +63,7 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
                                 <div className="flex justify-between w-full">
                                 <span>{product.name}</span>
                                 <span className="text-muted-foreground">
-                                    Estoque: {product.stock} | {formatBRL(product.price)}
+                                    Estoque: {product.stock} | {formatBRL(product.packPrice)}
                                 </span>
                                 </div>
                             </CommandItem>
