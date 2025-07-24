@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/pos/payment-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { QuantityDialog, type SaleUnit } from "@/components/pos/quantity-dialog";
+import { QuantityDialog } from "@/components/pos/quantity-dialog";
 import { ProductSearch } from "@/components/pos/product-search";
 import { useReactToPrint } from "react-to-print";
 import { Receipt } from "@/components/pos/receipt";
@@ -38,7 +38,6 @@ import { Badge } from "@/components/ui/badge";
 type CartItem = Product & {
   cartId: string;
   quantity: number;
-  saleUnit: SaleUnit; // 'unit' or 'pack'
   salePrice: number;
 };
 
@@ -70,12 +69,10 @@ export default function PosPage() {
       if (order && order.status === 'Pendente') {
         const cartItems: CartItem[] = order.items.map((item, index) => {
             const product = getProductById(item.id);
-            const isPackSale = item.price === product?.packPrice;
             return {
                 ...item,
                 stock: product?.stock ?? item.quantity,
                 cartId: `${item.id}-${index}`,
-                saleUnit: isPackSale ? 'pack' : 'unit',
                 salePrice: item.price,
             }
         });
@@ -104,13 +101,11 @@ export default function PosPage() {
       return;
     }
     
-    // Convert cart items for stock check (always in packs)
     const itemsForStockCheck = cart.map(item => ({
         id: item.id,
-        quantity: item.saleUnit === 'pack' ? item.quantity : item.quantity / item.unitsPerPack,
+        quantity: item.quantity,
     }));
 
-    // Aggregate quantities for the same product
     const aggregatedItems = itemsForStockCheck.reduce((acc, item) => {
         acc[item.id] = (acc[item.id] || 0) + item.quantity;
         return acc;
@@ -183,15 +178,13 @@ export default function PosPage() {
     setProductForQuantity(product);
   };
   
-  const handleAddToCart = (product: Product, quantity: number, price: number, saleUnit: SaleUnit) => {
+  const handleAddToCart = (product: Product, quantity: number, price: number) => {
     if (quantity <= 0) {
       setProductForQuantity(null);
       return;
     }
 
-    const stockNeededInPacks = saleUnit === 'pack' ? quantity : quantity / product.unitsPerPack;
-
-    if (stockNeededInPacks > product.stock) {
+    if (quantity > product.stock) {
         toast({
             title: "Estoque Insuficiente",
             description: `A quantidade máxima para ${product.name} é ${product.stock} ${product.unitOfMeasure}(s).`,
@@ -203,10 +196,9 @@ export default function PosPage() {
     setCart((currentCart) => {
       const newItem: CartItem = {
         ...product,
-        cartId: `${product.id}-${Date.now()}`, // Unique ID for each addition
+        cartId: `${product.id}-${Date.now()}`,
         quantity: quantity,
         salePrice: price,
-        saleUnit: saleUnit,
       };
       return [...currentCart, newItem];
     });
@@ -237,15 +229,13 @@ export default function PosPage() {
     const product = getProductById(cartItem.id);
     if (!product) return;
 
-    const stockNeededInPacks = cartItem.saleUnit === 'pack' ? newQuantity : newQuantity / product.unitsPerPack;
-
-    if (stockNeededInPacks > product.stock) {
+    if (newQuantity > product.stock) {
       toast({
         title: "Estoque Insuficiente",
         description: `A quantidade máxima em estoque para ${product.name} é ${product.stock} ${product.unitOfMeasure}(s).`,
         variant: "destructive",
       });
-      return; // Do not update if stock is insufficient
+      return;
     }
     
     setCart((currentCart) =>
@@ -262,14 +252,11 @@ export default function PosPage() {
   const handleConfirmSale = ({ paymentAmounts, change, cardFee }: { paymentAmounts: Record<string, number>; change: number; cardFee: number }) => {
     if (cart.length === 0) return;
 
-    // Aggregate quantities for stock check
     const aggregatedItemsForStock = cart.reduce((acc, item) => {
-        const quantityInPacks = item.saleUnit === 'pack' ? item.quantity : item.quantity / item.unitsPerPack;
-        acc[item.id] = (acc[item.id] || 0) + quantityInPacks;
+        acc[item.id] = (acc[item.id] || 0) + item.quantity;
         return acc;
     }, {} as Record<number, number>);
 
-    // Check stock for each product
     for (const [productId, quantity] of Object.entries(aggregatedItemsForStock)) {
         const productInStock = getProductById(Number(productId));
         if (!productInStock || quantity > productInStock.stock) {
@@ -282,7 +269,6 @@ export default function PosPage() {
         }
     }
 
-    // Decrease stock
     const itemsToDecrease = Object.entries(aggregatedItemsForStock).map(([id, quantity]) => ({
         id: Number(id),
         quantity
@@ -295,7 +281,7 @@ export default function PosPage() {
 
     const saleItems = cart.map(item => ({
         id: item.id,
-        name: `${item.name} ${item.saleUnit === 'pack' ? `(${item.unitOfMeasure})` : ''}`.trim(),
+        name: `${item.name} (${item.unitOfMeasure})`.trim(),
         price: item.salePrice,
         quantity: item.quantity,
     }));
@@ -378,9 +364,7 @@ export default function PosPage() {
                         <TableCell className="font-medium">{String(index + 1).padStart(2, '0')}</TableCell>
                         <TableCell className="font-medium">
                             {item.name}
-                            {item.saleUnit === 'pack' && (
-                                <Badge variant="secondary" className="ml-2">{item.unitOfMeasure}</Badge>
-                            )}
+                            <Badge variant="secondary" className="ml-2">{item.unitOfMeasure}</Badge>
                         </TableCell>
                         <TableCell>
                             <Input
