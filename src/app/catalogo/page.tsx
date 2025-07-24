@@ -1,131 +1,182 @@
-
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import Image from "next/image";
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { type Product } from "@/context/ProductsContext";
-import { formatBRL } from "@/lib/utils";
-import { Search, Package } from "lucide-react";
-import { AppLogo } from "@/components/icons";
-import { db } from "@/lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+  BookUser,
+  DollarSign,
+  FileText,
+  Home,
+  Landmark,
+  ListOrdered,
+  LogOut,
+  Package,
+  PanelLeft,
+  Settings,
+  ShoppingCart,
+  Tag,
+  Truck,
+  User,
+  Users,
+} from "lucide-react";
 
-export default function CatalogPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  useEffect(() => {
-    const fetchProducts = async () => {
-        try {
-            const productsCollection = collection(db, "products");
-            const productsSnapshot = await getDocs(productsCollection);
-            const productsList = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-            setProducts(productsList);
-        } catch(error) {
-            console.error("Failed to fetch products for catalog", error);
-        } finally {
-            setIsMounted(true);
-        }
-    };
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { AppLogo } from "./icons";
+import { useAuth } from "@/context/AuthContext";
 
-    fetchProducts();
-  }, []);
+const navItems = [
+  { href: "/dashboard", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
+  { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/cash-register", icon: Landmark, label: "Caixa", roles: ["Administrador", "Gerente"] },
+  { href: "/sales", icon: Tag, label: "Vendas", roles: ["Administrador", "Gerente"] },
+  { href: "/reports", icon: FileText, label: "Relatórios", roles: ["Administrador", "Gerente"] },
+  { href: "/orders", icon: ListOrdered, label: "Pedidos", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/products", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
+  { href: "/suppliers", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
+  { href: "/financial", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
+  { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente"] },
+  { href: "/users", icon: Users, label: "Usuários", roles: ["Administrador"] },
+  { href: "/account", icon: Settings, label: "Configurações", roles: ["Administrador"] },
+];
 
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm) {
-      return products;
-    }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return products.filter(
-      (product) =>
-        product.name.toLowerCase().includes(lowercasedTerm) ||
-        product.category.toLowerCase().includes(lowercasedTerm) ||
-        String(product.id).includes(lowercasedTerm)
-    );
-  }, [products, searchTerm]);
+export function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const accessibleNavItems = React.useMemo(() => {
+    if (!user) return [];
+    return navItems.filter(item => item.roles.includes(user.role));
+  }, [user]);
+
+  const pageTitle =
+    accessibleNavItems.find((item) => pathname.startsWith(item.href))?.label || "Página";
 
   return (
-    <div className="bg-muted/40 min-h-screen">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
-        <div className="flex items-center gap-2 font-semibold">
-          <AppLogo className="h-6 w-6 text-primary" />
-          <span>Catálogo de Produtos</span>
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+      <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
+        <div className="flex h-14 items-center border-b px-6">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-2 font-semibold"
+          >
+            <AppLogo className="h-6 w-6 text-primary" />
+            <span>Distribuidora</span>
+          </Link>
         </div>
-        <div className="relative ml-auto flex-1 md:grow-0">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar produtos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
-          />
-        </div>
-      </header>
-      <main className="p-4 sm:px-6 sm:py-4">
-        {isMounted ? (
-          filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden">
-                  <div className="relative w-full h-40 bg-muted">
-                    <Image
-                      src={`https://placehold.co/400x400.png`}
-                      alt={product.name}
-                      layout="fill"
-                      objectFit="cover"
-                      data-ai-hint="drink bottle"
-                    />
-                  </div>
-                  <CardHeader>
-                    <CardTitle className="text-base">{product.name}</CardTitle>
-                    <CardDescription>{product.category}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-2">
-                    <div className="font-semibold text-lg">
-                      {formatBRL(product.packPrice)}
-                      <span className="text-sm text-muted-foreground font-normal"> / {product.unitOfMeasure}</span>
-                    </div>
-                     <div className="text-sm text-muted-foreground">
-                       {formatBRL(product.price)} / Unidade
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg">
-                <Package className="h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-muted-foreground">Nenhum produto encontrado.</p>
-            </div>
-          )
-        ) : (
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <div className="h-40 bg-muted rounded-t-lg"></div>
-                <CardHeader>
-                  <div className="h-5 w-3/4 bg-muted rounded"></div>
-                  <div className="h-4 w-1/2 bg-muted rounded mt-1"></div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                   <div className="h-6 w-1/3 bg-muted rounded"></div>
-                   <div className="h-4 w-1/4 bg-muted rounded"></div>
-                </CardContent>
-              </Card>
+        <div className="flex-1 overflow-auto py-2">
+          <nav className="grid items-start gap-1 px-4 text-sm font-medium">
+            {accessibleNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
+                  pathname.startsWith(item.href)
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
             ))}
+          </nav>
+        </div>
+      </aside>
+      <div className="flex flex-col sm:pl-60 flex-1">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline" className="sm:hidden">
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Alternar Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-xs">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Menu Principal</SheetTitle>
+              </SheetHeader>
+              <nav className="grid gap-6 text-lg font-medium">
+                <Link
+                  href="#"
+                  className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                >
+                  <AppLogo className="h-5 w-5 transition-all group-hover:scale-110" />
+                  <span className="sr-only">Distribuidora</span>
+                </Link>
+                {accessibleNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-4 px-2.5 ${
+                      pathname.startsWith(item.href)
+                        ? "text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <Breadcrumb className="hidden md:flex">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard">Painel</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{pageTitle}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div className="relative ml-auto flex items-center gap-2 md:grow-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="overflow-hidden rounded-full"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link href="/account" className="w-full h-full">Configurações</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>Suporte</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        )}
-      </main>
+        </header>
+        <main className="flex-1 overflow-y-auto">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
