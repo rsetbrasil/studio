@@ -87,7 +87,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             batch.set(docRef, { name: cat });
         });
         await batch.commit();
-        setCategories(initialCategories);
+        setCategories(initialCategories.sort());
     } else {
         setCategories(categoriesSnapshot.docs.map(doc => doc.data().name).sort());
     }
@@ -100,7 +100,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
             batch.set(docRef, { name: unit });
         });
         await batch.commit();
-        setUnitsOfMeasure(initialUnits);
+        setUnitsOfMeasure(initialUnits.sort());
     } else {
         setUnitsOfMeasure(unitsSnapshot.docs.map(doc => doc.data().name).sort());
     }
@@ -145,8 +145,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteProduct = async (productId: string, sales: any[], orders: any[]) => {
     // This check should eventually be against Firestore data, not local context data
-    const isProductInSale = sales.some(sale => sale.items.some(item => item.id === productId));
-    const isProductInOrder = orders.some(order => order.items.some(item => item.id === productId));
+    const isProductInSale = sales.some(sale => sale.items.some((item:any) => item.id === productId));
+    const isProductInOrder = orders.some(order => order.items.some((item:any) => item.id === productId));
 
     if (isProductInSale || isProductInOrder) {
       toast({
@@ -176,18 +176,27 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         const existingDocs = await getDocs(productsCollection);
         existingDocs.forEach(doc => batch.delete(doc.ref));
 
+        // Ensure all categories and units from the import exist
+        const newCategories = [...new Set(newProducts.map(p => p.category.toUpperCase()))];
+        const newUnits = [...new Set(newProducts.map(p => p.unitOfMeasure.toUpperCase()))];
+        
+        newCategories.forEach(cat => addCategory(cat));
+        newUnits.forEach(unit => addUnitOfMeasure(unit));
+
         // Add new products
         newProducts.forEach(p => {
             const docRef = doc(productsCollection);
             batch.set(docRef, {
                 ...p,
+                category: p.category.toUpperCase(),
+                unitOfMeasure: p.unitOfMeasure.toUpperCase(),
                 price: calculatePrice(p.packPrice, p.unitsPerPack)
             });
         });
         
         await batch.commit();
         await fetchProducts(); // Refetch all products to get new IDs
-        await fetchMetadata(); // Refetch metadata
+        await fetchMetadata(); // Refetch metadata to include any new ones
         toast({ title: `${newProducts.length} produtos importados com sucesso.` });
       } catch (error) {
          console.error("Error loading products: ", error);
@@ -242,28 +251,34 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   // --- Metadata Management ---
   const addCategory = async (category: string) => {
-    if (category && !categories.includes(category)) {
-      await addDoc(collection(db, 'categories'), { name: category });
-      setCategories(prev => [...prev, category].sort());
+    const upperCategory = category.toUpperCase();
+    if (upperCategory && !categories.includes(upperCategory)) {
+      const q = query(collection(db, 'categories'), where("name", "==", upperCategory));
+      const snapshot = await getDocs(q);
+      if(snapshot.empty){
+        await addDoc(collection(db, 'categories'), { name: upperCategory });
+        setCategories(prev => [...prev, upperCategory].sort());
+      }
     }
   };
 
   const updateCategory = async (oldCategory: string, newCategory: string) => {
-    if (!newCategory || newCategory === oldCategory) return;
+    const upperNewCategory = newCategory.toUpperCase();
+    if (!upperNewCategory || upperNewCategory === oldCategory) return;
     
     // Update category name in categories collection
     const q = query(collection(db, 'categories'), where("name", "==", oldCategory));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
         const docRef = snapshot.docs[0].ref;
-        await updateDoc(docRef, { name: newCategory });
+        await updateDoc(docRef, { name: upperNewCategory });
     }
     
     // This part is complex in firestore, would require a batch update on all products.
     // For now, let's just update the local state and category list.
     // A more robust solution would be a cloud function to handle this data migration.
-    setCategories(prev => prev.map(c => c === oldCategory ? newCategory : c).sort());
-    setProducts(prev => prev.map(p => p.category === oldCategory ? { ...p, category: newCategory } : p));
+    setCategories(prev => prev.map(c => c === oldCategory ? upperNewCategory : c).sort());
+    setProducts(prev => prev.map(p => p.category === oldCategory ? { ...p, category: upperNewCategory } : p));
   };
 
   const deleteCategory = async (category: string) => {
@@ -281,21 +296,27 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const addUnitOfMeasure = async (unit: string) => {
-    if (unit && !unitsOfMeasure.includes(unit)) {
-        await addDoc(collection(db, 'unitsOfMeasure'), { name: unit });
-        setUnitsOfMeasure(prev => [...prev, unit].sort());
+    const upperUnit = unit.toUpperCase();
+    if (upperUnit && !unitsOfMeasure.includes(upperUnit)) {
+       const q = query(collection(db, 'unitsOfMeasure'), where("name", "==", upperUnit));
+        const snapshot = await getDocs(q);
+        if(snapshot.empty){
+          await addDoc(collection(db, 'unitsOfMeasure'), { name: upperUnit });
+          setUnitsOfMeasure(prev => [...prev, upperUnit].sort());
+        }
     }
   };
 
   const updateUnitOfMeasure = async (oldUnit: string, newUnit: string) => {
-    if (!newUnit || newUnit === oldUnit) return;
+    const upperNewUnit = newUnit.toUpperCase();
+    if (!upperNewUnit || upperNewUnit === oldUnit) return;
     const q = query(collection(db, 'unitsOfMeasure'), where("name", "==", oldUnit));
     const snapshot = await getDocs(q);
     if (!snapshot.empty) {
-        await updateDoc(snapshot.docs[0].ref, { name: newUnit });
+        await updateDoc(snapshot.docs[0].ref, { name: upperNewUnit });
     }
-    setUnitsOfMeasure(prev => prev.map(u => u === oldUnit ? newUnit : u).sort());
-    setProducts(prev => prev.map(p => p.unitOfMeasure === oldUnit ? { ...p, unitOfMeasure: newUnit } : p));
+    setUnitsOfMeasure(prev => prev.map(u => u === oldUnit ? upperNewUnit : u).sort());
+    setProducts(prev => prev.map(p => p.unitOfMeasure === oldUnit ? { ...p, unitOfMeasure: upperNewUnit } : p));
   };
 
   const deleteUnitOfMeasure = async (unit: string) => {
