@@ -171,7 +171,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     setProducts(productsWithPrice);
 
     if (productsWithPrice.length > 0) {
-      const maxId = Math.max(...productsWithPrice.map(p => p.id));
+      const maxId = Math.max(...productsWithPrice.map(p => p.id).filter(id => !isNaN(id) && id !== null));
       setProductCounter(maxId + 1);
     } else {
       setProductCounter(1);
