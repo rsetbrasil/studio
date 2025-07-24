@@ -63,6 +63,8 @@ export default function PosComponent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const canFinalizeSale = user?.role === 'Administrador' || user?.role === 'Gerente';
+
   const stockActions = useMemo(() => ({ increaseStock, decreaseStock, getProductById }), [increaseStock, decreaseStock, getProductById]);
 
   const total = useMemo(() => {
@@ -128,7 +130,7 @@ export default function PosComponent() {
     }
     
     const itemsForStockCheck = cart.map(item => ({
-        id: item.id,
+        id: String(item.id),
         quantity: item.quantity,
     }));
 
@@ -211,6 +213,7 @@ export default function PosComponent() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "F2") {
         event.preventDefault();
+        if(!canFinalizeSale) return;
         if (cart.length > 0) {
           setPaymentModalOpen(true);
         } else {
@@ -247,7 +250,7 @@ export default function PosComponent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder]);
+  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -427,7 +430,7 @@ export default function PosComponent() {
                     F4
                 </kbd>
             </Button>
-            <Button size="sm" onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0}>
+            <Button size="sm" onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0 || !canFinalizeSale}>
               <CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Venda
               <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                 F2
@@ -540,4 +543,5 @@ export default function PosComponent() {
         </div>
       </div>
   );
-}
+
+    
