@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useMemo, forwardRef } from 'react';
-import { Search } from 'lucide-react';
 import { useProducts, type Product } from '@/context/ProductsContext';
 import { Command, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandInput } from '@/components/ui/command';
 import { formatBRL } from '@/lib/utils';
@@ -38,13 +37,13 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Escape') {
+            e.preventDefault();
             setSearchTerm('');
         }
     }
 
     return (
         <Command shouldFilter={false} className="relative flex-1 min-w-[300px] overflow-visible">
-            
             <CommandInput
                 ref={ref}
                 placeholder="Buscar produto por nome ou código..."
@@ -66,7 +65,7 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
                                 onSelect={handleSelect}
                             >
                                 <div className="flex justify-between w-full">
-                                <span>{product.name}</span>
+                                <span>{product.id} - {product.name}</span>
                                 <span className="text-muted-foreground">
                                     Estoque: {product.stock} | {formatBRL(product.packPrice)}
                                 </span>
