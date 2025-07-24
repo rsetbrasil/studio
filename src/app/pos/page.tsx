@@ -39,6 +39,7 @@ type CartItem = Product & {
   cartId: string;
   quantity: number;
   salePrice: number;
+  unitOfSale: string;
 };
 
 export default function PosPage() {
@@ -59,7 +60,6 @@ export default function PosPage() {
 
   const stockActions = { increaseStock, decreaseStock, getProductById };
 
-
   useEffect(() => {
     searchInputRef.current?.focus();
 
@@ -74,6 +74,7 @@ export default function PosPage() {
                 stock: product?.stock ?? item.quantity,
                 cartId: `${item.id}-${index}`,
                 salePrice: item.price,
+                unitOfSale: product?.unitOfMeasure || "Unidade",
             }
         });
         setCart(cartItems);
@@ -168,30 +169,51 @@ export default function PosPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart.length, toast, handleCreateOrder]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.length, toast]);
 
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
+    onAfterPrint: () => {
+        setCart([]);
+        setLastSale(null);
+    },
   });
+  
+  useEffect(() => {
+    if(lastSale && receiptRef.current) {
+        handlePrint();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastSale]);
 
   const handleProductSelect = (product: Product) => {
     setProductForQuantity(product);
   };
   
-  const handleAddToCart = (product: Product, quantity: number, price: number) => {
+  const handleAddToCart = (product: Product, quantity: number, price: number, unitOfSale: string) => {
     if (quantity <= 0) {
         handleCloseQuantityDialog();
         return;
     }
 
-    const existingCartItem = cart.find(item => item.id === product.id && item.salePrice === price);
-    const quantityInCart = existingCartItem ? existingCartItem.quantity : 0;
-    const totalQuantity = quantityInCart + quantity;
+    const existingCartItem = cart.find(item => item.id === product.id && item.salePrice === price && item.unitOfSale === unitOfSale);
+    
+    const quantityInCart = cart
+        .filter(item => item.id === product.id)
+        .reduce((acc, item) => {
+            const quantityInPacks = item.unitOfSale === product.unitOfMeasure ? item.quantity : item.quantity / product.unitsPerPack;
+            return acc + quantityInPacks;
+        }, 0);
+    
+    const newQuantityInPacks = unitOfSale === product.unitOfMeasure ? quantity : quantity / product.unitsPerPack;
+    const totalQuantityInPacks = quantityInCart + newQuantityInPacks;
 
-    if (totalQuantity > product.stock) {
+
+    if (totalQuantityInPacks > product.stock) {
         toast({
             title: "Estoque Insuficiente",
-            description: `A quantidade total (${totalQuantity}) para ${product.name} excede o estoque (${product.stock}).`,
+            description: `A quantidade total para ${product.name} excede o estoque de ${product.stock} ${product.unitOfMeasure}(s).`,
             variant: "destructive",
         });
         return;
@@ -199,19 +221,18 @@ export default function PosPage() {
     
     setCart((currentCart) => {
         if (existingCartItem) {
-            // Update quantity of existing item
             return currentCart.map((item) =>
                 item.cartId === existingCartItem.cartId
                     ? { ...item, quantity: item.quantity + quantity }
                     : item
             );
         } else {
-            // Add new item to cart
             const newItem: CartItem = {
                 ...product,
                 cartId: `${product.id}-${Date.now()}`,
                 quantity: quantity,
                 salePrice: price,
+                unitOfSale: unitOfSale
             };
             return [...currentCart, newItem];
         }
@@ -295,7 +316,7 @@ export default function PosPage() {
 
     const saleItems = cart.map(item => ({
         id: item.id,
-        name: `${item.name} (${item.unitOfMeasure})`.trim(),
+        name: `${item.name} (${item.unitOfSale})`.trim(),
         price: item.salePrice,
         quantity: item.quantity,
     }));
@@ -313,9 +334,9 @@ export default function PosPage() {
       description: `Venda registrada para ${customerName}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
     });
     
-    setLastSale({ ...newSale, change });
-    setCart([]);
     setPaymentModalOpen(false);
+    // This will trigger the useEffect to print
+    setLastSale({ ...newSale, change }); 
   };
 
 
@@ -339,7 +360,7 @@ export default function PosPage() {
           <div className="ml-auto flex items-center gap-2">
             {lastSale && (
                 <Button size="sm" onClick={handlePrint} variant="outline">
-                    <Printer className="mr-2 h-4 w-4" /> Imprimir Comprovante
+                    <Printer className="mr-2 h-4 w-4" /> Imprimir Último Comprovante
                 </Button>
             )}
              <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
@@ -378,7 +399,7 @@ export default function PosPage() {
                         <TableCell className="font-medium">{String(index + 1).padStart(2, '0')}</TableCell>
                         <TableCell className="font-medium">
                             {item.name}
-                            <Badge variant="secondary" className="ml-2">{item.unitOfMeasure}</Badge>
+                            <Badge variant="secondary" className="ml-2">{item.unitOfSale}</Badge>
                         </TableCell>
                         <TableCell>
                             <Input
@@ -411,7 +432,7 @@ export default function PosPage() {
                         colSpan={6}
                         className="h-[calc(100vh-250px)] text-center text-muted-foreground"
                         >
-                          {lastSale ? "Venda finalizada. Inicie uma nova venda." : "Nenhum item adicionado."}
+                           Nenhum item adicionado. Inicie uma nova venda.
                         </TableCell>
                     </TableRow>
                     )}
@@ -452,3 +473,4 @@ export default function PosPage() {
     </AppShell>
   );
 }
+

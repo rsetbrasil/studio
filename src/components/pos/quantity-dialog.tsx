@@ -16,29 +16,45 @@ import { Label } from '@/components/ui/label';
 import type { Product } from '@/context/ProductsContext';
 import { formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 type QuantityDialogProps = {
   onClose: () => void;
-  onConfirm: (product: Product, quantity: number, price: number) => void;
+  onConfirm: (product: Product, quantity: number, price: number, unitOfSale: string) => void;
   product: Product;
 };
 
 export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogProps) {
   const [quantity, setQuantity] = useState('1');
   const [priceStr, setPriceStr] = useState('');
-  
+  const [unitOfSale, setUnitOfSale] = useState(product.unitOfMeasure);
+
   const quantityInputRef = useRef<HTMLInputElement>(null);
   const priceInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
 
+  const unitPrice = product.price;
+  const packPrice = product.packPrice;
+  const unitsPerPack = product.unitsPerPack;
+  const packUnitName = product.unitOfMeasure;
+  
+  const isPack = unitOfSale === packUnitName;
+  const stockDisplay = isPack ? product.stock : product.stock * unitsPerPack;
+  const stockUnitDisplay = isPack ? packUnitName : 'Unidade';
+
   useEffect(() => {
-    setPriceStr(formatCurrencyInput(String(product.packPrice * 100)));
+    setPriceStr(formatCurrencyInput(String(packPrice * 100)));
     setTimeout(() => {
       quantityInputRef.current?.focus();
       quantityInputRef.current?.select();
     }, 100);
-  }, [product]);
+  }, [product, packPrice]);
+  
+  useEffect(() => {
+      const newPrice = isPack ? packPrice : unitPrice;
+      setPriceStr(formatCurrencyInput(String(newPrice * 100)));
+  }, [isPack, packPrice, unitPrice]);
 
   const handleConfirm = () => {
     const numQuantity = parseInt(quantity, 10);
@@ -53,7 +69,7 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
       return;
     }
     
-    onConfirm(product, numQuantity, numPrice);
+    onConfirm(product, numQuantity, numPrice, unitOfSale);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -74,13 +90,26 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
           <DialogHeader>
             <DialogTitle>{product.name}</DialogTitle>
             <DialogDescription>
-              Estoque disponível: {product.stock} {product.unitOfMeasure}(s)
+              Estoque disponível: {stockDisplay} {stockUnitDisplay}(s)
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
              <div className="space-y-2">
+                <Label>Vender por</Label>
+                 <RadioGroup value={unitOfSale} onValueChange={setUnitOfSale} className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value={packUnitName} id={`r-${packUnitName}`} />
+                        <Label htmlFor={`r-${packUnitName}`}>{packUnitName}</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="Unidade" id="r-unidade" />
+                        <Label htmlFor="r-unidade">Unidade</Label>
+                    </div>
+                </RadioGroup>
+             </div>
+             <div className="space-y-2">
               <Label htmlFor="quantity">
-                Quantidade ({product.unitOfMeasure})
+                Quantidade ({unitOfSale})
               </Label>
               <Input
                 id="quantity"
@@ -89,11 +118,11 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
                 onChange={(e) => setQuantity(e.target.value)}
                 type="number"
                 min="1"
-                max={product.stock}
+                max={stockDisplay}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price">Preço de Venda (por {product.unitOfMeasure})</Label>
+              <Label htmlFor="price">Preço de Venda (por {unitOfSale})</Label>
               <Input
                 id="price"
                 ref={priceInputRef}
@@ -112,3 +141,4 @@ export function QuantityDialog({ onClose, onConfirm, product }: QuantityDialogPr
     </Dialog>
   );
 }
+
