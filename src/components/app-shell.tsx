@@ -10,6 +10,7 @@ import {
   Home,
   Landmark,
   ListOrdered,
+  LogOut,
   Package,
   PanelLeft,
   Settings,
@@ -141,30 +142,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="relative ml-auto flex-1 md:grow-0" />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className="overflow-hidden rounded-full"
-              >
-                 <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Link href="/account" className="w-full h-full">Configurações</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>Suporte</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                 <Link href="/" className="w-full h-full">Sair</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="relative ml-auto flex items-center gap-2 md:grow-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="overflow-hidden rounded-full"
+                >
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link href="/account" className="w-full h-full">Configurações</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>Suporte</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button asChild variant="outline" size="sm">
+               <Link href="/">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </Link>
+            </Button>
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto">
           {children}
