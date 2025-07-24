@@ -73,6 +73,7 @@ export default function FinancialPage() {
   };
 
   return (
+    <>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
 
         <Card>
@@ -218,5 +219,6 @@ export default function FinancialPage() {
         onClose={() => setDialogOpen(false)}
         onConfirm={handleConfirm}
       />
+    </>
   );
 }

@@ -97,6 +97,7 @@ export default function UsersPage() {
 
 
   return (
+    <>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -189,5 +190,6 @@ export default function UsersPage() {
         onConfirm={handleConfirmDelete}
         user={deletingUser}
        />
+    </>
   );
 }
