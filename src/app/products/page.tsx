@@ -152,25 +152,18 @@ export default function ProductsPage() {
             return;
           }
 
-          const parsedProducts = (results.data as CsvProductImport[]).reduce((acc: ProductFormData[], row) => {
-              const name = row.nome;
+          const parsedProducts = (results.data as CsvProductImport[]).map(row => ({
+            name: row.nome || "",
+            category: row.categoria || "Sem Categoria",
+            unitOfMeasure: row.unidade_medida || "Unidade",
+            cost: Number(row.preco_compra_fardo) || 0,
+            packPrice: Number(row.preco_venda_fardo) || 0,
+            unitsPerPack: Number(row.unidades_por_fardo) || 1,
+            stock: Number(row.estoque_fardo) || 0,
+          })).filter(p => p.name.trim() !== "");
+          
 
-              if (name && name.trim() !== "") {
-                acc.push({
-                  name: name,
-                  category: row.categoria || "Sem Categoria",
-                  unitOfMeasure: row.unidade_medida || "Unidade",
-                  cost: Number(row.preco_compra_fardo) || 0,
-                  packPrice: Number(row.preco_venda_fardo) || 0,
-                  unitsPerPack: Number(row.unidades_por_fardo) || 1,
-                  stock: Number(row.estoque_fardo) || 0,
-                });
-              }
-              return acc;
-            }, [])
-            .filter((p): p is ProductFormData => !!p.name);
-
-          await loadProducts(parsedProducts);
+          await loadProducts(parsedProducts as ProductFormData[]);
         },
       });
       if (event.target) {
