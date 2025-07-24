@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +22,12 @@ import { useFinancial } from "@/context/FinancialContext";
 import { useCashRegister } from "@/context/CashRegisterContext";
 import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/context/ProductsContext";
+import { useCompany, type CompanyInfo } from "@/context/CompanyContext";
 
 export default function AccountPage() {
+  const { companyInfo, updateCompanyInfo, isMounted } = useCompany();
+  const [localCompanyInfo, setLocalCompanyInfo] = useState<CompanyInfo>(companyInfo);
+  
   const [isResetDataDialogOpen, setResetDataDialogOpen] = useState(false);
   const [isResetProductsDialogOpen, setResetProductsDialogOpen] = useState(false);
 
@@ -33,13 +37,31 @@ export default function AccountPage() {
   const { resetHistory } = useCashRegister();
   const { resetProducts } = useProducts();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if(isMounted) {
+      setLocalCompanyInfo(companyInfo);
+    }
+  }, [companyInfo, isMounted]);
+
+  const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setLocalCompanyInfo(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveChanges = () => {
+    updateCompanyInfo(localCompanyInfo);
+    toast({
+      title: "Informações da Empresa Salvas!",
+      description: "Os dados foram atualizados com sucesso.",
+    });
+  };
 
   const handleResetData = () => {
     resetSales();
     resetOrders();
     resetTransactions();
     resetHistory();
-    // Note: resetProducts is not called here anymore, as it's separate.
     setResetDataDialogOpen(false);
     toast({
       title: "Dados Operacionais Redefinidos!",
@@ -86,6 +108,50 @@ export default function AccountPage() {
           </CardContent>
           <CardFooter className="border-t px-6 py-4">
             <Button>Salvar</Button>
+          </CardFooter>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações da Empresa</CardTitle>
+            <CardDescription>
+              Essas informações serão exibidas nos comprovantes de venda.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="tradeName">Nome Fantasia</Label>
+                <Input name="tradeName" id="tradeName" value={localCompanyInfo.tradeName} onChange={handleCompanyInfoChange} />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="businessName">Razão Social</Label>
+                <Input name="businessName" id="businessName" value={localCompanyInfo.businessName} onChange={handleCompanyInfoChange} />
+              </div>
+              <div className="grid gap-2 col-span-2">
+                <Label htmlFor="address">Endereço</Label>
+                <Input name="address" id="address" value={localCompanyInfo.address} onChange={handleCompanyInfoChange} />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="cityStateZip">Cidade/Estado - CEP</Label>
+                <Input name="cityStateZip" id="cityStateZip" value={localCompanyInfo.cityStateZip} onChange={handleCompanyInfoChange} />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="phone">Telefone</Label>
+                <Input name="phone" id="phone" value={localCompanyInfo.phone} onChange={handleCompanyInfoChange} />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="cnpj">CNPJ</Label>
+                <Input name="cnpj" id="cnpj" value={localCompanyInfo.cnpj} onChange={handleCompanyInfoChange} />
+              </div>
+               <div className="grid gap-2">
+                <Label htmlFor="ie">Inscrição Estadual (IE)</Label>
+                <Input name="ie" id="ie" value={localCompanyInfo.ie} onChange={handleCompanyInfoChange} />
+              </div>
+            </form>
+          </CardContent>
+          <CardFooter className="border-t px-6 py-4">
+            <Button onClick={handleSaveChanges}>Salvar Alterações</Button>
           </CardFooter>
         </Card>
 

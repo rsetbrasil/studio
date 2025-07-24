@@ -4,6 +4,7 @@
 import React from 'react';
 import { formatBRL } from '@/lib/utils';
 import type { Sale, SaleItem } from '@/context/SalesContext';
+import { useCompany } from '@/context/CompanyContext';
 
 type ReceiptProps = {
   sale: Sale & { change: number, totalPaid: number };
@@ -27,19 +28,20 @@ const ReceiptItem = ({ item }: { item: SaleItem }) => (
 
 export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
   ({ sale }, ref) => {
+    const { companyInfo } = useCompany();
     const subtotal = sale.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     return (
       <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container relative">
         <div className="text-center mb-2">
-            <h1 className="text-sm font-bold">NOME DE FANTASIA</h1>
-            <p>NOME DA RAZÃO SOCIAL COM. DE INFORMÁTICA LTDA-ME</p>
-            <p>Rua dos Equipamentos, 9 - Sobreloja 101 e 102</p>
-            <p>Centro - 20000-000 - Rio de Janeiro/RJ</p>
-            <p>(21) 1111-2222 / 3344-5566</p>
+            <h1 className="text-sm font-bold">{companyInfo.tradeName}</h1>
+            <p>{companyInfo.businessName}</p>
+            <p>{companyInfo.address}</p>
+            <p>{companyInfo.cityStateZip}</p>
+            <p>{companyInfo.phone}</p>
             <div className="flex justify-between mt-1 px-1">
-              <span>CNPJ: 11.111.111/0001-11</span>
-              <span>IE: 11.222.333</span>
+              <span>CNPJ: {companyInfo.cnpj}</span>
+              <span>IE: {companyInfo.ie}</span>
             </div>
         </div>
         
