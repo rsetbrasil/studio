@@ -80,6 +80,43 @@ export default function PosPage() {
     }
   }, [searchParams, getOrderById, updateOrderStatus, getProductById, toast]);
 
+  const handleCreateOrder = () => {
+    if (cart.length === 0) {
+      toast({
+        title: "Carrinho Vazio",
+        description: "Adicione produtos ao carrinho antes de criar um pedido.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    for (const item of cart) {
+        const productInStock = getProductById(item.id);
+        if (!productInStock || item.quantity > productInStock.stock) {
+            toast({
+                title: "Pedido não criado",
+                description: `Estoque de ${item.name} insuficiente.`,
+                variant: "destructive",
+            });
+            return;
+        }
+    }
+
+    const newOrder = {
+      customer: customerName || "Cliente Balcão",
+      items: cart,
+      total: total,
+    };
+    addOrder(newOrder);
+
+    toast({
+      title: "Pedido Criado!",
+      description: `O pedido para ${customerName} foi salvo e pode ser visto na página de Pedidos.`,
+    });
+
+    setCart([]);
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "F2") {
@@ -93,6 +130,9 @@ export default function PosPage() {
                 variant: "destructive"
             });
         }
+      } else if (event.key === "F4") {
+        event.preventDefault();
+        handleCreateOrder();
       }
     };
 
@@ -100,7 +140,7 @@ export default function PosPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart.length, toast]);
+  }, [cart.length, toast, handleCreateOrder]);
 
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
@@ -233,42 +273,6 @@ export default function PosPage() {
     setPaymentModalOpen(false);
   };
 
-  const handleCreateOrder = () => {
-    if (cart.length === 0) {
-      toast({
-        title: "Carrinho Vazio",
-        description: "Adicione produtos ao carrinho antes de criar um pedido.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    for (const item of cart) {
-        const productInStock = getProductById(item.id);
-        if (!productInStock || item.quantity > productInStock.stock) {
-            toast({
-                title: "Pedido não criado",
-                description: `Estoque de ${item.name} insuficiente.`,
-                variant: "destructive",
-            });
-            return;
-        }
-    }
-
-    const newOrder = {
-      customer: customerName || "Cliente Balcão",
-      items: cart,
-      total: total,
-    };
-    addOrder(newOrder);
-
-    toast({
-      title: "Pedido Criado!",
-      description: `O pedido para ${customerName} foi salvo e pode ser visto na página de Pedidos.`,
-    });
-
-    setCart([]);
-  };
 
   return (
     <AppShell>
@@ -295,6 +299,9 @@ export default function PosPage() {
             )}
              <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
                 <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
+                <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                    F4
+                </kbd>
             </Button>
             <Button size="sm" onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0}>
               <CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Venda
