@@ -42,7 +42,22 @@ type ProductsContextType = {
   deleteUnitOfMeasure: (unit: string) => void;
 };
 
-const initialProducts: Omit<Product, 'price'>[] = [];
+const initialProducts: Omit<Product, 'price'>[] = [
+    { id: 1, name: "AGUA C/GAS CRYSTAL 500ML", category: "AGUA", unitOfMeasure: "FARDO", cost: 15.00, packPrice: 21.00, unitsPerPack: 12, stock: 50 },
+    { id: 2, name: "AGUA S/GAS CRYSTAL 500ML", category: "AGUA", unitOfMeasure: "FARDO", cost: 12.00, packPrice: 18.00, unitsPerPack: 12, stock: 60 },
+    { id: 3, name: "COCA-COLA 2L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 45.00, packPrice: 54.00, unitsPerPack: 6, stock: 40 },
+    { id: 4, name: "COCA-COLA 350ML", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 28.00, packPrice: 36.00, unitsPerPack: 12, stock: 80 },
+    { id: 5, name: "GUARANA ANTARCTICA 2L", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 42.00, packPrice: 51.00, unitsPerPack: 6, stock: 35 },
+    { id: 6, name: "GUARANA ANTARCTICA 350ML", category: "REFRIGERANTE", unitOfMeasure: "FARDO", cost: 26.00, packPrice: 33.00, unitsPerPack: 12, stock: 70 },
+    { id: 7, name: "CERV SKOL 350ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 25.00, packPrice: 31.00, unitsPerPack: 12, stock: 120 },
+    { id: 8, name: "CERV BRAHMA 350ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 25.50, packPrice: 31.50, unitsPerPack: 12, stock: 110 },
+    { id: 9, name: "CERV HEINEKEN 330ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 48.00, packPrice: 60.00, unitsPerPack: 12, stock: 90 },
+    { id: 10, name: "SUCO LARANJA DEL VALLE 1L", category: "SUCO", unitOfMeasure: "CAIXA", cost: 30.00, packPrice: 42.00, unitsPerPack: 6, stock: 45 },
+    { id: 11, name: "SUCO UVA DEL VALLE 1L", category: "SUCO", unitOfMeasure: "CAIXA", cost: 30.00, packPrice: 42.00, unitsPerPack: 6, stock: 40 },
+    { id: 12, name: "ENERGETICO RED BULL 250ML", category: "ENERGETICO", unitOfMeasure: "FARDO", cost: 96.00, packPrice: 120.00, unitsPerPack: 24, stock: 30 },
+    { id: 13, name: "GATORADE LIMAO 500ML", category: "ISOTONICO", unitOfMeasure: "FARDO", cost: 33.00, packPrice: 45.00, unitsPerPack: 6, stock: 25 },
+];
+
 
 const calculatePrice = (packPrice: number, unitsPerPack: number) => {
     if(!unitsPerPack || unitsPerPack === 0) return packPrice;
@@ -54,15 +69,19 @@ const initialProductsWithPrice = initialProducts.map(p => ({
     price: calculatePrice(p.packPrice, p.unitsPerPack)
 }))
 
+const initialCategories = Array.from(new Set(initialProducts.map(p => p.category))).sort();
+const initialUnits = Array.from(new Set(initialProducts.map(p => p.unitOfMeasure))).sort();
+const initialMaxId = Math.max(0, ...initialProducts.map(p => p.id));
+
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [productCounter, setProductCounter] = useState(1);
+  const [products, setProducts] = useState<Product[]>(initialProductsWithPrice);
+  const [productCounter, setProductCounter] = useState(initialMaxId + 1);
 
-  const [categories, setCategories] = useState<string[]>([]);
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(initialUnits);
   
   const { toast } = useToast();
 
