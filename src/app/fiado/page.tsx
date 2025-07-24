@@ -90,10 +90,13 @@ export default function FiadoPage() {
   };
 
   const handlePrintSaleReceipt = (saleId: string) => {
-    const sale = getSaleById(saleId);
+    const sale = getSaleById(saleId); // Fetch the most recent sale data
     if (sale) {
       setPaymentToPrint(null);
-       setSaleToPrint({ ...sale, change: 0, totalPaid: sale.amount });
+      // For a finalized sale, totalPaid would be the sale amount and change 0, unless more complex logic is needed
+      const totalPaid = sale.status === 'Finalizada' ? sale.amount : 0;
+      const change = 0;
+      setSaleToPrint({ ...sale, change, totalPaid });
     }
   };
   
@@ -111,7 +114,7 @@ export default function FiadoPage() {
 
   return (
     <>
-      <div className="p-4 sm:px-6 sm:py-4">
+      <div className="p-4 sm:px-6 sm:py-4 print:hidden">
         <Card>
           <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-1">

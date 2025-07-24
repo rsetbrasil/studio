@@ -31,7 +31,6 @@ const ReceiptItem = ({ item }: { item: SaleItem }) => (
 export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
   ({ sale, user }, ref) => {
     const { companyInfo } = useCompany();
-    const subtotal = sale.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     return (
       <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container relative">
