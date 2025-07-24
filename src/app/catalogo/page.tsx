@@ -11,14 +11,34 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useProducts, type Product } from "@/context/ProductsContext";
+import { type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { Search, Package } from "lucide-react";
 import { AppLogo } from "@/components/icons";
+import { db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 export default function CatalogPage() {
-  const { products, isMounted } = useProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  
+  useEffect(() => {
+    const fetchProducts = async () => {
+        try {
+            const productsCollection = collection(db, "products");
+            const productsSnapshot = await getDocs(productsCollection);
+            const productsList = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+            setProducts(productsList);
+        } catch(error) {
+            console.error("Failed to fetch products for catalog", error);
+        } finally {
+            setIsMounted(true);
+        }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm) {

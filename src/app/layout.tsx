@@ -13,6 +13,7 @@ import { CompanyProvider } from "@/context/CompanyContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { AppShell } from "@/components/app-shell";
 import { FiadoProvider } from "@/context/FiadoContext";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -38,9 +39,7 @@ export default function RootLayout({
                     <FinancialProvider>
                       <FiadoProvider>
                         <CashRegisterProvider>
-                          <AppShell>
                             {children}
-                          </AppShell>
                         </CashRegisterProvider>
                       </FiadoProvider>
                     </FinancialProvider>
