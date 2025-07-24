@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useSales, Sale } from './SalesContext';
 
 export type CashRegisterSession = {
@@ -33,14 +33,60 @@ type CashRegisterContextType = {
 
 const CashRegisterContext = createContext<CashRegisterContextType | undefined>(undefined);
 
+const getInitialState = (): CashRegisterState => {
+    if (typeof window !== 'undefined') {
+        const storedState = localStorage.getItem('cashRegisterState');
+        if (storedState) {
+            return JSON.parse(storedState);
+        }
+    }
+    return { isOpen: false, currentSession: null };
+};
+
+const getInitialHistory = (): CashRegisterSession[] => {
+    if (typeof window !== 'undefined') {
+        const storedHistory = localStorage.getItem('cashRegisterHistory');
+        if (storedHistory) {
+            return JSON.parse(storedHistory);
+        }
+    }
+    return [];
+};
+
+const getInitialCounter = (): number => {
+    if (typeof window !== 'undefined') {
+        const storedCounter = localStorage.getItem('cashRegisterCounter');
+        if (storedCounter) {
+            return JSON.parse(storedCounter);
+        }
+    }
+    return 1;
+};
+
+
 export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   const { sales } = useSales();
-  const [state, setState] = useState<CashRegisterState>({
-    isOpen: false,
-    currentSession: null,
-  });
-  const [history, setHistory] = useState<CashRegisterSession[]>([]);
-  const [sessionCounter, setSessionCounter] = useState(1);
+  const [state, setState] = useState<CashRegisterState>(getInitialState);
+  const [history, setHistory] = useState<CashRegisterSession[]>(getInitialHistory);
+  const [sessionCounter, setSessionCounter] = useState<number>(getInitialCounter);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // This ensures we only read from localStorage on the client-side after hydration.
+    setState(getInitialState());
+    setHistory(getInitialHistory());
+    setSessionCounter(getInitialCounter());
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('cashRegisterState', JSON.stringify(state));
+      localStorage.setItem('cashRegisterHistory', JSON.stringify(history));
+      localStorage.setItem('cashRegisterCounter', JSON.stringify(sessionCounter));
+    }
+  }, [state, history, sessionCounter, isLoaded]);
+
 
   const openRegister = (openingBalance: number) => {
     if (state.isOpen) return;
@@ -57,7 +103,22 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   const getSalesForCurrentSession = () => {
     if (!state.currentSession) return [];
 
-    return sales.filter(sale => new Date(sale.date) >= new Date(state.currentSession!.openingTime));
+    const openingTime = new Date(state.currentSession.openingTime);
+
+    // Find the corresponding session in history if it exists
+    const closedSession = history.find(h => h.openingTime === state.currentSession?.openingTime);
+    
+    // If the session is closed, filter sales until its closing time.
+    if (closedSession?.closingTime) {
+      const closingTime = new Date(closedSession.closingTime);
+      return sales.filter(sale => {
+        const saleDate = new Date(sale.date);
+        return saleDate >= openingTime && saleDate <= closingTime;
+      });
+    }
+
+    // If the session is still open, filter all sales since it was opened.
+    return sales.filter(sale => new Date(sale.date) >= openingTime);
   }
 
   const closeRegister = () => {
@@ -87,6 +148,11 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
     setSessionCounter(1);
     if(state.isOpen){
       setState({ isOpen: false, currentSession: null });
+    }
+     if (typeof window !== 'undefined') {
+        localStorage.removeItem('cashRegisterState');
+        localStorage.removeItem('cashRegisterHistory');
+        localStorage.removeItem('cashRegisterCounter');
     }
   }
 
