@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResetDataDialog } from "@/components/account/reset-data-dialog";
+import { ResetProductsDialog } from "@/components/account/reset-products-dialog";
 import { useSales } from "@/context/SalesContext";
 import { useOrders } from "@/context/OrdersContext";
 import { useFinancial } from "@/context/FinancialContext";
@@ -23,7 +24,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useProducts } from "@/context/ProductsContext";
 
 export default function AccountPage() {
-  const [isResetDialogOpen, setResetDialogOpen] = useState(false);
+  const [isResetDataDialogOpen, setResetDataDialogOpen] = useState(false);
+  const [isResetProductsDialogOpen, setResetProductsDialogOpen] = useState(false);
+
   const { resetSales } = useSales();
   const { resetOrders } = useOrders();
   const { resetTransactions } = useFinancial();
@@ -36,11 +39,20 @@ export default function AccountPage() {
     resetOrders();
     resetTransactions();
     resetHistory();
-    resetProducts();
-    setResetDialogOpen(false);
+    // Note: resetProducts is not called here anymore, as it's separate.
+    setResetDataDialogOpen(false);
     toast({
-      title: "Dados Redefinidos!",
-      description: "Todas as informações operacionais (vendas, pedidos, financeiro, caixa e produtos) foram zeradas.",
+      title: "Dados Operacionais Redefinidos!",
+      description: "As informações de vendas, pedidos, financeiro e caixa foram zeradas.",
+    });
+  };
+
+  const handleResetProducts = () => {
+    resetProducts();
+    setResetProductsDialogOpen(false);
+    toast({
+      title: "Produtos Redefinidos!",
+      description: "Todos os dados de produtos, categorias e unidades de medida foram zerados.",
     });
   };
 
@@ -112,20 +124,35 @@ export default function AccountPage() {
               Ações irreversíveis. Tenha certeza antes de prosseguir.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button variant="destructive" onClick={() => setResetDialogOpen(true)}>
-              Zerar Dados do Sistema
-            </Button>
-            <p className="text-sm text-muted-foreground mt-2">
-              Esta ação irá apagar permanentemente todas as vendas, pedidos, transações financeiras, histórico de caixa e produtos.
-            </p>
+          <CardContent className="space-y-4">
+            <div>
+              <Button variant="destructive" onClick={() => setResetProductsDialogOpen(true)}>
+                Zerar Cadastro de Produtos
+              </Button>
+              <p className="text-sm text-muted-foreground mt-2">
+                Esta ação irá apagar permanentemente todos os produtos, categorias e unidades de medida. Outros dados como vendas e financeiro não serão afetados.
+              </p>
+            </div>
+            <div>
+              <Button variant="destructive" onClick={() => setResetDataDialogOpen(true)}>
+                Zerar Dados Operacionais
+              </Button>
+              <p className="text-sm text-muted-foreground mt-2">
+                Esta ação irá apagar permanentemente todas as vendas, pedidos, transações financeiras e histórico de caixa. O cadastro de produtos não será afetado.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
       <ResetDataDialog
-        isOpen={isResetDialogOpen}
-        onClose={() => setResetDialogOpen(false)}
+        isOpen={isResetDataDialogOpen}
+        onClose={() => setResetDataDialogOpen(false)}
         onConfirm={handleResetData}
+      />
+      <ResetProductsDialog
+        isOpen={isResetProductsDialogOpen}
+        onClose={() => setResetProductsDialogOpen(false)}
+        onConfirm={handleResetProducts}
       />
     </AppShell>
   );

@@ -14,22 +14,21 @@ import {
 } from '@/components/ui/alert-dialog';
 import { buttonVariants } from '@/components/ui/button';
 
-type ResetDataDialogProps = {
+type ResetProductsDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
 };
 
-export function ResetDataDialog({ isOpen, onClose, onConfirm }: ResetDataDialogProps) {
+export function ResetProductsDialog({ isOpen, onClose, onConfirm }: ResetProductsDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+          <AlertDialogTitle>Zerar Cadastro de Produtos?</AlertDialogTitle>
           <AlertDialogDescription>
             Esta ação não pode ser desfeita. Isso irá apagar permanentemente
-            todos os dados de vendas, pedidos, transações financeiras e histórico de caixa.
-            O cadastro de produtos não será afetado.
+            todos os dados de produtos, categorias e unidades de medida. Outros dados como vendas e financeiro não serão afetados.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -38,7 +37,7 @@ export function ResetDataDialog({ isOpen, onClose, onConfirm }: ResetDataDialogP
             onClick={onConfirm}
             className={buttonVariants({ variant: "destructive" })}
           >
-            Sim, zerar os dados
+            Sim, zerar os produtos
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
