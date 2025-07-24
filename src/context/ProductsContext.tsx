@@ -8,6 +8,7 @@ import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch, que
 
 export type Product = {
   id: string; // Firestore ID is a string
+  code: number; // Sequential product code
   name: string;
   unitOfMeasure: string;
   cost: number;
@@ -19,7 +20,7 @@ export type Product = {
   imageUrl?: string;
 };
 
-type ProductFormData = Omit<Product, 'id' | 'price'>;
+type ProductFormData = Omit<Product, 'id' | 'price' | 'code'>;
 
 type CartItem = {
     id: string;
@@ -35,7 +36,7 @@ type ProductsContextType = {
   increaseStock: (items: CartItem[]) => Promise<void>;
   getProductById: (id: string) => Product | undefined;
   resetProducts: () => Promise<void>;
-  loadProducts: (products: ProductFormData[]) => Promise<void>;
+  loadProducts: (products: Omit<Product, 'id' | 'price'>[]) => Promise<void>;
   isMounted: boolean; // Keep for UI rendering logic, but data loading is async now
   
   categories: string[];
@@ -74,7 +75,8 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const fetchProducts = async () => {
     try {
       const productsCollection = collection(db, "products");
-      const productsSnapshot = await getDocs(productsCollection);
+      const q = query(productsCollection, orderBy("code"));
+      const productsSnapshot = await getDocs(q);
       const productsList = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
       setProducts(productsList);
     } catch (e) {
@@ -122,12 +124,16 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   const addProduct = async (productData: ProductFormData) => {
     try {
+        const maxCode = products.reduce((max, p) => p.code > max ? p.code : max, 0);
+        const newCode = maxCode + 1;
+
         const newProduct = {
             ...productData,
+            code: newCode,
             price: calculatePrice(productData.packPrice, productData.unitsPerPack)
         };
         const docRef = await addDoc(collection(db, "products"), newProduct);
-        setProducts(prev => [...prev, { id: docRef.id, ...newProduct }]);
+        setProducts(prev => [...prev, { id: docRef.id, ...newProduct }].sort((a, b) => a.code - b.code));
         toast({ title: "Produto adicionado com sucesso!" });
     } catch (error) {
         console.error("Error adding product: ", error);
@@ -138,8 +144,12 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
   const updateProduct = async (productId: string, productData: ProductFormData) => {
     try {
         const productRef = doc(db, "products", productId);
+        const productToUpdate = products.find(p => p.id === productId);
+        if(!productToUpdate) throw new Error("Product not found");
+
         const updatedProductData = {
             ...productData,
+            code: productToUpdate.code, // Keep original code
             price: calculatePrice(productData.packPrice, productData.unitsPerPack)
         };
         await updateDoc(productRef, updatedProductData);
@@ -175,7 +185,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  const loadProducts = async (newProducts: ProductFormData[]) => {
+  const loadProducts = async (newProducts: Omit<Product, 'id' | 'price'>[]) => {
       try {
         const batch = writeBatch(db);
         const productsCollection = collection(db, "products");
@@ -202,10 +212,11 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
         }
 
         // Add new products
-        newProducts.forEach(p => {
+        newProducts.forEach((p, index) => {
             const docRef = doc(productsCollection);
             batch.set(docRef, {
                 ...p,
+                code: p.code || (index + 1), // Use provided code or generate sequentially
                 category: p.category.toUpperCase(),
                 unitOfMeasure: p.unitOfMeasure.toUpperCase(),
                 price: calculatePrice(p.packPrice, p.unitsPerPack)
@@ -354,7 +365,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ProductsContext.Provider value={{ 
-      products, addProduct, updateProduct, deleteProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts, isMounted,
+      products, addProduct, updateProduct, deleteProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts: loadProducts as any, isMounted,
       categories, unitsOfMeasure, addCategory, updateCategory, deleteCategory,
       addUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure
     }}>

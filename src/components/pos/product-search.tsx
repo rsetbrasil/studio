@@ -21,14 +21,14 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
       const lowercasedTerm = searchTerm.toLowerCase();
       return allProducts.filter((product) =>
         product.name.toLowerCase().includes(lowercasedTerm) ||
-        String(product.id).toLowerCase().includes(lowercasedTerm)
+        String(product.code).toLowerCase().includes(lowercasedTerm)
       );
     }, [searchTerm, allProducts]);
 
     const handleSelect = (value: string) => {
-      // The value is in the format "product.name product.id"
-      const productId = value.split(' ').pop();
-      const product = allProducts.find((p) => p.id === productId);
+      // The value is in the format "product.name product.code"
+      const productCode = value.split(' ').pop();
+      const product = allProducts.find((p) => String(p.code) === productCode);
       
       if (product) {
         onProductSelect(product);
@@ -65,11 +65,11 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
                             {filteredProducts.map((product) => (
                             <CommandItem
                                 key={product.id}
-                                value={`${product.name} ${product.id}`}
+                                value={`${product.name} ${product.code}`}
                                 onSelect={handleSelect}
                             >
                                 <div className="flex justify-between w-full">
-                                <span>{product.name}</span>
+                                <span>{product.name} (#{product.code})</span>
                                 <span className="text-muted-foreground">
                                     Estoque: {product.stock} | {formatBRL(product.packPrice)}
                                 </span>

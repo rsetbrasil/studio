@@ -24,7 +24,7 @@ import { formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 type ProductDialogProps = {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (productData: Omit<Product, 'id' | 'price'>) => void;
+  onConfirm: (productData: Omit<Product, 'id' | 'price' | 'code'>) => void;
   product?: Product | null;
 };
 
@@ -160,8 +160,8 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
                   <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
               </div>
               <div>
-                  <Label htmlFor="id">Código</Label>
-                  <Input id="id" value={product?.id ? `${product.id}` : ''} readOnly disabled />
+                  <Label htmlFor="code">Código</Label>
+                  <Input id="code" value={product?.code ? String(product.code) : 'Automático'} readOnly disabled />
               </div>
               <div>
                   <Label htmlFor="category">Categoria</Label>
