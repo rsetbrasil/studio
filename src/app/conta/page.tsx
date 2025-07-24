@@ -137,7 +137,7 @@ export default function AccountPage() {
           <CardContent>
              <div className="flex items-center gap-4 mb-6">
                 <Avatar className="h-20 w-20">
-                    <AvatarImage src={localCompanyInfo.logoUrl} alt="Logo da Empresa" />
+                    <AvatarImage src={localCompanyInfo.logoUrl || undefined} alt="Logo da Empresa" />
                     <AvatarFallback>Logo</AvatarFallback>
                 </Avatar>
                 <div>
@@ -159,35 +159,35 @@ export default function AccountPage() {
             <form className="grid grid-cols-2 gap-4">
                <div className="grid gap-2">
                 <Label htmlFor="systemName">Nome do Sistema</Label>
-                <Input name="systemName" id="systemName" value={localCompanyInfo.systemName} onChange={handleCompanyInfoChange} />
+                <Input name="systemName" id="systemName" value={localCompanyInfo.systemName || ''} onChange={handleCompanyInfoChange} />
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="tradeName">Nome Fantasia</Label>
-                <Input name="tradeName" id="tradeName" value={localCompanyInfo.tradeName} onChange={handleCompanyInfoChange} />
+                <Input name="tradeName" id="tradeName" value={localCompanyInfo.tradeName || ''} onChange={handleCompanyInfoChange} />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="businessName">Razão Social</Label>
-                <Input name="businessName" id="businessName" value={localCompanyInfo.businessName} onChange={handleCompanyInfoChange} />
+                <Input name="businessName" id="businessName" value={localCompanyInfo.businessName || ''} onChange={handleCompanyInfoChange} />
               </div>
               <div className="grid gap-2 col-span-2">
                 <Label htmlFor="address">Endereço</Label>
-                <Input name="address" id="address" value={localCompanyInfo.address} onChange={handleCompanyInfoChange} />
+                <Input name="address" id="address" value={localCompanyInfo.address || ''} onChange={handleCompanyInfoChange} />
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="cityStateZip">Cidade/Estado - CEP</Label>
-                <Input name="cityStateZip" id="cityStateZip" value={localCompanyInfo.cityStateZip} onChange={handleCompanyInfoChange} />
+                <Input name="cityStateZip" id="cityStateZip" value={localCompanyInfo.cityStateZip || ''} onChange={handleCompanyInfoChange} />
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="phone">Telefone</Label>
-                <Input name="phone" id="phone" value={localCompanyInfo.phone} onChange={handleCompanyInfoChange} />
+                <Input name="phone" id="phone" value={localCompanyInfo.phone || ''} onChange={handleCompanyInfoChange} />
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="cnpj">CNPJ</Label>
-                <Input name="cnpj" id="cnpj" value={localCompanyInfo.cnpj} onChange={handleCompanyInfoChange} />
+                <Input name="cnpj" id="cnpj" value={localCompanyInfo.cnpj || ''} onChange={handleCompanyInfoChange} />
               </div>
                <div className="grid gap-2">
                 <Label htmlFor="ie">Inscrição Estadual (IE)</Label>
-                <Input name="ie" id="ie" value={localCompanyInfo.ie} onChange={handleCompanyInfoChange} />
+                <Input name="ie" id="ie" value={localCompanyInfo.ie || ''} onChange={handleCompanyInfoChange} />
               </div>
             </form>
           </CardContent>
