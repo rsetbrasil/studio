@@ -89,6 +89,7 @@ export default function ProductsPage() {
     Papa.parse<CsvProductImport>(file, {
         header: true,
         skipEmptyLines: true,
+        newline: "", // Auto-detect newlines
         complete: (results) => {
             if(results.errors.length) {
                 toast({
