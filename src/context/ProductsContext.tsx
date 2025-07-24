@@ -51,8 +51,12 @@ const calculatePrice = (packPrice: number, unitsPerPack: number) => {
 }
 
 const initialProducts: Product[] = [];
-const initialCategories: string[] = [];
-const initialUnits: string[] = [];
+const initialCategories: string[] = [
+  "ÀGUAS", "BOMBONIERE", "CERVEJAS", "APERITIVO", "REFRIGERANTES", "DRINKS", 
+  "CACHAÇA", "CARVÃO", "WHISCKS", "CHAMPANHE", "TABACARIA", "VODKAS", 
+  "ENÈRGETICOS", "MANTIMENTOS", "ACHOCOLATADOS", "SUCOS", "VINHOS"
+];
+const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO"];
 
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
