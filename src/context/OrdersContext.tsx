@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import { useProducts } from './ProductsContext';
+// import { useProducts } from './ProductsContext'; // To avoid circular dependency
 import { useToast } from '@/hooks/use-toast';
 
 type OrderItem = {
@@ -25,8 +25,16 @@ type Order = {
 
 type OrdersContextType = {
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'date' | 'status'>) => void;
-  updateOrderStatus: (orderId: string, newStatus: OrderStatus) => void;
+  addOrder: (order: Omit<Order, 'id' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => void;
+  updateOrderStatus: (
+    orderId: string, 
+    newStatus: OrderStatus, 
+    stockActions: { 
+      increaseStock: (items: any[]) => void, 
+      decreaseStock: (items: any[]) => void, 
+      getProductById: (id: number) => any 
+    }
+  ) => void;
   getOrderById: (orderId: string) => Order | undefined;
   resetOrders: () => void;
   ordersLastMonthPercentage: number;
@@ -37,10 +45,10 @@ const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [orderCounter, setOrderCounter] = useState(1);
-  const { decreaseStock, increaseStock, getProductById: getProductStockById } = useProducts();
+  // const { decreaseStock, increaseStock, getProductById: getProductStockById } = useProducts();
   const { toast } = useToast();
 
-  const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>) => {
+  const addOrder = (newOrderData: Omit<Order, 'id' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => {
       const newId = `PED${String(orderCounter).padStart(3, '0')}`;
       const newDate = new Date().toISOString(); 
 
@@ -56,7 +64,15 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       setOrderCounter(prev => prev + 1);
   };
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+  const updateOrderStatus = (
+    orderId: string, 
+    newStatus: OrderStatus,
+    stockActions: { 
+      increaseStock: (items: any[]) => void, 
+      decreaseStock: (items: any[]) => void, 
+      getProductById: (id: number) => any 
+    }
+  ) => {
     setOrders(currentOrders => {
       const orderIndex = currentOrders.findIndex(o => o.id === orderId);
       if (orderIndex === -1) {
@@ -72,17 +88,17 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
 
       // Return items to stock
       if (oldStatus === "Pendente" && newStatus === "Cancelado") {
-        increaseStock(orderToUpdate.items);
+        stockActions.increaseStock(orderToUpdate.items);
       }
       
       if (oldStatus === "Cancelado" && newStatus === "Pendente") {
         const hasEnoughStock = orderToUpdate.items.every(item => {
-          const product = getProductStockById(item.id);
+          const product = stockActions.getProductById(item.id);
           return product && product.stock >= item.quantity;
         });
 
         if (hasEnoughStock) {
-          decreaseStock(orderToUpdate.items);
+          stockActions.decreaseStock(orderToUpdate.items);
         } else {
           toast({
             title: "Estoque insuficiente",
@@ -126,7 +142,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage }}>
+    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage } as any}>
       {children}
     </OrdersContext.Provider>
   );

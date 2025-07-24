@@ -26,17 +26,17 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         <UsersProvider>
-          <ProductsProvider>
+          <SalesProvider>
             <OrdersProvider>
-              <SalesProvider>
+              <ProductsProvider>
                 <FinancialProvider>
                   <CashRegisterProvider>
                     {children}
                   </CashRegisterProvider>
                 </FinancialProvider>
-              </SalesProvider>
+              </ProductsProvider>
             </OrdersProvider>
-          </ProductsProvider>
+          </SalesProvider>
         </UsersProvider>
         <Toaster />
       </body>

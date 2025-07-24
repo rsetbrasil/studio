@@ -39,7 +39,7 @@ type CartItem = Product & {
 };
 
 export default function PosPage() {
-  const { decreaseStock, getProductById } = useProducts();
+  const { decreaseStock, getProductById, increaseStock } = useProducts();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("Cliente Balcão");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -54,6 +54,9 @@ export default function PosPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const stockActions = { increaseStock, decreaseStock, getProductById };
+
+
   useEffect(() => {
     searchInputRef.current?.focus();
 
@@ -67,7 +70,7 @@ export default function PosPage() {
         }));
         setCart(cartItems);
         setCustomerName(order.customer);
-        updateOrderStatus(order.id, 'Finalizado');
+        updateOrderStatus(order.id, 'Finalizado', stockActions);
 
         toast({
           title: "Pedido Carregado",
@@ -107,7 +110,7 @@ export default function PosPage() {
       items: cart,
       total: total,
     };
-    addOrder(newOrder);
+    addOrder(newOrder, decreaseStock);
 
     toast({
       title: "Pedido Criado!",
@@ -261,7 +264,7 @@ export default function PosPage() {
       amount: finalTotal,
       paymentMethod: paymentMethodsUsed,
     };
-    const newSale = addSale(newSaleData);
+    const newSale = addSale(newSaleData, increaseStock);
     
     toast({
       title: "Venda Finalizada!",

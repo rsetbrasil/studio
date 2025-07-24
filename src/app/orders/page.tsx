@@ -27,12 +27,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useOrders, type OrderStatus } from "@/context/OrdersContext";
+import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { CreditCard } from "lucide-react";
 import Link from "next/link";
 
 export default function OrdersPage() {
-  const { orders, updateOrderStatus } = useOrders();
+  const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
+  const { increaseStock, decreaseStock, getProductById } = useProducts();
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -48,7 +50,7 @@ export default function OrdersPage() {
   };
 
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
-    updateOrderStatus(orderId, newStatus);
+    updateOrderStatusFromContext(orderId, newStatus, { increaseStock, decreaseStock, getProductById });
   };
 
   return (
@@ -132,4 +134,3 @@ export default function OrdersPage() {
     </AppShell>
   );
 }
-

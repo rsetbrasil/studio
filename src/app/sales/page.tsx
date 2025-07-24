@@ -20,6 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSales, type Sale } from "@/context/SalesContext";
+import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { XCircle } from "lucide-react";
@@ -27,7 +28,8 @@ import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SalesPage() {
-  const { sales, cancelSale } = useSales();
+  const { sales, cancelSale: cancelSaleFromContext } = useSales();
+  const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const { toast } = useToast();
 
@@ -37,7 +39,7 @@ export default function SalesPage() {
 
   const handleConfirmCancel = () => {
     if (saleToCancel) {
-      cancelSale(saleToCancel.id);
+      cancelSaleFromContext(saleToCancel.id, increaseStock);
       toast({
         title: "Venda Cancelada!",
         description: `A venda ${saleToCancel.id} foi cancelada e os itens retornaram ao estoque.`,

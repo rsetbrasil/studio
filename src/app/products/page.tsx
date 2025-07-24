@@ -23,8 +23,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle, Pencil, Search, Download, Upload } from "lucide-react";
+import { PlusCircle, Pencil, Search, Download, Upload, Trash } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
+import { DeleteProductDialog } from "@/components/products/delete-product-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 type CsvProductImport = {
@@ -39,9 +40,11 @@ type CsvProductImport = {
 };
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct, loadProducts } = useProducts();
+  const { products, addProduct, updateProduct, loadProducts, deleteProduct } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -54,6 +57,23 @@ export default function ProductsPage() {
   const handleCloseDialog = () => {
     setEditingProduct(null);
     setDialogOpen(false);
+  };
+
+  const handleOpenDeleteDialog = (product: Product) => {
+    setDeletingProduct(product);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeletingProduct(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deletingProduct) {
+      deleteProduct(deletingProduct.id);
+    }
+    handleCloseDeleteDialog();
   };
 
   const handleConfirm = (productData: Omit<Product, "id" | "price">) => {
@@ -114,7 +134,6 @@ export default function ProductsPage() {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
-        newline: "",
         complete: (results) => {
           if (results.errors.length) {
             toast({
@@ -127,8 +146,7 @@ export default function ProductsPage() {
             return;
           }
 
-          const parsedProducts = results.data
-            .reduce((acc: Omit<Product, "price">[], row: any) => {
+          const parsedProducts = (results.data as CsvProductImport[]).reduce((acc: Omit<Product, "price">[], row) => {
               const id = Number(row.id);
               const name = row.nome;
 
@@ -163,19 +181,20 @@ export default function ProductsPage() {
     }
   };
 
+
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-            <div>
+          <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex-1">
               <CardTitle>Gestão de Produtos</CardTitle>
               <CardDescription>
                 Visualize, adicione, importe e exporte seus produtos.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="relative w-full sm:max-w-xs">
+            <div className="flex w-full md:w-auto items-center gap-2">
+              <div className="relative flex-1 md:flex-initial md:max-w-xs">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar..."
@@ -201,7 +220,7 @@ export default function ProductsPage() {
               </Button>
               <Button onClick={() => handleOpenDialog()}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Adicionar Produto
+                Adicionar
               </Button>
             </div>
           </CardHeader>
@@ -216,7 +235,7 @@ export default function ProductsPage() {
                   <TableHead>Preço (Fardo)</TableHead>
                   <TableHead>Preço (Unit.)</TableHead>
                   <TableHead>Categoria</TableHead>
-                  <TableHead className="w-[100px]">Ações</TableHead>
+                  <TableHead className="w-[200px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -232,7 +251,7 @@ export default function ProductsPage() {
                       <TableCell>{formatBRL(product.packPrice)}</TableCell>
                       <TableCell>{formatBRL(product.price)}</TableCell>
                       <TableCell>{product.category}</TableCell>
-                      <TableCell>
+                      <TableCell className="space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
@@ -240,6 +259,14 @@ export default function ProductsPage() {
                         >
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
+                        </Button>
+                         <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleOpenDeleteDialog(product)}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          Excluir
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -263,6 +290,12 @@ export default function ProductsPage() {
         onConfirm={handleConfirm}
         product={editingProduct}
       />
+      <DeleteProductDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        product={deletingProduct}
+       />
     </AppShell>
   );
 }

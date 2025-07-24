@@ -2,7 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
-import { useProducts } from './ProductsContext';
+// We are removing useProducts import to avoid circular dependency
+// import { useProducts } from './ProductsContext';
 
 type SaleItem = {
   id: number;
@@ -23,8 +24,8 @@ export type Sale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
-  cancelSale: (saleId: string) => void;
+  addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>, increaseStock: (items: any[]) => void) => Sale;
+  cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
   resetSales: () => void;
   totalSalesValue: number;
   salesLastMonthPercentage: number;
@@ -35,7 +36,6 @@ const initialSales: Sale[] = [];
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
 
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
-  const { increaseStock } = useProducts();
   const [sales, setSales] = useState<Sale[]>(initialSales);
   const [saleCounter, setSaleCounter] = useState(sales.length + 1);
 
@@ -55,7 +55,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
       return sale;
   };
 
-  const cancelSale = (saleId: string) => {
+  const cancelSale = (saleId: string, increaseStock: (items: any[]) => void) => {
     setSales(currentSales => {
         const saleToCancel = currentSales.find(s => s.id === saleId);
         if (saleToCancel && saleToCancel.status === 'Finalizada') {
@@ -93,7 +93,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage }}>
+    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage } as any}>
       {children}
     </SalesContext.Provider>
   );
