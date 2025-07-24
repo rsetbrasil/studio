@@ -13,8 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Banknote, CreditCard, Landmark, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { formatBRL } from '@/lib/utils';
+import { cn, formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
+
 
 const CREDIT_FEE_RATE = 0.03; // 3%
 const DEBIT_FEE_RATE = 0.015; // 1.5%
@@ -35,8 +35,8 @@ type PaymentDialogProps = {
 };
 
 export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }: PaymentDialogProps) {
-  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
   const [paymentAmountStrings, setPaymentAmountStrings] = useState<Record<string, string>>({});
+  const [paymentAmounts, setPaymentAmounts] = useState<Record<string, number>>({});
   const [focusedIndex, setFocusedIndex] = useState(0);
   
   const paymentInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -48,15 +48,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
 
   const cardFee = useMemo(() => {
     let fee = 0;
-    const paymentMethods = Object.keys(paymentAmounts);
-
-    if (paymentMethods.includes('Crédito') && paymentAmounts['Crédito'] > 0) {
+    if (paymentAmounts['Crédito'] > 0) {
         fee = Math.max(fee, paymentAmounts['Crédito'] * CREDIT_FEE_RATE);
     }
-    if (paymentMethods.includes('Débito') && paymentAmounts['Débito'] > 0) {
+    if (paymentAmounts['Débito'] > 0) {
         fee = Math.max(fee, paymentAmounts['Débito'] * DEBIT_FEE_RATE);
     }
-    
     return fee;
   }, [paymentAmounts]);
   
@@ -68,12 +65,12 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
 
   const balance = total - totalPaid;
   const change = balance < -0.001 ? Math.abs(balance) : 0;
-
+  
   useEffect(() => {
     if (isOpen) {
       const initialTotal = subtotal + tax;
       setPaymentAmounts({ 'Dinheiro': initialTotal });
-      setPaymentAmountStrings({ 'Dinheiro': formatBRL(initialTotal) });
+      setPaymentAmountStrings({ 'Dinheiro': formatBRL(initialTotal).replace('R$', '').trim() });
       setFocusedIndex(0); 
     } else {
       setPaymentAmounts({});
@@ -81,6 +78,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       setFocusedIndex(0);
     }
   }, [isOpen, subtotal, tax]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -99,34 +97,28 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     }
   }, [focusedIndex, isOpen]);
 
-  const updatePaymentAmount = (method: string, amount: number) => {
-    setPaymentAmounts(prev => ({...prev, [method]: amount }));
-    setPaymentAmountStrings(prev => ({...prev, [method]: amount.toFixed(2).replace('.',',')}));
-  }
-
   const handleSelectPaymentMethod = (method: string) => {
     setPaymentAmounts(prevAmounts => {
-        const newAmounts = { ...prevAmounts };
-        const isSelected = newAmounts[method] !== undefined;
+        const newAmountsNum: Record<string, number> = { ...prevAmounts };
+        const newAmountsStr: Record<string, string> = {};
+        const isSelected = newAmountsNum[method] !== undefined;
 
         if (isSelected) {
-            if (Object.keys(newAmounts).length > 1) {
-              delete newAmounts[method];
+            if (Object.keys(newAmountsNum).length > 1) {
+              delete newAmountsNum[method];
             }
         } else {
-            const paidSoFar = Object.values(newAmounts).reduce((sum, amt) => sum + (amt || 0), 0);
-            const currentTotal = subtotal + tax; // Use initial total, cardFee will be calculated
+            const paidSoFar = Object.values(newAmountsNum).reduce((sum, amt) => sum + (amt || 0), 0);
+            const currentTotal = subtotal + tax; // Use initial total, cardFee will be calculated later
             const remaining = currentTotal - paidSoFar;
-            newAmounts[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
+            newAmountsNum[method] = Math.max(0, remaining > 0.001 ? remaining : 0);
         }
 
-        const newStrings: Record<string, string> = {};
-        for (const key in newAmounts) {
-            newStrings[key] = (newAmounts[key] || 0).toFixed(2).replace('.', ',');
-        }
-        setPaymentAmountStrings(newStrings);
-        
-        return newAmounts;
+        Object.keys(newAmountsNum).forEach(key => {
+          newAmountsStr[key] = formatCurrencyInput(String(newAmountsNum[key] * 100));
+        });
+        setPaymentAmountStrings(newAmountsStr);
+        return newAmountsNum;
     });
 
     setTimeout(() => {
@@ -144,33 +136,11 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
   };
 
   const handlePaymentAmountChange = (method: string, value: string) => {
-    setPaymentAmountStrings(prev => ({
-      ...prev,
-      [method]: value,
-    }));
+    const formattedValue = formatCurrencyInput(value);
+    setPaymentAmountStrings(prev => ({ ...prev, [method]: formattedValue }));
 
-    if (value === "" || value === ",") {
-        setPaymentAmounts(prev => ({...prev, [method]: 0}));
-        return;
-    }
-
-    const parsableValue = value.replace(/\./g, '').replace(',', '.');
-    const numericValue = parseFloat(parsableValue);
-
-    if (!isNaN(numericValue)) {
-      setPaymentAmounts(prev => ({
-        ...prev,
-        [method]: numericValue,
-      }));
-    }
-  };
-
-  const handleInputBlur = (method: string) => {
-    const numericValue = paymentAmounts[method] || 0;
-    setPaymentAmountStrings(prev => ({
-      ...prev,
-      [method]: numericValue.toFixed(2).replace('.', ',')
-    }));
+    const numericValue = parseCurrencyBRL(formattedValue);
+    setPaymentAmounts(prev => ({ ...prev, [method]: numericValue }));
   };
 
   const handleFinish = () => {
@@ -182,7 +152,9 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
       });
       return;
     }
-    onConfirmSale({ paymentAmounts, change, cardFee });
+    const finalAmounts = Object.fromEntries(Object.entries(paymentAmounts).filter(([, value]) => value > 0));
+
+    onConfirmSale({ paymentAmounts: finalAmounts, change, cardFee });
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -254,13 +226,13 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
                                     inputMode="decimal"
                                     value={paymentAmountStrings[value] ?? ''}
                                     onChange={(e) => handlePaymentAmountChange(value, e.target.value)}
-                                    onBlur={() => handleInputBlur(value)}
                                     className="h-9 text-right font-bold text-base pr-3"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         (e.target as HTMLInputElement).select();
                                     }}
                                     onFocus={(e) => e.target.select()}
+                                    placeholder="0,00"
                                 />
                             </div>
                         )}

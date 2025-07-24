@@ -21,7 +21,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 import type { Transaction } from '@/context/FinancialContext';
 
 type TransactionDialogProps = {
@@ -50,10 +50,11 @@ export function TransactionDialog({ isOpen, onClose, onConfirm }: TransactionDia
   }, [isOpen]);
 
   const handleConfirm = () => {
-    if (!description || !amount || !date) {
+    const numericAmount = parseCurrencyBRL(amount);
+    if (!description || !amount || !date || isNaN(numericAmount) || numericAmount <= 0) {
       toast({
-        title: "Campos Obrigatórios",
-        description: "Por favor, preencha todos os campos.",
+        title: "Campos Obrigatórios ou Inválidos",
+        description: "Por favor, preencha todos os campos corretamente.",
         variant: "destructive",
       });
       return;
@@ -61,7 +62,7 @@ export function TransactionDialog({ isOpen, onClose, onConfirm }: TransactionDia
 
     const transactionData = {
       description,
-      amount: parseFloat(amount.replace(',', '.')),
+      amount: numericAmount,
       type,
       status,
       date: format(date, "yyyy-MM-dd"),
@@ -91,7 +92,15 @@ export function TransactionDialog({ isOpen, onClose, onConfirm }: TransactionDia
                 <Label htmlFor="amount" className="text-right">
                 Valor
                 </Label>
-                <Input id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} className="col-span-3" type="text" inputMode="decimal" />
+                <Input 
+                  id="amount" 
+                  value={amount} 
+                  onChange={(e) => setAmount(formatCurrencyInput(e.target.value))} 
+                  className="col-span-3" 
+                  type="text" 
+                  inputMode="decimal" 
+                  placeholder="0,00"
+                />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">

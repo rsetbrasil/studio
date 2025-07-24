@@ -6,7 +6,7 @@ import { AppShell } from '@/components/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCashRegister } from '@/context/CashRegisterContext';
-import { formatBRL } from '@/lib/utils';
+import { formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -43,7 +43,7 @@ export default function CashRegisterPage() {
   
 
   const handleOpenRegister = () => {
-    const balance = parseFloat(openingBalance.replace(',', '.'));
+    const balance = parseCurrencyBRL(openingBalance);
     if (isNaN(balance) || balance < 0) {
       toast({ title: 'Valor inválido', description: 'Por favor, insira um valor de abertura válido.', variant: 'destructive' });
       return;
@@ -158,8 +158,8 @@ export default function CashRegisterPage() {
                 type="text"
                 inputMode="decimal"
                 value={openingBalance}
-                onChange={e => setOpeningBalance(e.target.value)}
-                placeholder="Ex: 50,00"
+                onChange={e => setOpeningBalance(formatCurrencyInput(e.target.value))}
+                placeholder="0,00"
               />
             </div>
             <DialogFooter>

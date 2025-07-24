@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Pencil } from 'lucide-react';
 import { EntityManagementDialog } from './entity-management-dialog';
 import Image from 'next/image';
-import { formatBRL } from '@/lib/utils';
+import { formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
 
 
 type ProductDialogProps = {
@@ -48,47 +48,50 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
   
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
-  const [cost, setCost] = useState('');
+  const [costStr, setCostStr] = useState('');
   const [stock, setStock] = useState('');
   const [unitOfMeasure, setUnitOfMeasure] = useState('');
   const [unitsPerPack, setUnitsPerPack] = useState('');
-  const [packPrice, setPackPrice] = useState('');
+  const [packPriceStr, setPackPriceStr] = useState('');
   
   const { toast } = useToast();
 
   const [dialogManagementState, setDialogManagementState] = useState<DialogManagementState>({ isOpen: false, type: null });
 
+  const packPriceNum = useMemo(() => parseCurrencyBRL(packPriceStr), [packPriceStr]);
+  const unitsPerPackNum = useMemo(() => parseInt(unitsPerPack, 10), [unitsPerPack]);
+
   useEffect(() => {
     if (product) {
       setName(product.name);
       setCategory(product.category);
-      setCost(String(product.cost));
+      setCostStr(formatCurrencyInput(String(product.cost * 100)));
       setStock(String(product.stock));
       setUnitOfMeasure(product.unitOfMeasure);
       setUnitsPerPack(String(product.unitsPerPack));
-      setPackPrice(String(product.packPrice));
+      setPackPriceStr(formatCurrencyInput(String(product.packPrice * 100)));
     } else {
       setName('');
       setCategory('');
-      setCost('');
+      setCostStr('');
       setStock('');
       setUnitOfMeasure('');
       setUnitsPerPack('');
-      setPackPrice('');
+      setPackPriceStr('');
     }
   }, [product, isOpen]);
 
   const unitPrice = useMemo(() => {
-    const numPackPrice = parseFloat(packPrice.replace(',', '.'));
-    const numUnitsPerPack = parseInt(unitsPerPack, 10);
-    if (!isNaN(numPackPrice) && !isNaN(numUnitsPerPack) && numUnitsPerPack > 0) {
-      return numPackPrice / numUnitsPerPack;
+    if (!isNaN(packPriceNum) && !isNaN(unitsPerPackNum) && unitsPerPackNum > 0) {
+      return packPriceNum / unitsPerPackNum;
     }
     return 0;
-  }, [packPrice, unitsPerPack]);
+  }, [packPriceNum, unitsPerPackNum]);
 
   const handleConfirm = () => {
-    if (!name || !category || !stock || !unitOfMeasure || !cost || !unitsPerPack || !packPrice) {
+    const costNum = parseCurrencyBRL(costStr);
+    
+    if (!name || !category || !stock || !unitOfMeasure || !costStr || !unitsPerPack || !packPriceStr || isNaN(costNum) || isNaN(packPriceNum)) {
       toast({
         title: "Campos Obrigatórios",
         description: "Por favor, preencha todos os campos.",
@@ -100,11 +103,11 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
     const productData = {
       name,
       category,
-      cost: parseFloat(cost.replace(',', '.')),
+      cost: costNum,
       stock: parseInt(stock, 10),
       unitOfMeasure,
-      unitsPerPack: parseInt(unitsPerPack, 10),
-      packPrice: parseFloat(packPrice.replace(',', '.')),
+      unitsPerPack: unitsPerPackNum,
+      packPrice: packPriceNum,
     };
 
     onConfirm(productData);
@@ -223,12 +226,12 @@ export function ProductDialog({ isOpen, onClose, onConfirm, product }: ProductDi
 
                 <div>
                     <Label htmlFor="cost">Preço de Compra (Fardo)</Label>
-                    <Input id="cost" value={cost} onChange={(e) => setCost(e.target.value)} type="text" inputMode="decimal" />
+                    <Input id="cost" value={costStr} onChange={(e) => setCostStr(formatCurrencyInput(e.target.value))} type="text" inputMode="decimal" placeholder="0,00" />
                 </div>
 
                 <div>
                     <Label htmlFor="packPrice">Preço de Venda (Fardo)</Label>
-                    <Input id="packPrice" value={packPrice} onChange={(e) => setPackPrice(e.target.value)} type="text" inputMode="decimal" />
+                    <Input id="packPrice" value={packPriceStr} onChange={(e) => setPackPriceStr(formatCurrencyInput(e.target.value))} type="text" inputMode="decimal" placeholder="0,00" />
                 </div>
                 
                 <div>
