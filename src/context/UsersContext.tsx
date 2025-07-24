@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -23,30 +22,28 @@ type UsersContextType = {
   getUserById: (id: number) => User | undefined;
 };
 
+const initialUsers: User[] = [
+  { id: 1, name: 'Admin User', email: 'admin@pdvrset.com', role: 'Administrador', password: 'admin123' },
+  { id: 2, name: 'Vendedor Exemplo', email: 'vendedor@example.com', role: 'Vendedor', password: 'vendedor123' },
+];
+
 const getInitialState = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') {
         return defaultValue;
     }
     const storedValue = localStorage.getItem(key);
-    if (!storedValue) {
+    if (!storedValue || storedValue === '[]' && key === 'users') {
+        localStorage.setItem(key, JSON.stringify(defaultValue));
         return defaultValue;
     }
     try {
-        const parsed = JSON.parse(storedValue);
-        if (Array.isArray(parsed) && parsed.length === 0 && key === 'users') {
-          return defaultValue;
-        }
-        return parsed;
+        return JSON.parse(storedValue);
     } catch (error) {
         console.error(`Error parsing localStorage key "${key}":`, error);
         return defaultValue;
     }
 };
 
-const initialUsers: User[] = [
-  { id: 1, name: 'Admin User', email: 'admin@pdvrset.com', role: 'Administrador', password: 'admin123' },
-  { id: 2, name: 'Vendedor Exemplo', email: 'vendedor@example.com', role: 'Vendedor', password: 'vendedor123' },
-];
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
 
