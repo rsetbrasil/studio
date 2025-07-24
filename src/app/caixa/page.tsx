@@ -68,9 +68,6 @@ export default function CashRegisterPage() {
     // Initialize with all possible payment methods to ensure they appear even if value is 0
     ['Dinheiro', 'PIX', 'Crédito', 'Débito'].forEach(method => totals[method] = 0);
     
-    // Add opening balance to Dinheiro
-    totals['Dinheiro'] = state.currentSession.openingBalance;
-
     salesForCurrentSession.forEach(sale => {
       const methods = sale.paymentMethod.split(' e ');
       const amountPerMethod = sale.amount / methods.length;
@@ -375,12 +372,20 @@ export default function CashRegisterPage() {
                  <div>
                     <h4 className="font-medium mb-2">Resumo por Forma de Pagamento</h4>
                     <div className="space-y-1 text-sm">
-                        {Object.keys(paymentMethodTotals).length > 0 ? Object.entries(paymentMethodTotals).map(([method, total]) => (
-                            <div key={method} className="flex justify-between">
-                                <span className="text-muted-foreground">{method === 'Dinheiro' ? 'Dinheiro (+ Abertura):' : `${method}:`}</span>
-                                <span>{formatBRL(total)}</span>
+                        {Object.keys(paymentMethodTotals).length > 0 ? (
+                          <>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Abertura de Caixa (Dinheiro):</span>
+                                <span>{formatBRL(state.currentSession.openingBalance)}</span>
                             </div>
-                        )) : <p className="text-xs text-muted-foreground">Nenhuma venda registrada no período.</p>}
+                            {Object.entries(paymentMethodTotals).map(([method, total]) => (
+                              <div key={method} className="flex justify-between">
+                                  <span className="text-muted-foreground">{method}:</span>
+                                  <span>{formatBRL(total)}</span>
+                              </div>
+                            ))}
+                          </>
+                        ) : <p className="text-xs text-muted-foreground">Nenhuma venda registrada no período.</p>}
                     </div>
                  </div>
 
