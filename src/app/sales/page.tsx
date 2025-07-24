@@ -81,6 +81,7 @@ export default function SalesPage() {
   };
 
   return (
+    <>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader>
@@ -159,5 +160,6 @@ export default function SalesPage() {
       <div className="hidden print:block">
         {saleToPrint && <Receipt ref={receiptRef} sale={saleToPrint} user={user} />}
       </div>
+    </>
   );
 }
