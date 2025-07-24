@@ -30,17 +30,18 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrders, type OrderStatus } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { CreditCard } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OrdersPage() {
   const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
+  const { toast } = useToast();
   
   const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
-  const canInvoice = user?.role === 'Administrador' || user?.role === 'Gerente';
-
+  
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "Finalizado":
@@ -57,6 +58,14 @@ export default function OrdersPage() {
   const handleStatusChange = (orderId: string, newStatus: OrderStatus) => {
     updateOrderStatusFromContext(orderId, newStatus, { increaseStock, decreaseStock, getProductById });
   };
+  
+  const handleDelete = (orderId: string) => {
+      handleStatusChange(orderId, 'Cancelado');
+      toast({
+          title: "Pedido Cancelado",
+          description: "O pedido foi cancelado e os itens retornaram ao estoque."
+      })
+  }
 
   return (
       <div className="p-4 sm:px-6 sm:py-4">
@@ -77,7 +86,7 @@ export default function OrdersPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="w-[120px]">Ações</TableHead>
+                  <TableHead className="w-[200px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -89,36 +98,48 @@ export default function OrdersPage() {
                       <TableCell>{order.items.length} item(s)</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>
-                        <Select
-                          value={order.status}
-                          onValueChange={(newStatus) =>
-                            handleStatusChange(order.id, newStatus as OrderStatus)
-                          }
-                          disabled={!canEditStatus || order.status === "Finalizado"}
-                        >
-                          <SelectTrigger className="w-auto border-0 p-0 focus:ring-0 focus:ring-offset-0">
-                            <Badge variant={getStatusVariant(order.status) as any}>
-                              {order.status}
+                        {canEditStatus ? (
+                            <Select
+                                value={order.status}
+                                onValueChange={(newStatus) =>
+                                handleStatusChange(order.id, newStatus as OrderStatus)
+                                }
+                                disabled={order.status === "Finalizado"}
+                            >
+                                <SelectTrigger className="w-auto border-0 p-0 focus:ring-0 focus:ring-offset-0 disabled:border-0 disabled:opacity-100">
+                                    <Badge variant={getStatusVariant(order.status) as any}>
+                                    {order.status}
+                                    </Badge>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Pendente">Pendente</SelectItem>
+                                    <SelectItem value="Finalizado">Finalizado</SelectItem>
+                                    <SelectItem value="Cancelado">Cancelado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        ) : (
+                             <Badge variant={getStatusVariant(order.status) as any}>
+                                {order.status}
                             </Badge>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Pendente">Pendente</SelectItem>
-                            <SelectItem value="Finalizado">Finalizado</SelectItem>
-                            <SelectItem value="Cancelado">Cancelado</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
-                       <TableCell className="text-right">
-                        {order.status === 'Pendente' && canInvoice && (
-                          <Button asChild size="sm" variant="outline">
-                            <Link href={`/pdv?orderId=${order.id}`}>
-                              <CreditCard className="mr-2 h-4 w-4" />
-                              Faturar
-                            </Link>
-                          </Button>
+                       <TableCell className="text-center">
+                        {order.status === 'Pendente' && (
+                            <div className="flex gap-2 justify-center">
+                                <Button asChild size="sm" variant="outline">
+                                    <Link href={`/pdv?orderId=${order.id}`}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Alterar
+                                    </Link>
+                                </Button>
+                                <Button onClick={() => handleDelete(order.id)} size="sm" variant="destructive">
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Excluir
+                                </Button>
+                            </div>
                         )}
                       </TableCell>
                     </TableRow>
