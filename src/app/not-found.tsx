@@ -14,7 +14,7 @@ export default function NotFound() {
           A página que você está tentando acessar não existe ou foi movida.
         </p>
         <Button asChild>
-          <Link href="/dashboard">
+          <Link href="/painel">
             <Home className="mr-2 h-4 w-4" />
             Voltar para o Painel
           </Link>

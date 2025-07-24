@@ -113,7 +113,7 @@ export default function OrdersPage() {
                        <TableCell className="text-right">
                         {order.status === 'Pendente' && (
                           <Button asChild size="sm" variant="outline">
-                            <Link href={`/pos?orderId=${order.id}`}>
+                            <Link href={`/pdv?orderId=${order.id}`}>
                               <CreditCard className="mr-2 h-4 w-4" />
                               Faturar
                             </Link>

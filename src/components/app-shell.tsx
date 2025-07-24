@@ -44,18 +44,18 @@ import { AppLogo } from "./icons";
 import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
-  { href: "/dashboard", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
-  { href: "/pos", icon: ShoppingCart, label: "Ponto de Venda", roles: ["Administrador", "Gerente", "Vendedor"] },
-  { href: "/cash-register", icon: Landmark, label: "Caixa", roles: ["Administrador", "Gerente"] },
-  { href: "/sales", icon: Tag, label: "Vendas", roles: ["Administrador", "Gerente"] },
-  { href: "/reports", icon: FileText, label: "Relatórios", roles: ["Administrador", "Gerente"] },
-  { href: "/orders", icon: ListOrdered, label: "Pedidos", roles: ["Administrador", "Gerente", "Vendedor"] },
-  { href: "/products", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
-  { href: "/suppliers", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
-  { href: "/financial", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
+  { href: "/painel", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
+  { href: "/pdv", icon: ShoppingCart, label: "Ponto de Venda", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/caixa", icon: Landmark, label: "Caixa", roles: ["Administrador", "Gerente"] },
+  { href: "/vendas", icon: Tag, label: "Vendas", roles: ["Administrador", "Gerente"] },
+  { href: "/relatorios", icon: FileText, label: "Relatórios", roles: ["Administrador", "Gerente"] },
+  { href: "/pedidos", icon: ListOrdered, label: "Pedidos", roles: ["Administrador", "Gerente", "Vendedor"] },
+  { href: "/produtos", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
+  { href: "/fornecedores", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
+  { href: "/financeiro", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
   { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente"] },
-  { href: "/users", icon: Users, label: "Usuários", roles: ["Administrador"] },
-  { href: "/account", icon: Settings, label: "Configurações", roles: ["Administrador"] },
+  { href: "/usuarios", icon: Users, label: "Usuários", roles: ["Administrador"] },
+  { href: "/conta", icon: Settings, label: "Configurações", roles: ["Administrador"] },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -75,7 +75,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
         <div className="flex h-14 items-center border-b px-6">
           <Link
-            href="/dashboard"
+            href="/painel"
             className="flex items-center gap-2 font-semibold"
           >
             <AppLogo className="h-6 w-6 text-primary" />
@@ -143,7 +143,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/dashboard">Painel</Link>
+                  <Link href="/painel">Painel</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
@@ -167,7 +167,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Link href="/account" className="w-full h-full">Configurações</Link>
+                  <Link href="/conta" className="w-full h-full">Configurações</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>Suporte</DropdownMenuItem>
               </DropdownMenuContent>
