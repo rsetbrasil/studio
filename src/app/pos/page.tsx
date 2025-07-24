@@ -64,7 +64,7 @@ export default function PosPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const stockActions = { increaseStock, decreaseStock, getProductById };
+  const stockActions = useMemo(() => ({ increaseStock, decreaseStock, getProductById }), [increaseStock, decreaseStock, getProductById]);
 
   const total = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
