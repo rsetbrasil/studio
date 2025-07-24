@@ -41,7 +41,7 @@ type CsvProductImport = {
 };
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct, loadProducts, deleteProduct } = useProducts();
+  const { products, addProduct, updateProduct, loadProducts, deleteProduct, isMounted } = useProducts();
   const { sales } = useSales();
   const { orders } = useOrders();
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -51,11 +51,6 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
