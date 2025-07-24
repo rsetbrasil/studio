@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
+import Papa from 'papaparse';
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,31 +74,36 @@ export default function ProductsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result;
-        if (typeof content === 'string') {
-          const importedProducts = JSON.parse(content);
-          if (Array.isArray(importedProducts)) {
-            loadProducts(importedProducts);
+    Papa.parse<Omit<Product, 'price'>>(file, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+            if(results.errors.length) {
+                toast({
+                    title: "Erro na Importação",
+                    description: "Ocorreram erros ao processar o arquivo CSV. Verifique o formato.",
+                    variant: "destructive",
+                });
+                console.error("CSV Parsing Errors:", results.errors);
+            } else {
+                loadProducts(results.data);
+                toast({
+                    title: "Produtos Importados!",
+                    description: `${results.data.length} produtos foram carregados com sucesso.`,
+                });
+            }
+        },
+        error: (error) => {
             toast({
-              title: "Produtos Importados!",
-              description: `${importedProducts.length} produtos foram carregados com sucesso.`,
+                title: "Erro na Importação",
+                description: "Não foi possível ler o arquivo selecionado.",
+                variant: "destructive",
             });
-          } else {
-             throw new Error("O arquivo JSON não contém um array de produtos.");
-          }
+            console.error(error);
         }
-      } catch (error) {
-        toast({
-          title: "Erro na Importação",
-          description: "O arquivo selecionado não é um JSON válido ou está no formato incorreto.",
-          variant: "destructive",
-        });
-      }
-    };
-    reader.readAsText(file);
+    });
+
     // Reset file input to allow re-importing the same file
     event.target.value = '';
   };
@@ -134,7 +140,7 @@ export default function ProductsPage() {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className="hidden"
-                  accept=".json"
+                  accept=".csv"
                 />
                 <Button onClick={() => handleOpenDialog()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
