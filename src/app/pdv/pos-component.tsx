@@ -437,7 +437,7 @@ export default function PosComponent() {
       price: item.salePrice,
       quantity: item.quantity,
       unit: item.unitOfSale,
-      cost: item.cost,
+      cost: item.cost || 0, // Ensure cost is never undefined
     }));
     
     const updatedSaleData = {
