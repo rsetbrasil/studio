@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -121,7 +120,7 @@ export default function SalesPage() {
                          <Button
                           variant="outline"
                           size="sm"
-                          disabled={sale.status !== 'Finalizada'}
+                          disabled={sale.status === 'Cancelada'}
                           onClick={() => handlePrintRequest(sale)}
                         >
                           <Printer className="mr-2 h-4 w-4" />
