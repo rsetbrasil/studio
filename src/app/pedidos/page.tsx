@@ -38,7 +38,8 @@ export default function OrdersPage() {
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
   
-  const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
+  const canEditStatus = user?.role === 'Administrador' || user?.role === 'Gerente' || user?.role === 'Vendedor';
+  const canInvoice = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -111,7 +112,7 @@ export default function OrdersPage() {
                         {formatBRL(order.total)}
                       </TableCell>
                        <TableCell className="text-right">
-                        {order.status === 'Pendente' && (
+                        {order.status === 'Pendente' && canInvoice && (
                           <Button asChild size="sm" variant="outline">
                             <Link href={`/pdv?orderId=${order.id}`}>
                               <CreditCard className="mr-2 h-4 w-4" />
