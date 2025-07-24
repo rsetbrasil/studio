@@ -72,15 +72,10 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsMounted(true);
+    setState(getInitialState('cashRegisterState', defaultState));
+    setHistory(getInitialState('cashRegisterHistory', []));
+    setSessionCounter(getInitialState('cashRegisterCounter', 1));
   }, []);
-
-  useEffect(() => {
-    if (isMounted) {
-      setState(getInitialState('cashRegisterState', defaultState));
-      setHistory(getInitialState('cashRegisterHistory', []));
-      setSessionCounter(getInitialState('cashRegisterCounter', 1));
-    }
-  }, [isMounted]);
 
   useEffect(() => {
       if(isMounted) {
@@ -207,5 +202,3 @@ export const useCashRegister = () => {
   }
   return context;
 };
-
-    
