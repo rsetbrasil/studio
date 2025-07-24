@@ -49,7 +49,7 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
                 <CommandInput
                     ref={ref}
                     placeholder="Buscar produto por nome ou código..."
-                    className="w-full text-base pl-10 h-10"
+                    className="w-full text-base pl-9 h-10"
                     value={searchTerm}
                     onValueChange={setSearchTerm}
                     onKeyDown={handleKeyDown}
