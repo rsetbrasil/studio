@@ -9,6 +9,7 @@ export type SaleItem = {
   price: number;
   quantity: number;
   unit: string;
+  cost: number;
 };
 
 export type SaleStatus = "Finalizada" | "Pendente" | "Cancelada" | "Fiado";

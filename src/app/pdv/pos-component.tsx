@@ -179,7 +179,8 @@ export default function PosComponent() {
         name: `${item.name}`,
         price: item.salePrice,
         quantity: item.quantity,
-        unit: item.unitOfSale
+        unit: item.unitOfSale,
+        cost: item.cost,
     }));
     
     const newFiadoSale = {
@@ -369,7 +370,8 @@ export default function PosComponent() {
         name: `${item.name}`,
         price: item.salePrice,
         quantity: item.quantity,
-        unit: item.unitOfSale
+        unit: item.unitOfSale,
+        cost: item.cost,
     }));
 
     const newSaleData = {

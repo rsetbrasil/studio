@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowDownLeft, ArrowUpRight, DollarSign, MinusCircle, PlusCircle, Trash } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, DollarSign, MinusCircle, PlusCircle, Trash, TrendingUp } from 'lucide-react';
 import { AdjustmentDialog } from '@/components/cash-register/adjustment-dialog';
 import { DeleteSessionDialog } from '@/components/cash-register/delete-session-dialog';
 import type { CashRegisterSession } from '@/context/CashRegisterContext';
@@ -44,6 +44,15 @@ export default function CashRegisterPage() {
   const salesForCurrentSession = getSalesForCurrentSession();
   const totalSales = useMemo(() => salesForCurrentSession.reduce((acc, sale) => acc + sale.amount, 0), [salesForCurrentSession]);
   
+  const totalCost = useMemo(() => 
+    salesForCurrentSession.reduce((acc, sale) => {
+        const saleCost = sale.items.reduce((itemAcc, item) => itemAcc + (item.cost || 0) * item.quantity, 0);
+        return acc + saleCost;
+    }, 0),
+  [salesForCurrentSession]);
+
+  const grossProfit = useMemo(() => totalSales - totalCost, [totalSales, totalCost]);
+
   const totalSuprimento = useMemo(() => 
     (state.currentSession?.adjustments || [])
       .filter(a => a.type === 'suprimento')
@@ -183,7 +192,7 @@ export default function CashRegisterPage() {
           </CardHeader>
           {isMounted && state.isOpen && state.currentSession && (
             <CardContent>
-              <div className="grid md:grid-cols-5 gap-4">
+              <div className="grid md:grid-cols-6 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Saldo Inicial</CardDescription>
@@ -195,6 +204,16 @@ export default function CashRegisterPage() {
                     <CardDescription>Vendas</CardDescription>
                     <CardTitle className="text-2xl text-green-600">{formatBRL(totalSales)}</CardTitle>
                   </CardHeader>
+                </Card>
+                 <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Lucro Bruto</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="text-2xl font-bold text-teal-600">{formatBRL(grossProfit)}</div>
+                    <p className="text-xs text-muted-foreground">Lucro das vendas no período</p>
+                  </CardContent>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
@@ -362,6 +381,11 @@ export default function CashRegisterPage() {
                    <div className="flex justify-between"><span>(+) Vendas:</span> <span className="font-medium text-green-600">{formatBRL(totalSales)}</span></div>
                    <div className="flex justify-between"><span>(+) Suprimentos:</span> <span className="font-medium text-blue-600">{formatBRL(totalSuprimento)}</span></div>
                    <div className="flex justify-between"><span>(-) Sangrias:</span> <span className="font-medium text-red-600">{formatBRL(totalSangria)}</span></div>
+                </div>
+                <Separator />
+                 <div className="flex justify-between items-center text-lg">
+                  <span className="font-semibold">Lucro Bruto (Vendas):</span>
+                  <span className="font-bold text-teal-600">{formatBRL(grossProfit)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center text-xl text-primary">
