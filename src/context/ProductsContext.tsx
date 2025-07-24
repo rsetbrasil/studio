@@ -325,7 +325,7 @@ const initialCategories: string[] = [
   "CACHAÇA", "CARVÃO", "WHISCKS", "CHAMPANHE", "TABACARIA", "VODKAS", 
   "ENÈRGETICOS", "MANTIMENTOS", "ACHOCOLATADOS", "SUCOS", "VINHOS"
 ];
-const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO"];
+const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO", "Fardo", "Unidade"];
 
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
