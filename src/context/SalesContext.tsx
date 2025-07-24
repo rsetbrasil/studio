@@ -3,11 +3,12 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 
-type SaleItem = {
+export type SaleItem = {
   id: number;
   name: string;
   price: number;
   quantity: number;
+  unit: string;
 };
 
 export type Sale = {
@@ -73,7 +74,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   const addSale = (newSaleData: Omit<Sale, 'id' | 'date' | 'status'>): Sale => {
-      const newId = `SALE${String(saleCounter).padStart(3, '0')}`;
+      const newId = `SALE${String(saleCounter).padStart(5, '0')}`;
       const newDate = new Date().toISOString();
 
       const sale: Sale = {
@@ -143,3 +144,5 @@ export const useSales = () => {
   }
   return context;
 };
+
+    

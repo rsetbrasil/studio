@@ -14,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { Banknote, CreditCard, Landmark, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn, formatBRL, formatCurrencyInput, parseCurrencyBRL } from '@/lib/utils';
-import { Separator } from '../ui/separator';
 
 
 const CREDIT_FEE_RATE = 0.03; // 3%
@@ -32,7 +31,7 @@ type PaymentDialogProps = {
   onClose: () => void;
   subtotal: number;
   tax: number;
-  onConfirmSale: (paymentData: { paymentAmounts: Record<string, number>; change: number; cardFee: number }) => void;
+  onConfirmSale: (paymentData: { paymentAmounts: Record<string, number>; change: number; cardFee: number, totalPaid: number }) => void;
 };
 
 export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }: PaymentDialogProps) {
@@ -112,7 +111,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
         }
         const finalAmounts = Object.fromEntries(Object.entries(numericAmounts).filter(([, value]) => value > 0));
 
-        onConfirmSale({ paymentAmounts: finalAmounts, change, cardFee });
+        onConfirmSale({ paymentAmounts: finalAmounts, change, cardFee, totalPaid });
     };
   
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -209,7 +208,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             size="lg" 
             className="w-full h-12 text-lg font-semibold"
             onClick={handleFinish}
-            disabled={balance > 0}
+            disabled={balance <= -0.001}
           >
             Concluir (F2)
           </Button>
@@ -218,3 +217,5 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     </Dialog>
   );
 }
+
+    

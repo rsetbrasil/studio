@@ -32,7 +32,7 @@ export default function SalesPage() {
   const { sales, cancelSale, isMounted } = useSales();
   const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
-  const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
+  const [saleToPrint, setSaleToPrint] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -52,7 +52,7 @@ export default function SalesPage() {
   };
   
   const handlePrintRequest = (sale: Sale) => {
-    setSaleToPrint({ ...sale, change: 0 }); // Assuming 0 change for reprint
+    setSaleToPrint({ ...sale, change: 0, totalPaid: sale.amount }); // Assuming 0 change for reprint
   };
   
   const handleActualPrint = () => {
@@ -161,3 +161,5 @@ export default function SalesPage() {
     </AppShell>
   );
 }
+
+    

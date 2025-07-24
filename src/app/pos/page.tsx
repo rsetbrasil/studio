@@ -52,7 +52,7 @@ export default function PosPage() {
   const { addOrder, getOrderById, updateOrderStatus } = useOrders();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [lastSale, setLastSale] = useState<Sale & { change: number } | null>(null);
+  const [lastSale, setLastSale] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -63,28 +63,17 @@ export default function PosPage() {
     return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
   }, [cart]);
 
-  const handlePrint = () => {
-    const printContents = receiptRef.current?.innerHTML;
-    if (printContents) {
-      const originalContents = document.body.innerHTML;
-      document.body.innerHTML = printContents;
-      window.print();
-      document.body.innerHTML = originalContents;
-      // Re-attach event listeners might be needed depending on the app's complexity,
-      // but for this specific flow, we are navigating or resetting state, so it's okay.
-      setCart([]);
-      setLastSale(null);
-      // We need to reload to re-initialize the React app in the body
-      window.location.reload(); 
-    }
+ const handlePrint = () => {
+    window.print();
   };
 
 
   useEffect(() => {
     if (lastSale && receiptRef.current) {
         handlePrint();
+        setCart([]);
+        setLastSale(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastSale]);
 
 
@@ -197,8 +186,7 @@ export default function PosPage() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart, customerName, total]);
+  }, [cart, customerName, total, handleCreateOrder]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -286,7 +274,7 @@ export default function PosPage() {
     );
   };
   
-  const handleConfirmSale = ({ paymentAmounts, change, cardFee }: { paymentAmounts: Record<string, number>; change: number; cardFee: number }) => {
+  const handleConfirmSale = ({ paymentAmounts, change, cardFee, totalPaid }: { paymentAmounts: Record<string, number>; change: number; cardFee: number, totalPaid: number }) => {
     if (cart.length === 0) return;
 
     const aggregatedItemsForStock = cart.reduce((acc, item) => {
@@ -318,9 +306,10 @@ export default function PosPage() {
 
     const saleItems = cart.map(item => ({
         id: item.id,
-        name: `${item.name} (${item.unitOfSale})`.trim(),
+        name: `${item.name}`,
         price: item.salePrice,
         quantity: item.quantity,
+        unit: item.unitOfSale
     }));
 
     const newSaleData = {
@@ -338,7 +327,7 @@ export default function PosPage() {
     
     setPaymentModalOpen(false);
     
-    setLastSale({ ...newSale, change });
+    setLastSale({ ...newSale, change, totalPaid });
   };
 
 
@@ -360,12 +349,7 @@ export default function PosPage() {
               />
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {lastSale && (
-                <Button size="sm" onClick={() => handlePrint()} variant="outline">
-                    <Printer className="mr-2 h-4 w-4" /> Imprimir Último Comprovante
-                </Button>
-            )}
-             <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
+            <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
                 <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
                 <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                     F4
@@ -475,3 +459,5 @@ export default function PosPage() {
     </AppShell>
   );
 }
+
+    
