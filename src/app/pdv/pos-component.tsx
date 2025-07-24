@@ -99,6 +99,7 @@ export default function PosComponent() {
                 cartId: `${item.id}-${index}`,
                 salePrice: item.price,
                 unitOfSale: product?.unitOfMeasure || "Unidade",
+                id: product?.id ?? String(item.id)
             }
         });
         setCart(cartItems);

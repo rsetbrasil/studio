@@ -74,7 +74,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       return `PED${String(orderCount + 1).padStart(3, '0')}`;
   }
 
-  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: any[]) => void) => {
+  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
       const newDisplayId = await getNextDisplayId();
       const newDate = new Date().toISOString(); 
 
@@ -86,7 +86,8 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       };
       
       try {
-        await decreaseStock(order.items);
+        const itemsToDecrease = order.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
+        await decreaseStock(itemsToDecrease);
         const docRef = await addDoc(collection(db, 'orders'), order);
         setOrders(prevOrders => [{ ...order, id: docRef.id }, ...prevOrders]);
       } catch (e) {
@@ -96,7 +97,8 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         // This is a simplified rollback. A more robust solution would use Firestore transactions.
         // For now, we assume increaseStock exists and can revert the change.
         const { increaseStock } = require('./ProductsContext');
-        increaseStock(order.items);
+        const itemsToIncrease = order.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
+        increaseStock(itemsToIncrease);
       }
   };
 
@@ -117,7 +119,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
 
     try {
         if (oldStatus === "Pendente" && newStatus === "Cancelado") {
-            await stockActions.increaseStock(orderToUpdate.items);
+            await stockActions.increaseStock(orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
         }
       
         if (oldStatus === "Cancelado" && newStatus === "Pendente") {
@@ -127,7 +129,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (hasEnoughStock) {
-                await stockActions.decreaseStock(orderToUpdate.items);
+                await stockActions.decreaseStock(orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
             } else {
                 toast({
                     title: "Estoque insuficiente",
@@ -183,7 +185,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
+    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
       {children}
     </OrdersContext.Provider>
   );
