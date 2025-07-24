@@ -145,6 +145,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     {item.label}
                   </Link>
                 ))}
+                 <Link
+                    href="#"
+                    onClick={handleLogout}
+                    className="flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Sair
+                  </Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -162,6 +170,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </BreadcrumbList>
           </Breadcrumb>
           <div className="relative ml-auto flex items-center gap-2 md:grow-0">
+             <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="hidden sm:flex"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -180,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </DropdownMenuItem>
                 <DropdownMenuItem>Suporte</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer sm:hidden">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
                 </DropdownMenuItem>
