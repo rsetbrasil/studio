@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useRef } from "react";
@@ -187,6 +186,7 @@ export default function ProductsPage() {
 
 
   return (
+    <>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
            <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -299,5 +299,6 @@ export default function ProductsPage() {
         onConfirm={handleConfirmDelete}
         product={deletingProduct}
        />
+    </>
   );
 }
