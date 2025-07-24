@@ -54,18 +54,18 @@ export default function UsersPage() {
     setDeleteDialogOpen(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (deletingUser) {
-      deleteUser(deletingUser.id);
+      await deleteUser(deletingUser.id);
     }
     handleCloseDeleteDialog();
   };
 
-  const handleConfirmSave = (userData: Omit<User, "id">) => {
+  const handleConfirmSave = async (userData: Omit<User, "id">) => {
     if (editingUser) {
-      updateUser(editingUser.id, userData);
+      await updateUser(editingUser.id, userData);
     } else {
-      addUser(userData);
+      await addUser(userData);
     }
     handleCloseDialog();
   };

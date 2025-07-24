@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { type User } from './UsersContext';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { User, useUsers } from './UsersContext'; // Assuming useUsers is now Firestore-backed
 
 type AuthContextType = {
   user: User | null;
@@ -13,27 +13,43 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Default admin user when login is removed
-const defaultAdminUser: User = {
-  id: 1,
-  name: 'Admin User',
-  email: 'admin@pdvrset.com',
-  role: 'Administrador',
-  password: 'admin123'
-};
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // The user is always the default admin, and is always authenticated.
-  const [user] = useState<User | null>(defaultAdminUser);
-  const isAuthenticated = true;
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { users } = useUsers(); // This will fetch users from Firestore
 
-  const login = (): boolean => {
-    // Login is no longer necessary
-    return true;
+  useEffect(() => {
+    // This effect provides a default authenticated user to bypass login for now.
+    // As `useUsers` fetches from Firestore, we wait until we have users to set one.
+    if (users.length > 0) {
+      const adminUser = users.find(u => u.role === 'Administrador');
+      if (adminUser) {
+        setUser(adminUser);
+        setIsAuthenticated(true);
+      } else if (!user) { // fallback to first user if no admin
+        setUser(users[0]);
+        setIsAuthenticated(true);
+      }
+    }
+  }, [users, user]);
+
+
+  const login = (email: string, pass: string): boolean => {
+    // This login logic is effectively bypassed by the useEffect above for now.
+    // If login were to be re-enabled, this would need to check against the Firestore-backed `users`.
+    const foundUser = users.find(u => u.email === email && u.password === pass);
+    if (foundUser) {
+      setUser(foundUser);
+      setIsAuthenticated(true);
+      return true;
+    }
+    return false;
   };
 
   const logout = () => {
-    // Logout is no longer necessary
+    // In a real scenario, would clear session. Here we just reset state.
+    setUser(null);
+    setIsAuthenticated(false);
   };
 
   return (

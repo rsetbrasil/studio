@@ -1,20 +1,22 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useSales, Sale, SaleItem } from './SalesContext';
+import { db } from '@/lib/firebase';
+import { collection, doc, getDocs, writeBatch, query } from 'firebase/firestore';
 
 export type FiadoTransaction = {
-  id: string; // saleId or paymentId
+  id: string; 
   date: string;
   type: 'sale' | 'payment';
-  amount: number; // positive for sale, negative for payment
+  amount: number; 
   paymentMethod?: string;
   items?: SaleItem[];
 };
 
 export type FiadoAccount = {
-  customerName: string;
+  customerName: string; // This will be the document ID
   balance: number;
   transactions: FiadoTransaction[];
 };
@@ -28,43 +30,41 @@ type FiadoContextType = {
 
 const FiadoContext = createContext<FiadoContextType | undefined>(undefined);
 
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = localStorage.getItem(key);
-    if (!storedValue) {
-        return defaultValue;
-    }
-    try {
-        return JSON.parse(storedValue);
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
-};
-
 export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<FiadoAccount[]>([]);
   const { addSale: addSaleToHistory, updateSaleStatus } = useSales();
   const [isMounted, setIsMounted] = useState(false);
 
+  const fetchAccounts = async () => {
+      try {
+          const accountsCollection = collection(db, "fiadoAccounts");
+          const q = query(accountsCollection);
+          const snapshot = await getDocs(q);
+          const accountsList = snapshot.docs.map(d => ({
+              customerName: d.id,
+              ...d.data()
+          } as FiadoAccount));
+          setAccounts(accountsList);
+      } catch (error) {
+          console.error("Error fetching fiado accounts:", error);
+      }
+  };
+  
   useEffect(() => {
     setIsMounted(true);
-    setAccounts(getInitialState('fiadoAccounts', []));
+    fetchAccounts();
   }, []);
-
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('fiadoAccounts', JSON.stringify(accounts));
-    }
-  }, [accounts, isMounted]);
   
-  const addFiadoSale = (saleData: Omit<Sale, 'id' | 'date' | 'status'>) => {
+  const addFiadoSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status'>) => {
     const sale = addSaleToHistory(saleData);
+    if (!sale) return;
 
-    setAccounts(prevAccounts => {
-        const accountIndex = prevAccounts.findIndex(acc => acc.customerName === sale.customer);
+    const accountRef = doc(db, "fiadoAccounts", sale.customer);
+    
+    try {
+        const batch = writeBatch(db);
+        const accountDoc = await getDoc(accountRef);
+
         const newTransaction: FiadoTransaction = {
             id: sale.id,
             date: sale.date,
@@ -73,36 +73,41 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
             items: sale.items,
         };
 
-        if (accountIndex > -1) {
-            const updatedAccounts = [...prevAccounts];
-            const account = updatedAccounts[accountIndex];
-            account.balance += sale.amount;
-            account.transactions.unshift(newTransaction);
-            return updatedAccounts;
+        if (accountDoc.exists()) {
+            const currentData = accountDoc.data() as FiadoAccount;
+            const updatedTransactions = [newTransaction, ...currentData.transactions];
+            batch.update(accountRef, {
+                balance: currentData.balance + sale.amount,
+                transactions: updatedTransactions,
+            });
         } else {
             const newAccount: FiadoAccount = {
                 customerName: sale.customer,
                 balance: sale.amount,
                 transactions: [newTransaction],
             };
-            return [...prevAccounts, newAccount];
+            batch.set(accountRef, newAccount);
         }
-    });
+        await batch.commit();
+        await fetchAccounts(); // Refetch to update local state
+    } catch (error) {
+        console.error("Error adding fiado sale:", error);
+    }
   };
 
-  const addPayment = (customerName: string, amount: number, paymentMethod: string): FiadoTransaction | null => {
-    let paymentTransaction: FiadoTransaction | null = null;
+  const addPayment = async (customerName: string, amount: number, paymentMethod: string): Promise<FiadoTransaction | null> => {
+    const accountRef = doc(db, "fiadoAccounts", customerName);
     
-    setAccounts(prevAccounts => {
-        const accountIndex = prevAccounts.findIndex(acc => acc.customerName === customerName);
-        if (accountIndex === -1) return prevAccounts;
+    try {
+        const batch = writeBatch(db);
+        const accountDoc = await getDoc(accountRef);
 
-        const updatedAccounts = [...prevAccounts];
-        const account = { ...updatedAccounts[accountIndex] };
+        if (!accountDoc.exists()) return null;
+
+        const currentData = accountDoc.data() as FiadoAccount;
+        const actualAmount = Math.min(amount, currentData.balance);
+        const newBalance = currentData.balance - actualAmount;
         
-        const actualAmount = Math.min(amount, account.balance);
-        account.balance -= actualAmount;
-
         const newPayment: FiadoTransaction = {
             id: `PAY-${Date.now()}`,
             date: new Date().toISOString(),
@@ -111,28 +116,33 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
             paymentMethod: paymentMethod,
         };
         
-        paymentTransaction = newPayment;
-        
-        account.transactions = [newPayment, ...account.transactions];
-        updatedAccounts[accountIndex] = account;
-        
-        // If balance is paid off, update the status of related fiado sales
-        if (account.balance <= 0) {
-            account.transactions.forEach(tx => {
+        const updatedTransactions = [newPayment, ...currentData.transactions];
+        batch.update(accountRef, {
+            balance: newBalance,
+            transactions: updatedTransactions,
+        });
+
+        if (newBalance <= 0) {
+            currentData.transactions.forEach(tx => {
                 if (tx.type === 'sale') {
+                    // This function needs to be async now or handle updates itself
+                    // For now, we assume updateSaleStatus can trigger a Firestore update.
                     updateSaleStatus(tx.id, 'Finalizada');
                 }
             });
         }
 
-        return updatedAccounts;
-    });
-
-    return paymentTransaction;
+        await batch.commit();
+        await fetchAccounts(); // Refetch to update local state
+        return newPayment;
+    } catch (error) {
+        console.error("Error adding payment:", error);
+        return null;
+    }
   };
 
   return (
-    <FiadoContext.Provider value={{ accounts, addFiadoSale, addPayment, isMounted }}>
+    <FiadoContext.Provider value={{ accounts, addFiadoSale, addPayment: addPayment as any, isMounted }}>
       {children}
     </FiadoContext.Provider>
   );

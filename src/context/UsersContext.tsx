@@ -3,11 +3,13 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 
 export type UserRole = "Administrador" | "Gerente" | "Vendedor";
 
 export type User = {
-  id: number;
+  id: string; // Firestore ID
   name: string;
   email: string;
   role: UserRole;
@@ -16,78 +18,76 @@ export type User = {
 
 type UsersContextType = {
   users: User[];
-  addUser: (userData: Omit<User, 'id'>) => void;
-  updateUser: (userId: number, userData: Omit<User, 'id'>) => void;
-  deleteUser: (userId: number) => void;
-  getUserById: (id: number) => User | undefined;
+  addUser: (userData: Omit<User, 'id'>) => Promise<void>;
+  updateUser: (userId: string, userData: Omit<User, 'id'>) => Promise<void>;
+  deleteUser: (userId: string) => Promise<void>;
+  getUserById: (id: string) => User | undefined;
 };
 
-const initialUsers: User[] = [
-  { id: 1, name: 'Admin User', email: 'admin@pdvrset.com', role: 'Administrador', password: 'admin123' },
-  { id: 2, name: 'Vendedor Exemplo', email: 'vendedor@example.com', role: 'Vendedor', password: 'vendedor123' },
+const initialUsers: Omit<User, 'id'>[] = [
+  { name: 'Admin User', email: 'admin@pdvrset.com', role: 'Administrador', password: 'admin123' },
+  { name: 'Vendedor Exemplo', email: 'vendedor@example.com', role: 'Vendedor', password: 'vendedor123' },
 ];
-
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = localStorage.getItem(key);
-    if (!storedValue || storedValue === '[]' && key === 'users') {
-        localStorage.setItem(key, JSON.stringify(defaultValue));
-        return defaultValue;
-    }
-    try {
-        return JSON.parse(storedValue);
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
-};
-
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
 
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
-  const [users, setUsers] = useState<User[]>(() => getInitialState('users', initialUsers));
-  const [userCounter, setUserCounter] = useState<number>(() => getInitialState('userCounter', initialUsers.length + 1));
+  const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    localStorage.setItem('users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('userCounter', JSON.stringify(userCounter));
-  }, [userCounter]);
-
-  const addUser = (userData: Omit<User, 'id'>) => {
-    const newUser: User = {
-      ...userData,
-      id: userCounter,
-    };
-    setUsers(prevUsers => [...prevUsers, newUser]);
-    setUserCounter(prev => prev + 1);
-    toast({ title: "Usuário adicionado com sucesso!" });
-  };
-
-  const updateUser = (userId: number, userData: Omit<User, 'id'>) => {
-    setUsers(currentUsers =>
-      currentUsers.map(u => {
-        if (u.id === userId) {
-          const { password, ...rest } = userData;
-          const updatedUser = { ...u, ...rest };
-          if (password) {
-            updatedUser.password = password;
+  const fetchUsers = async () => {
+      try {
+          const usersCollection = collection(db, "users");
+          const snapshot = await getDocs(usersCollection);
+          if (snapshot.empty) {
+              const batch = writeBatch(db);
+              initialUsers.forEach(user => {
+                  const docRef = doc(collection(db, "users"));
+                  batch.set(docRef, user);
+              });
+              await batch.commit();
+              await fetchUsers(); // refetch to get IDs
+          } else {
+              setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as User)));
           }
-          return updatedUser;
-        }
-        return u;
-      })
-    );
-    toast({ title: "Usuário atualizado com sucesso!" });
+      } catch (error) {
+          console.error("Error fetching users:", error);
+      }
+  }
+  
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const addUser = async (userData: Omit<User, 'id'>) => {
+    try {
+        const docRef = await addDoc(collection(db, "users"), userData);
+        setUsers(prev => [...prev, { ...userData, id: docRef.id }]);
+        toast({ title: "Usuário adicionado com sucesso!" });
+    } catch (error) {
+        console.error("Error adding user:", error);
+        toast({ title: "Erro ao adicionar usuário", variant: "destructive" });
+    }
   };
 
-  const deleteUser = (userId: number) => {
+  const updateUser = async (userId: string, userData: Omit<User, 'id'>) => {
+    try {
+        const userRef = doc(db, "users", userId);
+        const { password, ...rest } = userData;
+        const dataToUpdate: any = rest;
+        if (password) {
+            dataToUpdate.password = password; // In a real app, hash this
+        }
+        await updateDoc(userRef, dataToUpdate);
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...dataToUpdate } : u));
+        toast({ title: "Usuário atualizado com sucesso!" });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        toast({ title: "Erro ao atualizar usuário", variant: "destructive" });
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
     if (users.length <= 1) {
         toast({
             title: "Operação não permitida",
@@ -96,16 +96,23 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
         });
         return;
     }
-    setUsers(currentUsers => currentUsers.filter(u => u.id !== userId));
-    toast({ title: "Usuário excluído com sucesso!", variant: "destructive" });
+    
+    try {
+        await deleteDoc(doc(db, "users", userId));
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        toast({ title: "Usuário excluído com sucesso!", variant: "destructive" });
+    } catch (error) {
+        console.error("Error deleting user:", error);
+        toast({ title: "Erro ao excluir usuário", variant: "destructive" });
+    }
   };
 
-  const getUserById = (id: number) => {
+  const getUserById = (id: string) => {
     return users.find(u => u.id === id);
   };
 
   return (
-    <UsersContext.Provider value={{ users, addUser, updateUser, deleteUser, getUserById }}>
+    <UsersContext.Provider value={{ users, addUser, updateUser, deleteUser, getUserById: getUserById as any }}>
       {children}
     </UsersContext.Provider>
   );

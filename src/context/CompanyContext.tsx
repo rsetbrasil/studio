@@ -2,6 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export type CompanyInfo = {
   systemName: string;
@@ -19,22 +21,6 @@ type CompanyContextType = {
   companyInfo: CompanyInfo;
   updateCompanyInfo: (info: CompanyInfo) => void;
   isMounted: boolean;
-};
-
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = localStorage.getItem(key);
-    if (!storedValue) {
-        return defaultValue;
-    }
-    try {
-        return JSON.parse(storedValue);
-    } catch (error) {
-        console.error(`Error parsing localStorage key "${key}":`, error);
-        return defaultValue;
-    }
 };
 
 const initialCompanyInfo: CompanyInfo = {
@@ -55,20 +41,35 @@ export const CompanyProvider = ({ children }: { children: ReactNode }) => {
   const [companyInfo, setCompanyInfo] = useState<CompanyInfo>(initialCompanyInfo);
   const [isMounted, setIsMounted] = useState(false);
 
+  const fetchCompanyInfo = async () => {
+      try {
+          const docRef = doc(db, "company", "info");
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+              setCompanyInfo(docSnap.data() as CompanyInfo);
+          } else {
+              // If no info exists, create it with default values
+              await setDoc(docRef, initialCompanyInfo);
+              setCompanyInfo(initialCompanyInfo);
+          }
+      } catch (error) {
+          console.error("Error fetching company info:", error);
+      }
+  }
+
   useEffect(() => {
     setIsMounted(true);
-    const storedInfo = getInitialState<CompanyInfo>('companyInfo', initialCompanyInfo);
-    setCompanyInfo(storedInfo);
+    fetchCompanyInfo();
   }, []);
 
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('companyInfo', JSON.stringify(companyInfo));
+  const updateCompanyInfo = async (info: CompanyInfo) => {
+    try {
+        const docRef = doc(db, "company", "info");
+        await setDoc(docRef, info);
+        setCompanyInfo(info);
+    } catch (error) {
+        console.error("Error updating company info:", error);
     }
-  }, [companyInfo, isMounted]);
-
-  const updateCompanyInfo = (info: CompanyInfo) => {
-    setCompanyInfo(info);
   };
 
   return (
