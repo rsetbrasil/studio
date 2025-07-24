@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export type Product = {
@@ -49,13 +49,48 @@ const calculatePrice = (packPrice: number, unitsPerPack: number) => {
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
 
+// Helper functions to get initial state from localStorage
+const getInitialState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window !== 'undefined') {
+        const storedValue = localStorage.getItem(key);
+        if (storedValue) {
+            try {
+                return JSON.parse(storedValue);
+            } catch (error) {
+                console.error(`Error parsing localStorage key "${key}":`, error);
+                return defaultValue;
+            }
+        }
+    }
+    return defaultValue;
+};
+
+
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [productCounter, setProductCounter] = useState(1);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>([]);
+  const [products, setProducts] = useState<Product[]>(() => getInitialState('products', []));
+  const [productCounter, setProductCounter] = useState<number>(() => getInitialState('productCounter', 1));
+  const [categories, setCategories] = useState<string[]>(() => getInitialState('categories', []));
+  const [unitsOfMeasure, setUnitsOfMeasure] = useState<string[]>(() => getInitialState('unitsOfMeasure', []));
   
   const { toast } = useToast();
+  
+  // Effect to save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('products', JSON.stringify(products));
+  }, [products]);
+
+  useEffect(() => {
+    localStorage.setItem('productCounter', JSON.stringify(productCounter));
+  }, [productCounter]);
+
+  useEffect(() => {
+    localStorage.setItem('categories', JSON.stringify(categories));
+  }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('unitsOfMeasure', JSON.stringify(unitsOfMeasure));
+  }, [unitsOfMeasure]);
+
 
   const addProduct = (productData: Omit<Product, 'id' | 'price'>) => {
     const newProduct: Product = {
