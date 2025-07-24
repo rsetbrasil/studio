@@ -12,6 +12,7 @@ import { UsersProvider } from "@/context/UsersContext";
 import { CompanyProvider } from "@/context/CompanyContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { AppShell } from "@/components/app-shell";
+import { FiadoProvider } from "@/context/FiadoContext";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -35,11 +36,13 @@ export default function RootLayout({
                 <OrdersProvider>
                   <ProductsProvider>
                     <FinancialProvider>
-                      <CashRegisterProvider>
-                        <AppShell>
-                          {children}
-                        </AppShell>
-                      </CashRegisterProvider>
+                      <FiadoProvider>
+                        <CashRegisterProvider>
+                          <AppShell>
+                            {children}
+                          </AppShell>
+                        </CashRegisterProvider>
+                      </FiadoProvider>
                     </FinancialProvider>
                   </ProductsProvider>
                 </OrdersProvider>

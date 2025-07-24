@@ -11,19 +11,22 @@ export type SaleItem = {
   unit: string;
 };
 
+export type SaleStatus = "Finalizada" | "Pendente" | "Cancelada" | "Fiado";
+
 export type Sale = {
   id: string;
   customer: string;
   items: SaleItem[];
   paymentMethod: string;
   date: string;
-  status: "Finalizada" | "Pendente" | "Cancelada";
+  status: SaleStatus;
   amount: number;
 };
 
 type SalesContextType = {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
+  updateSaleStatus: (saleId: string, status: SaleStatus) => void;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
   resetSales: () => void;
   totalSalesValue: number;
@@ -81,13 +84,21 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
           ...newSaleData,
           id: newId,
           date: newDate,
-          status: "Finalizada",
+          status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
       };
 
       setSales(prevSales => [sale, ...prevSales]);
       setSaleCounter(prev => prev + 1);
       return sale;
   };
+  
+  const updateSaleStatus = (saleId: string, status: SaleStatus) => {
+     setSales(currentSales =>
+      currentSales.map(s =>
+        s.id === saleId ? { ...s, status } : s
+      )
+    );
+  }
 
   const cancelSale = (saleId: string, increaseStock: (items: any[]) => void) => {
     setSales(currentSales => {
@@ -131,7 +142,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted }}>
+    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus }}>
       {children}
     </SalesContext.Provider>
   );

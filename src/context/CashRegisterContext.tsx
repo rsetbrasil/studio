@@ -115,18 +115,9 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
 
     const openingTime = new Date(state.currentSession.openingTime);
 
-    const closedSession = history.find(h => h.openingTime === state.currentSession?.openingTime);
-    
-    if (closedSession?.closingTime) {
-      const closingTime = new Date(closedSession.closingTime);
-      return sales.filter(sale => {
-        const saleDate = new Date(sale.date);
-        return saleDate >= openingTime && saleDate <= closingTime;
-      });
-    }
+    return sales.filter(sale => sale.status !== 'Fiado' && new Date(sale.date) >= openingTime);
 
-    return sales.filter(sale => new Date(sale.date) >= openingTime);
-  }, [isMounted, state.currentSession, history, sales]);
+  }, [isMounted, state.currentSession, sales]);
 
   const closeRegister = () => {
     if (!state.isOpen || !state.currentSession) return;

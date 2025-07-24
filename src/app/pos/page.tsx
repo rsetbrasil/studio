@@ -9,6 +9,7 @@ import {
   ListOrdered,
   Printer,
   User,
+  Save,
 } from "lucide-react";
 import { useSearchParams, useRouter } from 'next/navigation';
 
@@ -34,6 +35,8 @@ import { ProductSearch } from "@/components/pos/product-search";
 import { Receipt } from "@/components/pos/receipt";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
+import { useFiado } from "@/context/FiadoContext";
+import { ConfirmFiadoDialog } from "@/components/pos/confirm-fiado-dialog";
 
 type CartItem = Product & {
   cartId: string;
@@ -47,10 +50,12 @@ export default function PosPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("Cliente Balcão");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [isFiadoConfirmOpen, setFiadoConfirmOpen] = useState(false);
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
   const { addSale } = useSales();
   const { addOrder, getOrderById, updateOrderStatus } = useOrders();
+  const { addFiadoSale } = useFiado();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [lastSale, setLastSale] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
@@ -166,6 +171,40 @@ export default function PosPage() {
     setCart([]);
     setCustomerName("Cliente Balcão");
   };
+  
+  const handleFiadoConfirm = () => {
+    if (cart.length === 0) return;
+    
+    const saleItems = cart.map(item => ({
+        id: item.id,
+        name: `${item.name}`,
+        price: item.salePrice,
+        quantity: item.quantity,
+        unit: item.unitOfSale
+    }));
+    
+    const newFiadoSale = {
+        customer: customerName || "Cliente Balcão",
+        items: saleItems,
+        amount: total,
+        paymentMethod: "Fiado",
+    }
+    
+    addFiadoSale(newFiadoSale);
+    
+    const itemsToDecrease = saleItems.map(({ id, quantity }) => ({ id, quantity }));
+    decreaseStock(itemsToDecrease);
+    
+    toast({
+        title: "Venda Fiado Registrada!",
+        description: `A dívida de ${formatBRL(total)} foi adicionada para ${customerName}.`,
+    });
+    
+    setCart([]);
+    setCustomerName("Cliente Balcão");
+    setFiadoConfirmOpen(false);
+  };
+  
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -183,6 +222,23 @@ export default function PosPage() {
       } else if (event.key === "F4") {
         event.preventDefault();
         handleCreateOrder();
+      } else if (event.key === "F9") {
+        event.preventDefault();
+        if (cart.length > 0 && customerName !== 'Cliente Balcão' && customerName.trim() !== '') {
+            setFiadoConfirmOpen(true);
+        } else if (cart.length === 0) {
+             toast({
+                title: "Carrinho Vazio",
+                description: "Adicione produtos para salvar no fiado.",
+                variant: "destructive"
+            });
+        } else {
+            toast({
+                title: "Cliente não identificado",
+                description: "Informe o nome do cliente para salvar no fiado.",
+                variant: "destructive"
+            });
+        }
       }
     };
 
@@ -352,6 +408,16 @@ export default function PosPage() {
               />
           </div>
           <div className="ml-auto flex items-center gap-2">
+             <Button 
+                size="sm" 
+                onClick={() => setFiadoConfirmOpen(true)} 
+                variant="secondary" 
+                disabled={cart.length === 0 || customerName === 'Cliente Balcão' || customerName.trim() === ''}>
+                <Save className="mr-2 h-4 w-4" /> Salvar Fiado
+                <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                    F9
+                </kbd>
+            </Button>
             <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
                 <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
                 <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
@@ -454,6 +520,17 @@ export default function PosPage() {
             onConfirmSale={handleConfirmSale}
             />
         )}
+        
+        {isFiadoConfirmOpen && (
+            <ConfirmFiadoDialog
+                isOpen={isFiadoConfirmOpen}
+                onClose={() => setFiadoConfirmOpen(false)}
+                onConfirm={handleFiadoConfirm}
+                customerName={customerName}
+                total={total}
+            />
+        )}
+
 
         <div className="hidden print:block">
             {lastSale && <Receipt ref={receiptRef} sale={lastSale} user={user} />}
