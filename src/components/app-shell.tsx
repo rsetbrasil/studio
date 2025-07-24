@@ -20,6 +20,7 @@ import {
   Truck,
   User,
   Users,
+  Book,
 } from "lucide-react";
 
 import {
@@ -51,6 +52,7 @@ const navItems = [
   { href: "/reports", icon: FileText, label: "Relatórios", roles: ["Administrador", "Gerente"] },
   { href: "/orders", icon: ListOrdered, label: "Pedidos", roles: ["Administrador", "Gerente", "Vendedor"] },
   { href: "/products", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
+  { href: "/catalogo", icon: Book, label: "Catálogo", roles: ["Administrador", "Gerente", "Vendedor"] },
   { href: "/suppliers", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
   { href: "/financial", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
   { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente"] },
