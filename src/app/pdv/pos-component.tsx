@@ -64,6 +64,7 @@ export default function PosComponent() {
   const router = useRouter();
 
   const canFinalizeSale = user?.role === 'Administrador' || user?.role === 'Gerente';
+  const canSaveFiado = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const stockActions = useMemo(() => ({ increaseStock, decreaseStock, getProductById }), [increaseStock, decreaseStock, getProductById]);
 
@@ -230,6 +231,7 @@ export default function PosComponent() {
         handleCreateOrder();
       } else if (event.key === "F9") {
         event.preventDefault();
+        if (!canSaveFiado) return;
         if (cart.length > 0 && finalCustomerName !== 'Cliente Balcão') {
             setFiadoConfirmOpen(true);
         } else if (cart.length === 0) {
@@ -252,7 +254,7 @@ export default function PosComponent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale, finalCustomerName]);
+  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale, canSaveFiado, finalCustomerName]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -420,7 +422,7 @@ export default function PosComponent() {
                 size="sm" 
                 onClick={() => setFiadoConfirmOpen(true)} 
                 variant="secondary" 
-                disabled={cart.length === 0 || finalCustomerName === 'Cliente Balcão'}>
+                disabled={cart.length === 0 || finalCustomerName === 'Cliente Balcão' || !canSaveFiado}>
                 <Save className="mr-2 h-4 w-4" /> Salvar Fiado
                 <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                     F9

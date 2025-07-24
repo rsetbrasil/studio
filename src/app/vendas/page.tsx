@@ -36,6 +36,8 @@ export default function SalesPage() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
+  
+  const canCancelSale = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const handleCancelClick = (sale: Sale) => {
     setSaleToCancel(sale);
@@ -133,7 +135,7 @@ export default function SalesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          disabled={sale.status === 'Cancelada' || sale.status === 'Fiado'}
+                          disabled={sale.status === 'Cancelada' || sale.status === 'Fiado' || !canCancelSale}
                           onClick={() => handleCancelClick(sale)}
                         >
                           <XCircle className="mr-2 h-4 w-4" />

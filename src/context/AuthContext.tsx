@@ -6,7 +6,7 @@ import { User, useUsers } from './UsersContext';
 
 type AuthContextType = {
   user: User | null;
-  login: (username: string, pass: string) => boolean;
+  login: (username: string, pass: string) => User | null;
   logout: () => void;
   isAuthenticated: boolean;
   isAuthLoading: boolean;
@@ -34,15 +34,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [users]);
 
 
-  const login = (username: string, pass: string): boolean => {
+  const login = (username: string, pass: string): User | null => {
     const foundUser = users.find(u => u.name.toLowerCase() === username.toLowerCase() && u.password === pass);
     if (foundUser) {
       setUser(foundUser);
       setIsAuthenticated(true);
       localStorage.setItem('loggedInUser', foundUser.name);
-      return true;
+      return foundUser;
     }
-    return false;
+    return null;
   };
 
   const logout = () => {

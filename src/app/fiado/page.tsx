@@ -44,6 +44,8 @@ export default function FiadoPage() {
   const paymentReceiptRef = useRef<HTMLDivElement>(null);
   const saleReceiptRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  
+  const canReceivePayment = user?.role === 'Administrador' || user?.role === 'Gerente';
 
   const filteredAccounts = useMemo(() => {
     return accounts.filter(
@@ -165,7 +167,7 @@ export default function FiadoPage() {
                                 <Button
                                 size="sm"
                                 onClick={() => setPayingAccount(account)}
-                                disabled={!cashRegisterState.isOpen}
+                                disabled={!cashRegisterState.isOpen || !canReceivePayment}
                                 >
                                 <DollarSign className="mr-2 h-4 w-4" />
                                 Receber
@@ -235,6 +237,11 @@ export default function FiadoPage() {
             {!cashRegisterState.isOpen && (
               <p className="text-center text-sm text-destructive mt-4">
                 Abra o caixa para registrar novos recebimentos de fiado.
+              </p>
+            )}
+            {!canReceivePayment && (
+              <p className="text-center text-sm text-muted-foreground mt-4">
+                Apenas Administradores e Gerentes podem registrar recebimentos.
               </p>
             )}
           </CardContent>

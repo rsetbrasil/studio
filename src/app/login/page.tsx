@@ -21,16 +21,20 @@ import { AppLogo } from '@/components/icons';
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { companyInfo } = useCompany();
   const router = useRouter();
   const { toast } = useToast();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const success = login(username, password);
-    if (success) {
-      router.push('/painel');
+    const loggedInUser = login(username, password);
+    if (loggedInUser) {
+      if (loggedInUser.role === 'Vendedor') {
+        router.push('/pdv');
+      } else {
+        router.push('/painel');
+      }
     } else {
       toast({
         title: 'Falha no Login',

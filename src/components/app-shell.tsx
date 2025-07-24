@@ -49,13 +49,13 @@ const navItems = [
   { href: "/painel", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
   { href: "/pdv", icon: ShoppingCart, label: "Ponto de Venda", roles: ["Administrador", "Gerente", "Vendedor"] },
   { href: "/caixa", icon: Landmark, label: "Caixa", roles: ["Administrador", "Gerente"] },
-  { href: "/vendas", icon: Tag, label: "Vendas", roles: ["Administrador", "Gerente"] },
+  { href: "/vendas", icon: Tag, label: "Vendas", roles: ["Administrador", "Gerente", "Vendedor"] },
   { href: "/relatorios", icon: FileText, label: "Relatórios", roles: ["Administrador", "Gerente"] },
   { href: "/pedidos", icon: ListOrdered, label: "Pedidos", roles: ["Administrador", "Gerente", "Vendedor"] },
   { href: "/produtos", icon: Package, label: "Produtos", roles: ["Administrador", "Gerente"] },
   { href: "/fornecedores", icon: Truck, label: "Fornecedores", roles: ["Administrador", "Gerente"] },
   { href: "/financeiro", icon: DollarSign, label: "Financeiro", roles: ["Administrador", "Gerente"] },
-  { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente"] },
+  { href: "/fiado", icon: BookUser, label: "Fiado", roles: ["Administrador", "Gerente", "Vendedor"] },
   { href: "/usuarios", icon: Users, label: "Usuários", roles: ["Administrador"] },
   { href: "/conta", icon: Settings, label: "Configurações", roles: ["Administrador"] },
 ];
@@ -160,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/painel">Painel</Link>
+                  <Link href={user?.role === 'Vendedor' ? '/pdv' : '/painel'}>Principal</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />

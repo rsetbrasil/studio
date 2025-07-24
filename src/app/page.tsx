@@ -7,17 +7,21 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, isAuthLoading } = useAuth();
+  const { user, isAuthenticated, isAuthLoading } = useAuth();
 
   useEffect(() => {
     if (!isAuthLoading) {
       if (isAuthenticated) {
-        router.replace('/painel');
+        if (user?.role === 'Vendedor') {
+          router.replace('/pdv');
+        } else {
+          router.replace('/painel');
+        }
       } else {
         router.replace('/login');
       }
     }
-  }, [router, isAuthenticated, isAuthLoading]);
+  }, [router, user, isAuthenticated, isAuthLoading]);
 
   // You can return a loading spinner here while the auth state is being determined
   return null;
