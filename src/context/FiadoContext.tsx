@@ -46,7 +46,7 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 
 export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<FiadoAccount[]>([]);
-  const { addSale: addSaleToHistory } = useSales();
+  const { addSale: addSaleToHistory, updateSaleStatus } = useSales();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -115,6 +115,15 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
         
         account.transactions = [newPayment, ...account.transactions];
         updatedAccounts[accountIndex] = account;
+        
+        // If balance is paid off, update the status of related fiado sales
+        if (account.balance <= 0) {
+            account.transactions.forEach(tx => {
+                if (tx.type === 'sale') {
+                    updateSaleStatus(tx.id, 'Finalizada');
+                }
+            });
+        }
 
         return updatedAccounts;
     });
