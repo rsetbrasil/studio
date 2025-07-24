@@ -1,6 +1,4 @@
 
-'use client';
-
 import React, { Suspense } from 'react';
 import PosComponent from './pos-component';
 import { Skeleton } from '@/components/ui/skeleton';
