@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -79,6 +78,7 @@ export default function AccountPage() {
   };
 
   return (
+    <>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
         <Card>
           <CardHeader>
@@ -219,5 +219,6 @@ export default function AccountPage() {
         onClose={() => setResetProductsDialogOpen(false)}
         onConfirm={handleResetProducts}
       />
+    </>
   );
 }
