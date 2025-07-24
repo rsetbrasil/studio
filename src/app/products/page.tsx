@@ -41,7 +41,7 @@ export default function ProductsPage() {
     setDialogOpen(false);
   };
 
-  const handleConfirm = (productData: Omit<Product, 'id' | 'margin'>) => {
+  const handleConfirm = (productData: Omit<Product, 'id' | 'price'>) => {
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
     } else {
@@ -97,10 +97,10 @@ export default function ProductsPage() {
                 <TableRow>
                   <TableHead>ID</TableHead>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Un. Medida</TableHead>
-                  <TableHead>Estoque</TableHead>
-                  <TableHead>Custo</TableHead>
-                  <TableHead>Preço</TableHead>
+                  <TableHead>Estoque (Fardos)</TableHead>
+                  <TableHead>Custo (Fardo)</TableHead>
+                  <TableHead>Preço (Fardo)</TableHead>
+                  <TableHead>Preço (Unit.)</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead className="w-[100px]">Ações</TableHead>
                 </TableRow>
@@ -111,9 +111,9 @@ export default function ProductsPage() {
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">{product.id}</TableCell>
                       <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.unitOfMeasure}</TableCell>
                       <TableCell>{product.stock}</TableCell>
                       <TableCell>{formatBRL(product.cost)}</TableCell>
+                      <TableCell>{formatBRL(product.packPrice)}</TableCell>
                       <TableCell>{formatBRL(product.price)}</TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell>
