@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
+import Papa from "papaparse";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,14 +23,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle, Pencil, Search } from "lucide-react";
+import { PlusCircle, Pencil, Search, Download, Upload } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
+import { useToast } from "@/hooks/use-toast";
+
+type CsvProductImport = {
+  id: string;
+  nome: string;
+  categoria: string;
+  unidade_medida: string;
+  preco_compra_fardo: string;
+  preco_venda_fardo: string;
+  unidades_por_fardo: string;
+  estoque_fardo: string;
+};
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct } = useProducts();
+  const { products, addProduct, updateProduct, loadProducts } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -41,7 +56,7 @@ export default function ProductsPage() {
     setDialogOpen(false);
   };
 
-  const handleConfirm = (productData: Omit<Product, 'id' | 'price'>) => {
+  const handleConfirm = (productData: Omit<Product, "id" | "price">) => {
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
     } else {
@@ -61,7 +76,93 @@ export default function ProductsPage() {
         String(product.id).includes(lowercasedTerm)
     );
   }, [products, searchTerm]);
-  
+
+  const handleExport = () => {
+    const csvData = Papa.unparse(
+      filteredProducts.map((p) => ({
+        id: p.id,
+        nome: p.name,
+        categoria: p.category,
+        unidade_medida: p.unitOfMeasure,
+        preco_compra_fardo: p.cost,
+        preco_venda_fardo: p.packPrice,
+        unidades_por_fardo: p.unitsPerPack,
+        estoque_fardo: p.stock,
+      }))
+    );
+
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", "produtos.csv");
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        newline: '',
+        complete: (results) => {
+          if (results.errors.length) {
+            toast({
+              title: "Erro na importação do CSV",
+              description:
+                "Verifique o formato do arquivo e tente novamente.",
+              variant: "destructive",
+            });
+            console.error("CSV Parsing Errors:", results.errors);
+            return;
+          }
+
+          const parsedProducts = results.data
+            .reduce((acc: Omit<Product, "price">[], row: any) => {
+              const id = Number(row.id);
+              const name = row.nome;
+
+              if (name && name.trim() !== '' && !isNaN(id) && id > 0) {
+                acc.push({
+                  id: id,
+                  name: name,
+                  category: row.categoria || "Sem Categoria",
+                  unitOfMeasure: row.unidade_medida || "Unidade",
+                  cost: Number(row.preco_compra_fardo) || 0,
+                  packPrice: Number(row.preco_venda_fardo) || 0,
+                  unitsPerPack: Number(row.unidades_por_fardo) || 1,
+                  stock: Number(row.estoque_fardo) || 0,
+                });
+              }
+              return acc;
+            }, [])
+            .filter((p): p is Omit<Product, "price"> => p.id != null);
+
+          loadProducts(parsedProducts);
+
+          toast({
+            title: "Importação Concluída!",
+            description: `${parsedProducts.length} produtos foram importados com sucesso.`,
+          });
+        },
+      });
+      // Reset file input
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
+  };
+
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
@@ -71,7 +172,7 @@ export default function ProductsPage() {
               <div>
                 <CardTitle>Gestão de Produtos</CardTitle>
                 <CardDescription>
-                  Visualize, adicione e edite seus produtos.
+                  Visualize, adicione, importe e exporte seus produtos.
                 </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -84,6 +185,21 @@ export default function ProductsPage() {
                     className="w-full pl-10"
                   />
                 </div>
+                <input
+                  type="file"
+                  accept=".csv"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <Button variant="outline" onClick={handleImportClick}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Importar
+                </Button>
+                <Button variant="outline" onClick={handleExport}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Exportar
+                </Button>
                 <Button onClick={() => handleOpenDialog()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Adicionar Produto
@@ -109,7 +225,9 @@ export default function ProductsPage() {
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.id}</TableCell>
+                      <TableCell className="font-medium">
+                        {product.id}
+                      </TableCell>
                       <TableCell>{product.name}</TableCell>
                       <TableCell>{product.stock}</TableCell>
                       <TableCell>{formatBRL(product.cost)}</TableCell>
