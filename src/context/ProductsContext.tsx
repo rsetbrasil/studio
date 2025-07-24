@@ -57,7 +57,7 @@ const initialCategories: string[] = [
   "CACHAÇA", "CARVÃO", "WHISCKS", "CHAMPANHE", "TABACARIA", "VODKAS", 
   "ENÈRGETICOS", "MANTIMENTOS", "ACHOCOLATADOS", "SUCOS", "VINHOS"
 ];
-const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO", "Fardo", "Unidade"];
+const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO"];
 
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
@@ -68,7 +68,12 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
         const storedValue = localStorage.getItem(key);
         if (storedValue) {
             try {
-                return JSON.parse(storedValue);
+                // Ensure that for arrays, we don't return an empty one if defaultValue has items
+                const parsed = JSON.parse(storedValue);
+                if (Array.isArray(parsed) && parsed.length === 0 && Array.isArray(defaultValue) && defaultValue.length > 0) {
+                    return defaultValue;
+                }
+                return parsed;
             } catch (error) {
                 console.error(`Error parsing localStorage key "${key}":`, error);
                 return defaultValue;
@@ -303,4 +308,3 @@ export const useProducts = () => {
   }
   return context;
 };
-
