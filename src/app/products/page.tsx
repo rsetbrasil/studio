@@ -22,14 +22,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle, Pencil, Search } from "lucide-react";
+import { PlusCircle, Pencil, Search, Upload } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductsPage() {
   const { products, addProduct, updateProduct } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -61,6 +63,13 @@ export default function ProductsPage() {
         String(product.id).includes(lowercasedTerm)
     );
   }, [products, searchTerm]);
+  
+  const handleImportClick = () => {
+    toast({
+      title: "Funcionalidade em desenvolvimento",
+      description: "A importação de produtos estará disponível em breve.",
+    });
+  }
 
   return (
     <AppShell>
@@ -83,6 +92,10 @@ export default function ProductsPage() {
                   className="w-full pl-10"
                 />
               </div>
+              <Button onClick={handleImportClick} variant="outline">
+                <Upload className="mr-2 h-4 w-4" />
+                Importar
+              </Button>
               <Button onClick={() => handleOpenDialog()}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Produto
