@@ -29,7 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Receipt } from "@/components/pos/receipt";
 
 export default function SalesPage() {
-  const { sales, cancelSale } = useSales();
+  const { sales, cancelSale, isMounted } = useSales();
   const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
@@ -102,7 +102,7 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.length > 0 ? (
+                {isMounted && sales.length > 0 ? (
                   sales.map((sale) => (
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.id}</TableCell>

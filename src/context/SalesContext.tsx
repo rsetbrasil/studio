@@ -27,6 +27,7 @@ type SalesContextType = {
   resetSales: () => void;
   totalSalesValue: number;
   salesLastMonthPercentage: number;
+  isMounted: boolean;
 };
 
 const getInitialState = <T,>(key: string, defaultValue: T): T => {
@@ -48,16 +49,27 @@ const getInitialState = <T,>(key: string, defaultValue: T): T => {
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
 
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
-  const [sales, setSales] = useState<Sale[]>(() => getInitialState('sales', []));
-  const [saleCounter, setSaleCounter] = useState<number>(() => getInitialState('saleCounter', 1));
-  
-  useEffect(() => {
-    localStorage.setItem('sales', JSON.stringify(sales));
-  }, [sales]);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [saleCounter, setSaleCounter] = useState<number>(1);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('saleCounter', JSON.stringify(saleCounter));
-  }, [saleCounter]);
+    setIsMounted(true);
+    setSales(getInitialState('sales', []));
+    setSaleCounter(getInitialState('saleCounter', 1));
+  }, []);
+  
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('sales', JSON.stringify(sales));
+    }
+  }, [sales, isMounted]);
+
+  useEffect(() => {
+    if (isMounted) {
+      localStorage.setItem('saleCounter', JSON.stringify(saleCounter));
+    }
+  }, [saleCounter, isMounted]);
 
 
   const addSale = (newSaleData: Omit<Sale, 'id' | 'date' | 'status'>): Sale => {
@@ -118,7 +130,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage }}>
+    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted }}>
       {children}
     </SalesContext.Provider>
   );
