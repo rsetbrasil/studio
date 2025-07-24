@@ -87,7 +87,7 @@ export default function SalesPage() {
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
                       <TableCell>{sale.items.length} item(s)</TableCell>
-                      <TableCell>{new Date(sale.date).toLocaleString('pt-BR')}</TableCell>
+                      <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell>
                         <Badge variant={getStatusVariant(sale.status) as any}>{sale.status}</Badge>
                       </TableCell>
