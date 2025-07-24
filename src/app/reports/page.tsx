@@ -32,26 +32,20 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { formatBRL } from "@/lib/utils"
-
-const salesData = [
-  { invoice: "FAT001", customer: "Liam Johnson", status: "Pago", date: "2023-06-23", amount: 250.00, product: "Coca-Cola 2L" },
-  { invoice: "FAT002", customer: "Olivia Smith", status: "Pago", date: "2023-06-24", amount: 150.00, product: "Skol 350ml Lata" },
-  { invoice: "FAT003", customer: "Noah Williams", status: "Não Pago", date: "2023-06-25", amount: 350.00, product: "Heineken 330ml" },
-  { invoice: "FAT004", customer: "Emma Brown", status: "Pago", date: "2023-06-26", amount: 450.00, product: "Red Bull" },
-  { invoice: "FAT005", customer: "Ava Jones", status: "Pendente", date: "2023-06-27", amount: 550.00, product: "Guaraná 2L" },
-]
+import { useSales } from "@/context/SalesContext"
 
 export default function ReportsPage() {
+  const { sales } = useSales();
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: addDays(new Date(), -20),
+    from: addDays(new Date(), -30),
     to: new Date(),
   })
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-        case "Pago":
+        case "Finalizada":
             return "default";
-        case "Não Pago":
+        case "Cancelada":
             return "destructive";
         case "Pendente":
             return "secondary";
@@ -59,6 +53,17 @@ export default function ReportsPage() {
             return "outline";
     }
   }
+
+  const filteredSales = React.useMemo(() => {
+    if (!date?.from) return [];
+    return sales.filter(s => {
+      const saleDate = new Date(s.date);
+      const from = date.from ? new Date(date.from.setHours(0, 0, 0, 0)) : null;
+      const to = date.to ? new Date(date.to.setHours(23, 59, 59, 999)) : from;
+      if (!from) return true;
+      return saleDate >= from && saleDate <= (to || from);
+    });
+  }, [sales, date]);
 
   return (
     <AppShell>
@@ -121,27 +126,35 @@ export default function ReportsPage() {
                 <TableRow>
                   <TableHead>Fatura</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Produto</TableHead>
+                  <TableHead>Itens</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesData.map((sale) => (
-                  <TableRow key={sale.invoice}>
-                    <TableCell className="font-medium">{sale.invoice}</TableCell>
-                    <TableCell>{sale.customer}</TableCell>
-                    <TableCell>{sale.product}</TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusVariant(sale.status) as any}>
-                          {sale.status}
-                      </Badge>
+                {filteredSales.length > 0 ? (
+                  filteredSales.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell className="font-medium">{sale.id}</TableCell>
+                      <TableCell>{sale.customer}</TableCell>
+                      <TableCell>{sale.items.length}</TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusVariant(sale.status) as any}>
+                            {sale.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{new Date(sale.date).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}</TableCell>
+                      <TableCell className="text-right">{formatBRL(sale.amount)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Nenhuma venda no período selecionado.
                     </TableCell>
-                    <TableCell>{sale.date}</TableCell>
-                    <TableCell className="text-right">{formatBRL(sale.amount)}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </CardContent>
