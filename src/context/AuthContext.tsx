@@ -2,13 +2,14 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, useUsers } from './UsersContext'; // Assuming useUsers is now Firestore-backed
+import { User, useUsers } from './UsersContext'; 
 
 type AuthContextType = {
   user: User | null;
   login: (email: string, pass: string) => boolean;
   logout: () => void;
   isAuthenticated: boolean;
+  isAuthLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,44 +17,42 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const { users } = useUsers(); // This will fetch users from Firestore
+  const [isAuthLoading, setAuthLoading] = useState(true);
+  const { users } = useUsers(); 
 
   useEffect(() => {
-    // This effect provides a default authenticated user to bypass login for now.
-    // As `useUsers` fetches from Firestore, we wait until we have users to set one.
-    if (users.length > 0) {
-      const adminUser = users.find(u => u.role === 'Administrador');
-      if (adminUser) {
-        setUser(adminUser);
-        setIsAuthenticated(true);
-      } else if (!user) { // fallback to first user if no admin
-        setUser(users[0]);
+    // Check for a logged-in user in localStorage to persist session
+    const loggedInUserEmail = localStorage.getItem('loggedInUser');
+    if (loggedInUserEmail && users.length > 0) {
+      const foundUser = users.find(u => u.email === loggedInUserEmail);
+      if (foundUser) {
+        setUser(foundUser);
         setIsAuthenticated(true);
       }
     }
-  }, [users, user]);
+    setAuthLoading(false);
+  }, [users]);
 
 
   const login = (email: string, pass: string): boolean => {
-    // This login logic is effectively bypassed by the useEffect above for now.
-    // If login were to be re-enabled, this would need to check against the Firestore-backed `users`.
-    const foundUser = users.find(u => u.email === email && u.password === pass);
+    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === pass);
     if (foundUser) {
       setUser(foundUser);
       setIsAuthenticated(true);
+      localStorage.setItem('loggedInUser', foundUser.email);
       return true;
     }
     return false;
   };
 
   const logout = () => {
-    // In a real scenario, would clear session. Here we just reset state.
     setUser(null);
     setIsAuthenticated(false);
+    localStorage.removeItem('loggedInUser');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isAuthLoading }}>
       {children}
     </AuthContext.Provider>
   );

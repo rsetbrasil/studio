@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookUser,
   DollarSign,
@@ -42,7 +42,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
 import { useCompany } from "@/context/CompanyContext";
-import Image from "next/image";
+import { AppLogo } from "./icons";
+
 
 const navItems = [
   { href: "/painel", icon: Home, label: "Painel", roles: ["Administrador", "Gerente"] },
@@ -61,8 +62,14 @@ const navItems = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { companyInfo } = useCompany();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const accessibleNavItems = React.useMemo(() => {
     if (!user) return [];
@@ -80,11 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href="/painel"
             className="flex items-center gap-2 font-semibold"
           >
-             {companyInfo.logoUrl ? (
-                <Image src={companyInfo.logoUrl} alt="Logo da Empresa" width={24} height={24} className="h-6 w-6" />
-              ) : (
-                <Package className="h-6 w-6 text-primary" />
-              )}
+             <AppLogo className="h-6 w-6" />
             <span>{companyInfo.systemName || "SipStream"}</span>
           </Link>
         </div>
@@ -96,7 +99,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all ${
                   pathname.startsWith(item.href)
-                    ? "bg-accent text-accent-foreground"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -125,11 +128,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   href="#"
                   className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
                 >
-                   {companyInfo.logoUrl ? (
-                      <Image src={companyInfo.logoUrl} alt="Logo da Empresa" width={20} height={20} className="h-5 w-5" />
-                    ) : (
-                      <Package className="h-5 w-5 transition-all group-hover:scale-110" />
-                    )}
+                  <AppLogo className="h-5 w-5 transition-all group-hover:scale-110" />
                   <span className="sr-only">{companyInfo.systemName || "SipStream"}</span>
                 </Link>
                 {accessibleNavItems.map((item) => (
@@ -176,10 +175,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{user?.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <Link href="/conta" className="w-full h-full">Configurações</Link>
+                <DropdownMenuItem asChild>
+                  <Link href="/conta" className="w-full h-full cursor-pointer">Configurações</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem>Suporte</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

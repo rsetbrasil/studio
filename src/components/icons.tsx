@@ -1,4 +1,6 @@
 
+'use client';
+
 import type { SVGProps } from 'react';
 import Image from 'next/image';
 import { useCompany } from '@/context/CompanyContext';

@@ -4,20 +4,29 @@
 import { useAuth } from '@/context/AuthContext';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, type ReactNode } from 'react';
+import { Skeleton } from './ui/skeleton';
 
 export default function AuthGuard({ children }: { children: ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAuthLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      // This logic can be removed or adapted if login is removed
-      // For now, it will not redirect as isAuthenticated will be true
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isAuthLoading, router, pathname]);
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Skeleton className="h-20 w-20 rounded-full" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
-    return null; // or a loading spinner
+    return null; 
   }
 
   return <>{children}</>;
