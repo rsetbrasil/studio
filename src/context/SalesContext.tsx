@@ -30,26 +30,7 @@ type SalesContextType = {
   salesLastMonthPercentage: number;
 };
 
-const initialSales: Sale[] = [
-  { 
-    id: "SALE001", 
-    customer: "João Silva", 
-    items: [{ id: 1, name: "AGUA C/GAS CRYSTAL 500ML", price: 2.75, quantity: 1 }], 
-    paymentMethod: "Dinheiro",
-    date: "2024-07-28T12:00:00Z", 
-    status: "Finalizada", 
-    amount: 2.75 
-  },
-  { 
-    id: "SALE002", 
-    customer: "Maria Oliveira", 
-    items: [{ id: 19, name: "CERV BRAHMA 350ML", price: 2.99, quantity: 12 }],
-    paymentMethod: "Débito",
-    date: "2024-07-28T13:00:00Z", 
-    status: "Finalizada", 
-    amount: 35.88 
-  },
-];
+const initialSales: Sale[] = [];
 
 const SalesContext = createContext<SalesContextType | undefined>(undefined);
 

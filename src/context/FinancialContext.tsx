@@ -18,14 +18,7 @@ type FinancialContextType = {
   resetTransactions: () => void;
 };
 
-const initialTransactions: Transaction[] = [
-  { id: 1, date: "2024-07-28", description: "Venda - Pedido SALE001", type: "Receita", status: "Pago", amount: 7.00 },
-  { id: 2, date: "2024-07-28", description: "Venda - Pedido SALE002", type: "Receita", status: "Pago", amount: 3.50 },
-  { id: 3, date: "2024-07-29", description: "Compra de estoque - Fornecedor A", type: "Despesa", status: "Pago", amount: 500.00 },
-  { id: 4, date: "2024-07-30", description: "Pagamento de Aluguel", type: "Despesa", status: "Pendente", amount: 1200.00 },
-  { id: 5, date: "2024-08-01", description: "Venda - Cliente B", type: "Receita", status: "Pendente", amount: 350.00 },
-  { id: 6, date: "2024-08-02", description: "Pagamento de Salários", type: "Despesa", status: "Pago", amount: 2500.00 },
-];
+const initialTransactions: Transaction[] = [];
 
 const FinancialContext = createContext<FinancialContextType | undefined>(undefined);
 

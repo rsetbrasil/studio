@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import Papa from 'papaparse';
+import React, { useState, useMemo } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,29 +22,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle, Pencil, Search, Upload, File as FileIcon } from "lucide-react";
+import { PlusCircle, Pencil, Search } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
-import { useToast } from "@/hooks/use-toast";
-
-type CsvProductImport = {
-  id: string;
-  nome: string;
-  categoria: string;
-  unidade_medida: string;
-  preco_compra_fardo: string;
-  preco_venda_fardo: string;
-  unidades_por_fardo: string;
-  estoque_fardo: string;
-};
-
 
 export default function ProductsPage() {
-  const { products, addProduct, updateProduct, loadProducts } = useProducts();
+  const { products, addProduct, updateProduct } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -78,117 +62,6 @@ export default function ProductsPage() {
     );
   }, [products, searchTerm]);
   
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    Papa.parse<CsvProductImport>(file, {
-        header: true,
-        skipEmptyLines: true,
-        newline: "", // Auto-detect newlines
-        complete: (results) => {
-            if(results.errors.length) {
-                toast({
-                    title: "Erro na Importação",
-                    description: "Ocorreram erros ao processar o arquivo CSV. Verifique o formato.",
-                    variant: "destructive",
-                });
-                console.error("CSV Parsing Errors:", results.errors);
-                return;
-            }
-            
-            const mappedProducts = results.data.reduce((acc: Omit<Product, 'price'>[], csvProduct) => {
-              const id = Number(csvProduct.id);
-              const name = csvProduct.nome;
-
-              if (name && name.trim() !== '' && !isNaN(id) && id > 0) {
-                acc.push({
-                  id: id,
-                  name: name,
-                  category: csvProduct.categoria,
-                  unitOfMeasure: csvProduct.unidade_medida,
-                  cost: Number(String(csvProduct.preco_compra_fardo).replace(',', '.')) || 0,
-                  packPrice: Number(String(csvProduct.preco_venda_fardo).replace(',', '.')) || 0,
-                  unitsPerPack: Number(csvProduct.unidades_por_fardo) || 0,
-                  stock: Number(csvProduct.estoque_fardo) || 0,
-                });
-              }
-              return acc;
-            }, []);
-
-            const finalProducts = mappedProducts.filter(p => p.id != null && p.id > 0);
-
-            if (finalProducts.length > 0) {
-              loadProducts(finalProducts);
-              toast({
-                  title: "Produtos Importados!",
-                  description: `${finalProducts.length} produtos foram carregados com sucesso.`,
-              });
-            } else {
-                toast({
-                    title: "Nenhum produto válido encontrado",
-                    description: "Verifique se o arquivo CSV tem as colunas 'id' e 'nome' preenchidas corretamente.",
-                    variant: "destructive",
-                });
-            }
-        },
-        error: (error) => {
-            toast({
-                title: "Erro na Importação",
-                description: "Não foi possível ler o arquivo selecionado.",
-                variant: "destructive",
-            });
-            console.error(error);
-        }
-    });
-
-    event.target.value = '';
-  };
-
-  const handleExport = () => {
-    if (filteredProducts.length === 0) {
-      toast({
-        title: "Nenhum produto para exportar",
-        description: "A tabela está vazia.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const dataToExport = filteredProducts.map(p => ({
-        id: p.id,
-        nome: p.name,
-        categoria: p.category,
-        unidade_medida: p.unitOfMeasure,
-        preco_compra_fardo: p.cost,
-        preco_venda_fardo: p.packPrice,
-        unidades_por_fardo: p.unitsPerPack,
-        estoque_fardo: p.stock
-    }));
-
-    const csv = Papa.unparse(dataToExport);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'produtos.csv');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast({
-        title: "Exportação Concluída!",
-        description: `${filteredProducts.length} produtos foram exportados para produtos.csv`
-    })
-  }
-
-
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
@@ -211,21 +84,6 @@ export default function ProductsPage() {
                     className="w-full pl-10"
                   />
                 </div>
-                <Button onClick={handleImportClick} variant="outline">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Importar
-                </Button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept=".csv"
-                />
-                <Button onClick={handleExport} variant="outline">
-                    <FileIcon className="mr-2 h-4 w-4" />
-                    Exportar
-                </Button>
                 <Button onClick={() => handleOpenDialog()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Adicionar Produto
