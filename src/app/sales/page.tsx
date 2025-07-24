@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,14 +23,17 @@ import { useSales, type Sale } from "@/context/SalesContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { XCircle } from "lucide-react";
+import { XCircle, Printer } from "lucide-react";
 import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Receipt } from "@/components/pos/receipt";
 
 export default function SalesPage() {
   const { sales, cancelSale } = useSales();
   const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
+  const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   const handleCancelClick = (sale: Sale) => {
@@ -47,6 +50,22 @@ export default function SalesPage() {
       setSaleToCancel(null);
     }
   };
+  
+  const handlePrintRequest = (sale: Sale) => {
+    setSaleToPrint({ ...sale, change: 0 }); // Assuming 0 change for reprint
+  };
+  
+  const handleActualPrint = () => {
+    window.print();
+  }
+
+  useEffect(() => {
+    if (saleToPrint && receiptRef.current) {
+      handleActualPrint();
+      setSaleToPrint(null); // Reset after printing
+    }
+  }, [saleToPrint]);
+
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -79,7 +98,7 @@ export default function SalesPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead className="w-[120px] text-center">Ações</TableHead>
+                  <TableHead className="w-[220px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,7 +115,16 @@ export default function SalesPage() {
                       <TableCell className="text-right">
                         {formatBRL(sale.amount)}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center flex gap-2 justify-center">
+                         <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={sale.status !== 'Finalizada'}
+                          onClick={() => handlePrintRequest(sale)}
+                        >
+                          <Printer className="mr-2 h-4 w-4" />
+                          Imprimir
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -127,6 +155,9 @@ export default function SalesPage() {
         onConfirm={handleConfirmCancel}
         sale={saleToCancel}
       />
+      <div className="hidden print:block">
+        {saleToPrint && <Receipt ref={receiptRef} sale={saleToPrint} />}
+      </div>
     </AppShell>
   );
 }
