@@ -27,6 +27,18 @@ import { PlusCircle, Pencil, Search, Upload } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
 import { useToast } from "@/hooks/use-toast";
 
+type CsvProduct = {
+  id: number;
+  name: string;
+  categoria: string;
+  unidade_medida: string;
+  preco_compra_fardo: number;
+  preco_venda_fardo: number;
+  unidades_por_fardo: number;
+  estoque: number;
+};
+
+
 export default function ProductsPage() {
   const { products, addProduct, updateProduct, loadProducts } = useProducts();
   const [isDialogOpen, setDialogOpen] = useState(false);
@@ -74,7 +86,7 @@ export default function ProductsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    Papa.parse<Omit<Product, 'price'>>(file, {
+    Papa.parse<CsvProduct>(file, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
@@ -87,7 +99,18 @@ export default function ProductsPage() {
                 });
                 console.error("CSV Parsing Errors:", results.errors);
             } else {
-                loadProducts(results.data);
+                const mappedProducts = results.data.map(csvProduct => ({
+                    id: csvProduct.id,
+                    name: csvProduct.name,
+                    category: csvProduct.categoria,
+                    unitOfMeasure: csvProduct.unidade_medida,
+                    cost: csvProduct.preco_compra_fardo,
+                    packPrice: csvProduct.preco_venda_fardo,
+                    unitsPerPack: csvProduct.unidades_por_fardo,
+                    stock: csvProduct.estoque,
+                }));
+
+                loadProducts(mappedProducts);
                 toast({
                     title: "Produtos Importados!",
                     description: `${results.data.length} produtos foram carregados com sucesso.`,
