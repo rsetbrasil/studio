@@ -170,12 +170,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <DropdownMenuItem>Suporte</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button asChild variant="outline" size="sm" onClick={logout}>
-               <Link href="/login">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sair
-              </Link>
-            </Button>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto">

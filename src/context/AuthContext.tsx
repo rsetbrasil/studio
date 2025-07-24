@@ -1,9 +1,8 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useUsers, type User } from './UsersContext';
-import { useRouter } from 'next/navigation';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { type User } from './UsersContext';
 
 type AuthContextType = {
   user: User | null;
@@ -14,52 +13,31 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getInitialState = <T,>(key: string, defaultValue: T): T => {
-    if (typeof window === 'undefined') {
-        return defaultValue;
-    }
-    const storedValue = sessionStorage.getItem(key); // Use sessionStorage
-    if (!storedValue) {
-        return defaultValue;
-    }
-    try {
-        return JSON.parse(storedValue);
-    } catch (error) {
-        console.error(`Error parsing sessionStorage key "${key}":`, error);
-        return defaultValue;
-    }
+// Default admin user when login is removed
+const defaultAdminUser: User = {
+  id: 1,
+  name: 'Admin User',
+  email: 'admin@pdvrset.com',
+  role: 'Administrador',
+  password: 'admin123'
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => getInitialState('currentUser', null));
-  const { users } = useUsers();
-  const router = useRouter();
+  // The user is always the default admin, and is always authenticated.
+  const [user] = useState<User | null>(defaultAdminUser);
+  const isAuthenticated = true;
 
-  useEffect(() => {
-    if (user) {
-      sessionStorage.setItem('currentUser', JSON.stringify(user));
-    } else {
-      sessionStorage.removeItem('currentUser');
-    }
-  }, [user]);
-
-  const login = (email: string, pass: string): boolean => {
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    if (foundUser && foundUser.password && pass === foundUser.password) {
-      setUser(foundUser);
-      return true;
-    }
-    return false;
+  const login = (): boolean => {
+    // Login is no longer necessary
+    return true;
   };
 
   const logout = () => {
-    setUser(null);
-    router.push('/login');
+    // Logout is no longer necessary
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, logout, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
