@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import Papa from "papaparse";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,11 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleOpenDialog = (product: Product | null = null) => {
     setEditingProduct(product);
@@ -242,7 +247,7 @@ export default function ProductsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProducts.length > 0 ? (
+                {isMounted && filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
                     <TableRow key={product.id}>
                       <TableCell className="font-medium">
@@ -277,7 +282,7 @@ export default function ProductsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={8} className="h-24 text-center">
-                      Nenhum produto encontrado.
+                      {isMounted ? "Nenhum produto encontrado." : "Carregando produtos..."}
                     </TableCell>
                   </TableRow>
                 )}

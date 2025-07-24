@@ -265,7 +265,7 @@ export const ProductsProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <ProductsContext.Provider value={{ 
-      products, addProduct, updateProduct, deleteProduct: () => {}, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts,
+      products, addProduct, updateProduct, deleteProduct, decreaseStock, increaseStock, getProductById, resetProducts, loadProducts,
       categories, unitsOfMeasure, addCategory, updateCategory, deleteCategory,
       addUnitOfMeasure, updateUnitOfMeasure, deleteUnitOfMeasure
     }}>
