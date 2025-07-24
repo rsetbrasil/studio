@@ -129,14 +129,22 @@ export default function PosComponent() {
              const cartItems: CartItem[] = sale.items.map((item, index) => {
                 const product = getProductById(String(item.id));
                 return {
-                    ...(product ?? {} as Product),
+                    // Base product data, ensuring defaults if product is not found
+                    name: product?.name || item.name,
+                    category: product?.category || 'N/A',
+                    unitOfMeasure: product?.unitOfMeasure || item.unit,
+                    unitsPerPack: product?.unitsPerPack || 1,
+                    packPrice: product?.packPrice || item.price,
+                    price: product?.price || item.price,
+                    // Sale-specific data
+                    ...product,
                     id: String(item.id),
                     quantity: item.quantity,
                     salePrice: item.price,
                     unitOfSale: item.unit,
                     cartId: `${item.id}-${Date.now()}-${index}`,
-                    cost: product?.cost ?? 0,
-                }
+                    cost: product?.cost ?? item.cost ?? 0, // Ensure cost is a number
+                };
              });
              setCart(cartItems);
              setCustomerName(sale.customer === 'Cliente Balcão' ? '' : sale.customer);
@@ -266,7 +274,7 @@ export default function PosComponent() {
         price: item.salePrice,
         quantity: item.quantity,
         unit: item.unitOfSale,
-        cost: item.cost,
+        cost: item.cost ?? 0,
     }));
     
     const newFiadoSale = {
@@ -439,7 +447,7 @@ export default function PosComponent() {
       price: item.salePrice,
       quantity: item.quantity,
       unit: item.unitOfSale,
-      cost: item.cost,
+      cost: item.cost ?? 0,
     }));
     
     const updatedSaleData = {
@@ -510,7 +518,7 @@ export default function PosComponent() {
         price: item.salePrice,
         quantity: item.quantity,
         unit: item.unitOfSale,
-        cost: item.cost,
+        cost: item.cost ?? 0,
     }));
 
     const newSaleData = {
@@ -650,7 +658,7 @@ export default function PosComponent() {
         
         <footer className="p-4 border-t bg-background print:hidden">
             <div className="flex items-center justify-end">
-                <span className="text-2xl font-bold">Total = {formatBRL(total)}</span>
+                <span className="text-2xl font-bold text-foreground">Total = {formatBRL(total)}</span>
             </div>
         </footer>
 
