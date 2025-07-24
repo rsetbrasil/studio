@@ -253,12 +253,13 @@ export default function PosPage() {
     setProductForQuantity(product);
   };
   
-  const handleAddToCart = (product: Product, quantity: number, price: number, unitOfSale: string) => {
+  const handleAddToCart = (product: Product, quantity: number, price: number) => {
     if (quantity <= 0) {
         handleCloseQuantityDialog();
         return;
     }
 
+    const unitOfSale = product.unitOfMeasure;
     const existingCartItem = cart.find(item => item.id === product.id && item.salePrice === price && item.unitOfSale === unitOfSale);
     
     if (existingCartItem) {
