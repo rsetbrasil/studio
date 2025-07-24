@@ -63,8 +63,6 @@ const initialProducts: Omit<Product, 'price'>[] = [
     { id: 18, name: "CERV SKOL 600ML", category: "CERVEJA", unitOfMeasure: "CAIXA", cost: 80.00, packPrice: 96.00, unitsPerPack: 12, stock: 50 },
     { id: 19, name: "CERV BRAHMA 350ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 25.50, packPrice: 31.50, unitsPerPack: 12, stock: 110 },
     { id: 20, name: "CERV BRAHMA 473ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 35.00, packPrice: 43.00, unitsPerPack: 12, stock: 90 },
-    { id: 21, name: "CERV HEINEKEN 330ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 48.00, packPrice: 60.00, unitsPerPack: 12, stock: 90 },
-    { id: 22, name: "CERV HEINEKEN 600ML", category: "CERVEJA", unitOfMeasure: "CAIXA", cost: 120.00, packPrice: 144.00, unitsPerPack: 12, stock: 40 },
     { id: 23, name: "CERV BUDWEISER 330ML", category: "CERVEJA", unitOfMeasure: "FARDO", cost: 40.00, packPrice: 50.00, unitsPerPack: 12, stock: 80 },
     { id: 24, name: "SUCO LARANJA DEL VALLE 1L", category: "SUCO", unitOfMeasure: "CAIXA", cost: 30.00, packPrice: 42.00, unitsPerPack: 6, stock: 45 },
     { id: 25, name: "SUCO UVA DEL VALLE 1L", category: "SUCO", unitOfMeasure: "CAIXA", cost: 30.00, packPrice: 42.00, unitsPerPack: 6, stock: 40 },
