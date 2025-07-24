@@ -1,8 +1,16 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useSales, Sale } from './SalesContext';
+
+export type CashAdjustment = {
+  id: string;
+  time: string;
+  type: 'suprimento' | 'sangria';
+  amount: number;
+  reason?: string;
+};
 
 export type CashRegisterSession = {
   id: number;
@@ -12,6 +20,7 @@ export type CashRegisterSession = {
   closingBalance: number | null;
   totalSales: number;
   sales: Sale[];
+  adjustments: CashAdjustment[];
 };
 
 type CashRegisterState = {
@@ -19,6 +28,7 @@ type CashRegisterState = {
   currentSession: {
     openingTime: string;
     openingBalance: number;
+    adjustments: CashAdjustment[];
   } | null;
 };
 
@@ -27,6 +37,7 @@ type CashRegisterContextType = {
   history: CashRegisterSession[];
   openRegister: (openingBalance: number) => void;
   closeRegister: () => void;
+  addAdjustment: (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => void;
   getSalesForCurrentSession: () => Sale[];
   resetHistory: () => void;
   isMounted: boolean;
@@ -61,10 +72,15 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     setIsMounted(true);
-    setState(getInitialState('cashRegisterState', defaultState));
-    setHistory(getInitialState('cashRegisterHistory', []));
-    setSessionCounter(getInitialState('cashRegisterCounter', 1));
   }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      setState(getInitialState('cashRegisterState', defaultState));
+      setHistory(getInitialState('cashRegisterHistory', []));
+      setSessionCounter(getInitialState('cashRegisterCounter', 1));
+    }
+  }, [isMounted]);
 
   useEffect(() => {
       if(isMounted) {
@@ -93,19 +109,18 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       currentSession: {
         openingBalance,
         openingTime: new Date().toISOString(),
+        adjustments: [],
       },
     });
   };
   
-  const getSalesForCurrentSession = () => {
-    if (!state.currentSession) return [];
+  const getSalesForCurrentSession = useCallback(() => {
+    if (!isMounted || !state.currentSession) return [];
 
     const openingTime = new Date(state.currentSession.openingTime);
 
-    // Find the corresponding session in history if it exists
     const closedSession = history.find(h => h.openingTime === state.currentSession?.openingTime);
     
-    // If the session is closed, filter sales until its closing time.
     if (closedSession?.closingTime) {
       const closingTime = new Date(closedSession.closingTime);
       return sales.filter(sale => {
@@ -114,16 +129,22 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       });
     }
 
-    // If the session is still open, filter all sales since it was opened.
     return sales.filter(sale => new Date(sale.date) >= openingTime);
-  }
+  }, [isMounted, state.currentSession, history, sales]);
 
   const closeRegister = () => {
     if (!state.isOpen || !state.currentSession) return;
     
     const sessionSales = getSalesForCurrentSession();
     const totalSales = sessionSales.reduce((acc, sale) => acc + sale.amount, 0);
-    const closingBalance = state.currentSession.openingBalance + totalSales;
+    const totalSuprimento = state.currentSession.adjustments
+      .filter(a => a.type === 'suprimento')
+      .reduce((acc, a) => acc + a.amount, 0);
+    const totalSangria = state.currentSession.adjustments
+      .filter(a => a.type === 'sangria')
+      .reduce((acc, a) => acc + a.amount, 0);
+    
+    const closingBalance = state.currentSession.openingBalance + totalSales + totalSuprimento - totalSangria;
 
     const newSession: CashRegisterSession = {
       id: sessionCounter,
@@ -133,11 +154,30 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
       closingBalance: closingBalance,
       totalSales: totalSales,
       sales: sessionSales,
+      adjustments: state.currentSession.adjustments,
     };
 
     setHistory(prev => [newSession, ...prev]);
     setState({ isOpen: false, currentSession: null });
     setSessionCounter(prev => prev + 1);
+  };
+  
+  const addAdjustment = (adjustment: Omit<CashAdjustment, 'id' | 'time'>) => {
+    if (!state.isOpen || !state.currentSession) return;
+
+    const newAdjustment: CashAdjustment = {
+      ...adjustment,
+      id: `ADJ-${Date.now()}`,
+      time: new Date().toISOString(),
+    };
+
+    setState(prevState => ({
+      ...prevState,
+      currentSession: prevState.currentSession ? {
+        ...prevState.currentSession,
+        adjustments: [...prevState.currentSession.adjustments, newAdjustment]
+      } : null
+    }));
   };
   
   const resetHistory = () => {
@@ -154,7 +194,7 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, resetHistory, isMounted }}>
+    <CashRegisterContext.Provider value={{ state, history, openRegister, closeRegister, getSalesForCurrentSession, addAdjustment, resetHistory, isMounted }}>
       {children}
     </CashRegisterContext.Provider>
   );
@@ -167,3 +207,5 @@ export const useCashRegister = () => {
   }
   return context;
 };
+
+    

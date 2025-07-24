@@ -16,31 +16,79 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowDownLeft, ArrowUpRight, DollarSign, MinusCircle, PlusCircle } from 'lucide-react';
+import { AdjustmentDialog } from '@/components/cash-register/adjustment-dialog';
 
 export default function CashRegisterPage() {
-  const { state, history, openRegister, closeRegister, getSalesForCurrentSession, isMounted } = useCashRegister();
+  const { 
+    state, 
+    history, 
+    openRegister, 
+    closeRegister, 
+    getSalesForCurrentSession, 
+    isMounted,
+    addAdjustment
+  } = useCashRegister();
+
   const [isOpeningDialogOpen, setOpeningDialogOpen] = useState(false);
   const [isClosingDialogOpen, setClosingDialogOpen] = useState(false);
   const [openingBalance, setOpeningBalance] = useState('');
+  const [adjustmentType, setAdjustmentType] = useState<'suprimento' | 'sangria' | null>(null);
+
   const { toast } = useToast();
 
   const salesForCurrentSession = getSalesForCurrentSession();
   const totalSales = useMemo(() => salesForCurrentSession.reduce((acc, sale) => acc + sale.amount, 0), [salesForCurrentSession]);
   
+  const totalSuprimento = useMemo(() => 
+    state.currentSession?.adjustments
+      .filter(a => a.type === 'suprimento')
+      .reduce((acc, a) => acc + a.amount, 0) || 0, 
+  [state.currentSession]);
+
+  const totalSangria = useMemo(() => 
+    state.currentSession?.adjustments
+      .filter(a => a.type === 'sangria')
+      .reduce((acc, a) => acc + a.amount, 0) || 0,
+  [state.currentSession]);
+
+  const saldoEsperado = useMemo(() => 
+    (state.currentSession?.openingBalance || 0) + totalSales + totalSuprimento - totalSangria,
+    [state.currentSession, totalSales, totalSuprimento, totalSangria]
+  );
+  
   const paymentMethodTotals = useMemo(() => {
     const totals: Record<string, number> = {};
     salesForCurrentSession.forEach(sale => {
-      // paymentMethod can be "Dinheiro e PIX"
       const methods = sale.paymentMethod.split(' e ');
+      const amountPerMethod = sale.amount / methods.length; // Simplification
       methods.forEach(method => {
-        // This is a simplification. A real scenario needs to know how much was paid with each method.
-        // For now, we assume the full amount for each method, which is incorrect for split payments.
-        // This would require changes in the payment dialog.
-        totals[method] = (totals[method] || 0) + sale.amount; 
+        totals[method] = (totals[method] || 0) + amountPerMethod;
       });
     });
     return totals;
   }, [salesForCurrentSession]);
+
+  const allMovements = useMemo(() => {
+    if (!state.currentSession) return [];
+
+    const salesMovements = salesForCurrentSession.map(sale => ({
+      time: new Date(sale.date),
+      type: 'Venda',
+      description: `Venda #${sale.id.replace('SALE', '')} para ${sale.customer}`,
+      amount: sale.amount
+    }));
+
+    const adjustmentMovements = state.currentSession.adjustments.map(adj => ({
+      time: new Date(adj.time),
+      type: adj.type === 'suprimento' ? 'Suprimento' : 'Sangria',
+      description: adj.reason || (adj.type === 'suprimento' ? 'Adição de valor' : 'Retirada de valor'),
+      amount: adj.amount
+    }));
+
+    return [...salesMovements, ...adjustmentMovements].sort((a, b) => b.time.getTime() - a.time.getTime());
+
+  }, [salesForCurrentSession, state.currentSession]);
   
 
   const handleOpenRegister = () => {
@@ -60,17 +108,27 @@ export default function CashRegisterPage() {
     toast({ title: 'Caixa Fechado!', description: 'O caixa foi fechado com sucesso.' });
     setClosingDialogOpen(false);
   };
+  
+  const handleAdjustment = (amount: number, reason: string) => {
+    if (!adjustmentType) return;
+    addAdjustment({ type: adjustmentType, amount, reason });
+    toast({
+      title: `${adjustmentType === 'suprimento' ? 'Suprimento' : 'Sangria'} realizado!`,
+      description: `Valor de ${formatBRL(amount)} foi ${adjustmentType === 'suprimento' ? 'adicionado ao' : 'retirado do'} caixa.`
+    });
+    setAdjustmentType(null);
+  };
 
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4 space-y-6">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-start justify-between">
             <div>
               <CardTitle>Controle de Caixa</CardTitle>
               <CardDescription>
                 {!isMounted ? (
-                  <Skeleton className="h-4 w-72" />
+                  <Skeleton className="h-4 w-72 mt-1" />
                 ) : state.isOpen ? (
                   'Caixa aberto. Acompanhe as movimentações.' 
                 ) : (
@@ -78,17 +136,31 @@ export default function CashRegisterPage() {
                 )}
               </CardDescription>
             </div>
-            {isMounted && (
-              state.isOpen ? (
-                <Button variant="destructive" onClick={() => setClosingDialogOpen(true)}>Fechar Caixa</Button>
-              ) : (
-                <Button onClick={() => setOpeningDialogOpen(true)}>Abrir Caixa</Button>
-              )
-            )}
+            <div className="flex items-center gap-2">
+              {isMounted && state.isOpen && (
+                 <>
+                  <Button variant="outline" size="sm" onClick={() => setAdjustmentType('sangria')}>
+                    <MinusCircle className="mr-2 h-4 w-4" />
+                    Sangria
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setAdjustmentType('suprimento')}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Suprimento
+                  </Button>
+                </>
+              )}
+               {isMounted && (
+                state.isOpen ? (
+                  <Button variant="destructive" onClick={() => setClosingDialogOpen(true)}>Fechar Caixa</Button>
+                ) : (
+                  <Button onClick={() => setOpeningDialogOpen(true)}>Abrir Caixa</Button>
+                )
+              )}
+            </div>
           </CardHeader>
           {isMounted && state.isOpen && state.currentSession && (
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-5 gap-4">
                 <Card>
                   <CardHeader className="pb-2">
                     <CardDescription>Saldo Inicial</CardDescription>
@@ -97,20 +169,79 @@ export default function CashRegisterPage() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardDescription>Vendas no Período</CardDescription>
-                    <CardTitle className="text-2xl">{formatBRL(totalSales)}</CardTitle>
+                    <CardDescription>Vendas</CardDescription>
+                    <CardTitle className="text-2xl text-green-600">{formatBRL(totalSales)}</CardTitle>
                   </CardHeader>
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
+                    <CardDescription>Suprimentos</CardDescription>
+                    <CardTitle className="text-2xl text-blue-600">{formatBRL(totalSuprimento)}</CardTitle>
+                  </CardHeader>
+                </Card>
+                 <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Sangrias</CardDescription>
+                    <CardTitle className="text-2xl text-red-600">{formatBRL(totalSangria)}</CardTitle>
+                  </CardHeader>
+                </Card>
+                <Card className="border-primary">
+                  <CardHeader className="pb-2">
                     <CardDescription>Saldo Esperado</CardDescription>
-                    <CardTitle className="text-2xl">{formatBRL(state.currentSession.openingBalance + totalSales)}</CardTitle>
+                    <CardTitle className="text-2xl text-primary">{formatBRL(saldoEsperado)}</CardTitle>
                   </CardHeader>
                 </Card>
               </div>
             </CardContent>
           )}
         </Card>
+
+        {isMounted && state.isOpen && (
+          <Card>
+            <CardHeader>
+                <CardTitle>Movimentações da Sessão</CardTitle>
+                <CardDescription>Todas as movimentações desde a abertura do caixa.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <ScrollArea className="h-96">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Horário</TableHead>
+                            <TableHead>Tipo</TableHead>
+                            <TableHead>Descrição</TableHead>
+                            <TableHead className="text-right">Valor</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {allMovements.length > 0 ? (
+                            allMovements.map((mov, index) => (
+                                <TableRow key={index}>
+                                    <TableCell>{mov.time.toLocaleTimeString('pt-BR')}</TableCell>
+                                    <TableCell>
+                                      <Badge variant={mov.type === 'Venda' ? 'default' : mov.type === 'Suprimento' ? 'secondary' : 'destructive'}>{mov.type}</Badge>
+                                    </TableCell>
+                                    <TableCell>{mov.description}</TableCell>
+                                    <TableCell className={`text-right font-medium ${mov.type === 'Sangria' ? 'text-red-600' : 'text-green-600'}`}>
+                                      {mov.type === 'Sangria' ? '-' : ''}{formatBRL(mov.amount)}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-24 text-center">Nenhuma movimentação ainda.</TableCell>
+                            </TableRow>
+                        )}
+                         <TableRow className="bg-muted/50 hover:bg-muted/50">
+                           <TableCell colSpan={3} className="font-bold">Abertura de Caixa</TableCell>
+                           <TableCell className="text-right font-bold text-green-600">{formatBRL(state.currentSession?.openingBalance || 0)}</TableCell>
+                         </TableRow>
+                    </TableBody>
+                </Table>
+                </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
             <CardHeader>
@@ -187,34 +318,32 @@ export default function CashRegisterPage() {
             </DialogHeader>
             {state.currentSession && (
               <div className="py-4 space-y-4">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground">Horário de Abertura:</span>
                   <span className="font-medium">{new Date(state.currentSession.openingTime).toLocaleString('pt-BR')}</span>
                 </div>
                 <Separator />
-                <div className="flex justify-between items-center text-lg">
-                  <span className="text-muted-foreground">Saldo Inicial:</span>
-                  <span className="font-bold">{formatBRL(state.currentSession.openingBalance)}</span>
-                </div>
-                 <div className="flex justify-between items-center text-lg">
-                  <span className="text-muted-foreground">Vendas no Período:</span>
-                  <span className="font-bold">{formatBRL(totalSales)}</span>
+                <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                   <div className="flex justify-between"><span>Saldo Inicial:</span> <span className="font-medium">{formatBRL(state.currentSession.openingBalance)}</span></div>
+                   <div className="flex justify-between"><span>(+) Vendas:</span> <span className="font-medium text-green-600">{formatBRL(totalSales)}</span></div>
+                   <div className="flex justify-between"><span>(+) Suprimentos:</span> <span className="font-medium text-blue-600">{formatBRL(totalSuprimento)}</span></div>
+                   <div className="flex justify-between"><span>(-) Sangrias:</span> <span className="font-medium text-red-600">{formatBRL(totalSangria)}</span></div>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center text-xl text-primary">
                   <span className="font-semibold">Saldo Final Esperado:</span>
-                  <span className="font-extrabold">{formatBRL(state.currentSession.openingBalance + totalSales)}</span>
+                  <span className="font-extrabold">{formatBRL(saldoEsperado)}</span>
                 </div>
                 <Separator />
                  <div>
-                    <h4 className="font-medium mb-2">Resumo por Forma de Pagamento</h4>
-                    <div className="space-y-1">
-                        {Object.entries(paymentMethodTotals).map(([method, total]) => (
+                    <h4 className="font-medium mb-2">Resumo por Forma de Pagamento (Vendas)</h4>
+                    <div className="space-y-1 text-sm">
+                        {Object.keys(paymentMethodTotals).length > 0 ? Object.entries(paymentMethodTotals).map(([method, total]) => (
                             <div key={method} className="flex justify-between">
                                 <span className="text-muted-foreground">{method}:</span>
                                 <span>{formatBRL(total)}</span>
                             </div>
-                        ))}
+                        )) : <p className="text-xs text-muted-foreground">Nenhuma venda registrada no período.</p>}
                     </div>
                  </div>
 
@@ -226,7 +355,18 @@ export default function CashRegisterPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {adjustmentType && (
+          <AdjustmentDialog 
+            type={adjustmentType}
+            isOpen={!!adjustmentType}
+            onClose={() => setAdjustmentType(null)}
+            onConfirm={handleAdjustment}
+          />
+        )}
       </div>
     </AppShell>
   );
 }
+
+    
