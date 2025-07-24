@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -51,7 +50,7 @@ export default function SalesPage() {
       cancelSale(saleToCancel.id, increaseStock);
       toast({
         title: "Venda Cancelada!",
-        description: `A venda ${saleToCancel.id} foi cancelada e os itens retornaram ao estoque.`,
+        description: `A venda ${saleToCancel.displayId} foi cancelada e os itens retornaram ao estoque.`,
       });
       setSaleToCancel(null);
     }

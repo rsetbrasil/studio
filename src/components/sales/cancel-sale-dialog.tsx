@@ -31,7 +31,7 @@ export function CancelSaleDialog({ isOpen, onClose, onConfirm, sale }: CancelSal
         <AlertDialogHeader>
           <AlertDialogTitle>Cancelar Venda?</AlertDialogTitle>
           <AlertDialogDescription>
-            Você tem certeza que deseja cancelar a venda <strong>{sale.id}</strong>? Esta ação não pode ser desfeita e os itens retornarão ao estoque.
+            Você tem certeza que deseja cancelar a venda <strong>{sale.displayId}</strong>? Esta ação não pode ser desfeita e os itens retornarão ao estoque.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
