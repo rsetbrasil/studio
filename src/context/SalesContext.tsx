@@ -27,6 +27,7 @@ type SalesContextType = {
   sales: Sale[];
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'status'>) => Sale;
   updateSaleStatus: (saleId: string, status: SaleStatus) => void;
+  getSaleById: (saleId: string) => Sale | undefined;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
   resetSales: () => void;
   totalSalesValue: number;
@@ -98,6 +99,10 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
         s.id === saleId ? { ...s, status } : s
       )
     );
+  };
+  
+  const getSaleById = (saleId: string): Sale | undefined => {
+    return sales.find(s => s.id === saleId);
   }
 
   const cancelSale = (saleId: string, increaseStock: (items: any[]) => void) => {
@@ -142,7 +147,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus }}>
+    <SalesContext.Provider value={{ sales, addSale, cancelSale, resetSales, totalSalesValue, salesLastMonthPercentage, isMounted, updateSaleStatus, getSaleById }}>
       {children}
     </SalesContext.Provider>
   );

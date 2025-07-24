@@ -27,20 +27,22 @@ import { PaymentDialog } from "@/components/fiado/payment-dialog";
 import { PaymentReceipt } from "@/components/fiado/payment-receipt";
 import { useAuth } from "@/context/AuthContext";
 import { Badge } from "@/components/ui/badge";
-
-type PaymentInfo = {
-  amount: number;
-  paymentMethod: string;
-};
+import type { Sale } from "@/context/SalesContext";
+import { useSales } from "@/context/SalesContext";
+import { Receipt } from "@/components/pos/receipt";
 
 export default function FiadoPage() {
   const { accounts, addPayment } = useFiado();
   const { addAdjustment, state: cashRegisterState } = useCashRegister();
+  const { getSaleById } = useSales();
   const [searchTerm, setSearchTerm] = useState("");
   const [payingAccount, setPayingAccount] = useState<FiadoAccount | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [paymentToPrint, setPaymentToPrint] = useState<{ account: FiadoAccount, transaction: FiadoTransaction } | null>(null);
-  const receiptRef = useRef<HTMLDivElement>(null);
+  const [saleToPrint, setSaleToPrint] = useState<Sale | null>(null);
+
+  const paymentReceiptRef = useRef<HTMLDivElement>(null);
+  const saleReceiptRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
   const filteredAccounts = useMemo(() => {
@@ -82,8 +84,17 @@ export default function FiadoPage() {
     setPayingAccount(null);
   };
   
-  const handlePrintRequest = (account: FiadoAccount, transaction: FiadoTransaction) => {
+  const handlePrintPaymentReceipt = (account: FiadoAccount, transaction: FiadoTransaction) => {
+    setSaleToPrint(null);
     setPaymentToPrint({ account, transaction });
+  };
+
+  const handlePrintSaleReceipt = (saleId: string) => {
+    const sale = getSaleById(saleId);
+    if (sale) {
+      setPaymentToPrint(null);
+      setSaleToPrint(sale);
+    }
   };
   
   const handlePrint = () => {
@@ -91,11 +102,12 @@ export default function FiadoPage() {
   };
 
   React.useEffect(() => {
-    if (paymentToPrint && receiptRef.current) {
+    if ((paymentToPrint && paymentReceiptRef.current) || (saleToPrint && saleReceiptRef.current)) {
         handlePrint();
         setPaymentToPrint(null);
+        setSaleToPrint(null);
     }
-  }, [paymentToPrint]);
+  }, [paymentToPrint, saleToPrint]);
 
   return (
     <>
@@ -188,8 +200,12 @@ export default function FiadoPage() {
                                                     {formatBRL(Math.abs(tx.amount))}
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        {tx.type === 'payment' && (
-                                                            <Button variant="ghost" size="icon" onClick={() => handlePrintRequest(account, tx)}>
+                                                        {tx.type === 'payment' ? (
+                                                            <Button variant="ghost" size="icon" onClick={() => handlePrintPaymentReceipt(account, tx)}>
+                                                                <Printer className="h-4 w-4" />
+                                                            </Button>
+                                                        ) : (
+                                                            <Button variant="ghost" size="icon" onClick={() => handlePrintSaleReceipt(tx.id)}>
                                                                 <Printer className="h-4 w-4" />
                                                             </Button>
                                                         )}
@@ -234,13 +250,20 @@ export default function FiadoPage() {
       <div className="hidden print:block">
         {paymentToPrint && user && (
             <PaymentReceipt 
-                ref={receiptRef}
+                ref={paymentReceiptRef}
                 account={paymentToPrint.account}
                 payment={{ 
                     amount: Math.abs(paymentToPrint.transaction.amount), 
                     paymentMethod: paymentToPrint.transaction.paymentMethod || '',
                     date: paymentToPrint.transaction.date
                 }}
+                user={user}
+            />
+        )}
+        {saleToPrint && user && (
+            <Receipt
+                ref={saleReceiptRef}
+                sale={{ ...saleToPrint, change: 0, totalPaid: saleToPrint.amount }}
                 user={user}
             />
         )}
