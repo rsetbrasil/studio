@@ -543,5 +543,4 @@ export default function PosComponent() {
         </div>
       </div>
   );
-
-    
+}
