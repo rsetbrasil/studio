@@ -92,39 +92,40 @@ export default function PosComponent() {
 
 
   useEffect(() => {
-    searchInputRef.current?.focus();
-
     const orderIdToLoad = searchParams.get('orderId');
-    if (orderIdToLoad) {
+    if (orderIdToLoad && orderIdToLoad !== editingOrderId) { // Check if it's a new order to load
       const order = getOrderById(orderIdToLoad);
       if (order && order.status === 'Pendente') {
         const cartItems: CartItem[] = order.items.map((item, index) => {
             const product = getProductById(String(item.id));
             return {
-                ...item,
+                ...(product ?? {} as Product), // Use found product data
+                ...item, // But override with order item data (like price)
+                id: String(item.id),
                 stock: product?.stock ?? item.quantity,
-                cartId: `${item.id}-${index}`,
+                cartId: `${item.id}-${Date.now()}-${index}`,
                 salePrice: item.price,
                 unitOfSale: product?.unitOfMeasure || "Unidade",
-                id: product?.id ?? String(item.id)
             }
         });
         setCart(cartItems);
         setCustomerName(order.customer === 'Cliente Balcão' ? '' : order.customer);
         setEditingOrderId(order.id);
-        // We don't change order status here, only when it's finalized/billed.
-
+        
         toast({
           title: "Pedido Carregado para Alteração",
           description: `Modifique o pedido ${order.displayId} e salve as alterações.`,
         });
 
-        // Clean URL
         const newUrl = window.location.pathname;
         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
       }
     }
-  }, [searchParams, getOrderById, getProductById, toast]);
+    
+    // Focus on the search input when the component mounts
+    searchInputRef.current?.focus();
+
+  }, [searchParams, getOrderById, getProductById, toast, editingOrderId]);
 
   const handleCreateOrder = () => {
     if (cart.length === 0) {
@@ -370,7 +371,7 @@ export default function PosComponent() {
       return;
     }
     
-    const product = getProductById(cartItem.id);
+    const product = getProductById(String(cartItem.id));
     if (!product) return;
 
     const quantityInCart = cart
@@ -397,7 +398,7 @@ export default function PosComponent() {
     if (cart.length === 0) return;
 
     const aggregatedItemsForStock = cart.reduce((acc, item) => {
-        acc[item.id] = (acc[item.id] || 0) + item.quantity;
+        acc[String(item.id)] = (acc[String(item.id)] || 0) + item.quantity;
         return acc;
     }, {} as Record<string, number>);
 
@@ -419,9 +420,7 @@ export default function PosComponent() {
     }));
 
     if (editingOrderId) {
-      // If we are editing an order and finalizing it, we just need to update its status to Finalizado.
-      // The stock was already handled when the order was created/updated.
-      updateOrderStatus(editingOrderId, 'Finalizado', stockActions);
+      updateOrderStatus(editingOrderId, 'Faturado', stockActions);
     } else {
        decreaseStock(itemsToDecrease);
     }
