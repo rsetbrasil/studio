@@ -144,7 +144,7 @@ export default function UsersPage() {
                             {user.role}
                         </Badge>
                       </TableCell>
-                      <TableCell className="space-x-2">
+                      <TableCell className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
