@@ -4,7 +4,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 
 export type SaleItem = {
   id: number;
@@ -36,7 +36,7 @@ type OrderForSale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale | null;
+  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale;
   updateSaleStatus: (saleId: string, status: SaleStatus) => void;
   getSaleById: (saleId: string) => Sale | undefined;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
@@ -68,28 +68,37 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     fetchSales();
   }, []);
 
-  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale | null => {
+  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale => {
+      const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
-      // This is not robust for multi-user env, but works for now.
-      // A dedicated counter in Firestore would be better.
       const newDisplayId = `SALE${String(sales.length + 1).padStart(5, '0')}`;
 
-      const sale: Omit<Sale, 'id'> = {
+      const sale: Sale = {
           ...newSaleData,
+          id: tempId,
           displayId: newDisplayId,
           date: newDate,
           status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
       };
 
-      try {
-        const docRef = addDoc(collection(db, 'sales'), sale);
-        const newSaleWithId = { ...sale, id: docRef.id };
-        setSales(prev => [newSaleWithId, ...prev]);
-        return newSaleWithId;
-      } catch (error) {
+      // Add to state immediately with a temporary ID
+      setSales(prev => [sale, ...prev]);
+
+      // Then, save to Firestore and update the ID
+      addDoc(collection(db, 'sales'), {
+        ...newSaleData,
+        displayId: newDisplayId,
+        date: newDate,
+        status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
+      }).then(docRef => {
+        setSales(prev => prev.map(s => s.id === tempId ? { ...s, id: docRef.id } : s));
+      }).catch(error => {
         console.error("Error adding sale:", error);
-        return null;
-      }
+        // Optionally remove the temp sale from state on error
+        setSales(prev => prev.filter(s => s.id !== tempId));
+      });
+      
+      return sale;
   };
   
   const updateSaleStatus = async (saleId: string, status: SaleStatus) => {
