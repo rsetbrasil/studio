@@ -97,37 +97,41 @@ export default function ProductsPage() {
                     variant: "destructive",
                 });
                 console.error("CSV Parsing Errors:", results.errors);
-            } else {
-                const mappedProducts = results.data
-                  .filter(csvProduct => {
-                    // Rigorous check to ensure we have a valid product
-                    const id = Number(csvProduct.id);
-                    return csvProduct.nome && csvProduct.nome.trim() !== '' && !isNaN(id) && id > 0;
-                  })
-                  .map(csvProduct => ({
-                    id: Number(csvProduct.id),
-                    name: csvProduct.nome,
-                    category: csvProduct.categoria,
-                    unitOfMeasure: csvProduct.unidade_medida,
-                    cost: Number(String(csvProduct.preco_compra_fardo).replace(',', '.')) || 0,
-                    packPrice: Number(String(csvProduct.preco_venda_fardo).replace(',', '.')) || 0,
-                    unitsPerPack: Number(csvProduct.unidades_por_fardo) || 0,
-                    stock: Number(csvProduct.estoque_fardo) || 0,
-                }));
+                return;
+            }
+            
+            const mappedProducts = results.data.reduce((acc: Omit<Product, 'price'>[], csvProduct) => {
+              const id = Number(csvProduct.id);
+              const name = csvProduct.nome;
 
-                if (mappedProducts.length > 0) {
-                  loadProducts(mappedProducts);
-                  toast({
-                      title: "Produtos Importados!",
-                      description: `${mappedProducts.length} produtos foram carregados com sucesso.`,
-                  });
-                } else {
-                   toast({
-                        title: "Nenhum produto válido encontrado",
-                        description: "Verifique se o arquivo CSV tem as colunas 'id' e 'nome' preenchidas corretamente.",
-                        variant: "destructive",
-                    });
-                }
+              if (name && name.trim() !== '' && !isNaN(id) && id > 0) {
+                acc.push({
+                  id: id,
+                  name: name,
+                  category: csvProduct.categoria,
+                  unitOfMeasure: csvProduct.unidade_medida,
+                  cost: Number(String(csvProduct.preco_compra_fardo).replace(',', '.')) || 0,
+                  packPrice: Number(String(csvProduct.preco_venda_fardo).replace(',', '.')) || 0,
+                  unitsPerPack: Number(csvProduct.unidades_por_fardo) || 0,
+                  stock: Number(csvProduct.estoque_fardo) || 0,
+                });
+              }
+              return acc;
+            }, []);
+
+
+            if (mappedProducts.length > 0) {
+              loadProducts(mappedProducts);
+              toast({
+                  title: "Produtos Importados!",
+                  description: `${mappedProducts.length} produtos foram carregados com sucesso.`,
+              });
+            } else {
+                toast({
+                    title: "Nenhum produto válido encontrado",
+                    description: "Verifique se o arquivo CSV tem as colunas 'id' e 'nome' preenchidas corretamente.",
+                    variant: "destructive",
+                });
             }
         },
         error: (error) => {
@@ -140,7 +144,6 @@ export default function ProductsPage() {
         }
     });
 
-    // Reset file input to allow re-importing the same file
     event.target.value = '';
   };
 
