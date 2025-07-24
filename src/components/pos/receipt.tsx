@@ -10,14 +10,19 @@ type ReceiptProps = {
 };
 
 const ReceiptItem = ({ item }: { item: SaleItem }) => (
-  <tr className="text-left">
-    <td className="py-0.5">{String(item.id).padStart(5, '0')}</td>
-    <td className="py-0.5">
-      <div>{item.name}</div>
-      <div className="text-xs">{item.quantity} x {formatBRL(item.price)}</div>
-    </td>
-    <td className="py-0.5 text-right">{formatBRL(item.price * item.quantity)}</td>
-  </tr>
+  <>
+    <tr className="text-left">
+      <td className="py-0.5">{String(item.id).padStart(5, '0')}</td>
+      <td className="py-0.5">
+        <div>{item.name}</div>
+        <div className="text-xs">{item.quantity} x {formatBRL(item.price)}</div>
+      </td>
+      <td className="py-0.5 text-right">{formatBRL(item.price * item.quantity)}</td>
+    </tr>
+    <tr>
+        <td colSpan={3} className="border-b border-dashed border-black py-0.5"></td>
+    </tr>
+  </>
 );
 
 export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
@@ -25,7 +30,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
     const subtotal = sale.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     return (
-      <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container">
+      <div ref={ref} className="p-1 bg-white text-black text-xs font-mono w-[300px] print-container relative">
         <div className="text-center mb-2">
             <h1 className="text-sm font-bold">NOME DE FANTASIA</h1>
             <p>NOME DA RAZÃO SOCIAL COM. DE INFORMÁTICA LTDA-ME</p>
@@ -62,8 +67,8 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
             </tr>
           </thead>
           <tbody>
-            {sale.items.map((item) => (
-              <ReceiptItem key={`${item.id}-${item.name}`} item={item} />
+            {sale.items.map((item, index) => (
+              <ReceiptItem key={`${item.id}-${item.name}-${index}`} item={item} />
             ))}
           </tbody>
         </table>
@@ -93,10 +98,17 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
           <p>VENDEDOR(A): VENDEDOR 1</p>
         </div>
 
-        <div className="text-center mt-2">
+        <div className="text-center mt-2 relative">
             <p>Recebi a(s) mercadoria(s) acima descrita(s).</p>
+             <div className="absolute top-[-40px] left-1/2 -translate-x-1/2">
+                <div 
+                    className="border-2 border-red-600 rounded-lg p-2 text-red-600 font-bold text-4xl opacity-70 transform -rotate-12"
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.2)' }}
+                >
+                    PAGO
+                </div>
+            </div>
             <div className="border-t border-dashed border-black w-4/5 mx-auto mt-6 mb-1"></div>
-            <p>ASSINATURA DO CLIENTE</p>
         </div>
 
         <div className="text-center mt-4 font-bold">
