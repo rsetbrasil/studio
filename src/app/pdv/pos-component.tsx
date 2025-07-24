@@ -47,7 +47,7 @@ type CartItem = Product & {
 export default function PosComponent() {
   const { decreaseStock, getProductById, increaseStock } = useProducts();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [customerName, setCustomerName] = useState("Cliente Balcão");
+  const [customerName, setCustomerName] = useState("");
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isFiadoConfirmOpen, setFiadoConfirmOpen] = useState(false);
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
@@ -67,6 +67,8 @@ export default function PosComponent() {
 
   const stockActions = useMemo(() => ({ increaseStock, decreaseStock, getProductById }), [increaseStock, decreaseStock, getProductById]);
 
+  const finalCustomerName = useMemo(() => customerName.trim() || 'Cliente Balcão', [customerName]);
+
   const total = useMemo(() => {
     return cart.reduce((acc, item) => acc + item.salePrice * item.quantity, 0);
   }, [cart]);
@@ -80,7 +82,7 @@ export default function PosComponent() {
     if (lastSale && receiptRef.current) {
         handlePrint();
         setCart([]);
-        setCustomerName("Cliente Balcão");
+        setCustomerName("");
         setLastSale(null);
     }
   }, [lastSale]);
@@ -105,7 +107,7 @@ export default function PosComponent() {
             }
         });
         setCart(cartItems);
-        setCustomerName(order.customer);
+        setCustomerName(order.customer === 'Cliente Balcão' ? '' : order.customer);
         updateOrderStatus(order.id, 'Finalizado', stockActions);
 
         toast({
@@ -159,7 +161,7 @@ export default function PosComponent() {
     }));
 
     const newOrder = {
-      customer: customerName || "Cliente Balcão",
+      customer: finalCustomerName,
       items: orderItems,
       total: total,
     };
@@ -167,11 +169,11 @@ export default function PosComponent() {
 
     toast({
       title: "Pedido Criado!",
-      description: `O pedido para ${customerName} foi salvo e pode ser visto na página de Pedidos.`,
+      description: `O pedido para ${finalCustomerName} foi salvo e pode ser visto na página de Pedidos.`,
     });
 
     setCart([]);
-    setCustomerName("Cliente Balcão");
+    setCustomerName("");
   };
   
   const handleFiadoConfirm = () => {
@@ -187,7 +189,7 @@ export default function PosComponent() {
     }));
     
     const newFiadoSale = {
-        customer: customerName || "Cliente Balcão",
+        customer: finalCustomerName,
         items: saleItems,
         amount: total,
         paymentMethod: "Fiado",
@@ -200,11 +202,11 @@ export default function PosComponent() {
     
     toast({
         title: "Venda Fiado Registrada!",
-        description: `A dívida de ${formatBRL(total)} foi adicionada para ${customerName}.`,
+        description: `A dívida de ${formatBRL(total)} foi adicionada para ${finalCustomerName}.`,
     });
     
     setCart([]);
-    setCustomerName("Cliente Balcão");
+    setCustomerName("");
     setFiadoConfirmOpen(false);
   };
   
@@ -228,7 +230,7 @@ export default function PosComponent() {
         handleCreateOrder();
       } else if (event.key === "F9") {
         event.preventDefault();
-        if (cart.length > 0 && customerName !== 'Cliente Balcão' && customerName.trim() !== '') {
+        if (cart.length > 0 && finalCustomerName !== 'Cliente Balcão') {
             setFiadoConfirmOpen(true);
         } else if (cart.length === 0) {
              toast({
@@ -250,7 +252,7 @@ export default function PosComponent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale]);
+  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale, finalCustomerName]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -379,7 +381,7 @@ export default function PosComponent() {
     }));
 
     const newSaleData = {
-      customer: customerName || "Cliente Balcão",
+      customer: finalCustomerName,
       items: saleItems,
       amount: finalTotal,
       paymentMethod: paymentMethodsUsed,
@@ -388,7 +390,7 @@ export default function PosComponent() {
     
     toast({
       title: "Venda Finalizada!",
-      description: `Venda registrada para ${customerName}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
+      description: `Venda registrada para ${finalCustomerName}. ${change > 0.001 ? `Troco: ${formatBRL(change)}` : ''}`.trim(),
     });
     
     setPaymentModalOpen(false);
@@ -407,7 +409,7 @@ export default function PosComponent() {
           <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                  placeholder="Nome do Cliente"
+                  placeholder="Cliente Balcão"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   className="w-full text-base pl-10 h-10 min-w-[200px]"
@@ -418,7 +420,7 @@ export default function PosComponent() {
                 size="sm" 
                 onClick={() => setFiadoConfirmOpen(true)} 
                 variant="secondary" 
-                disabled={cart.length === 0 || customerName === 'Cliente Balcão' || customerName.trim() === ''}>
+                disabled={cart.length === 0 || finalCustomerName === 'Cliente Balcão'}>
                 <Save className="mr-2 h-4 w-4" /> Salvar Fiado
                 <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                     F9
@@ -532,7 +534,7 @@ export default function PosComponent() {
                 isOpen={isFiadoConfirmOpen}
                 onClose={() => setFiadoConfirmOpen(false)}
                 onConfirm={handleFiadoConfirm}
-                customerName={customerName}
+                customerName={finalCustomerName}
                 total={total}
             />
         )}
