@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, Fragment } from "react";
 import {
   Card,
   CardContent,
@@ -19,14 +19,14 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, DollarSign, Eye, Printer } from "lucide-react";
+import { Search, DollarSign, Printer, ChevronDown, ChevronRight, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { useFiado, type FiadoAccount } from "@/context/FiadoContext";
 import { useCashRegister } from "@/context/CashRegisterContext";
 import { formatBRL } from "@/lib/utils";
 import { PaymentDialog } from "@/components/fiado/payment-dialog";
-import { AccountStatementDialog } from "@/components/fiado/account-statement-dialog";
 import { PaymentReceipt } from "@/components/fiado/payment-receipt";
 import { useAuth } from "@/context/AuthContext";
+import { Badge } from "@/components/ui/badge";
 
 type PaymentInfo = {
   amount: number;
@@ -38,7 +38,7 @@ export default function FiadoPage() {
   const { addAdjustment, state: cashRegisterState } = useCashRegister();
   const [searchTerm, setSearchTerm] = useState("");
   const [payingAccount, setPayingAccount] = useState<FiadoAccount | null>(null);
-  const [viewingAccount, setViewingAccount] = useState<FiadoAccount | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [lastPayment, setLastPayment] = useState<{ account: FiadoAccount, payment: PaymentInfo } | null>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -50,11 +50,22 @@ export default function FiadoPage() {
         account.balance > 0
     );
   }, [accounts, searchTerm]);
+    
+  const toggleRow = (customerName: string) => {
+    setExpandedRows(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(customerName)) {
+            newSet.delete(customerName);
+        } else {
+            newSet.add(customerName);
+        }
+        return newSet;
+    });
+  };
 
   const handlePaymentConfirm = (customerName: string, amount: number, paymentMethod: string) => {
     addPayment(customerName, amount, paymentMethod);
     
-    // Add payment to cash register as a "suprimento"
     if (cashRegisterState.isOpen) {
       addAdjustment({
         type: "suprimento",
@@ -109,46 +120,81 @@ export default function FiadoPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]"></TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead className="text-right">Saldo Devedor</TableHead>
-                  <TableHead className="w-[200px] text-center">Ações</TableHead>
+                  <TableHead className="w-[150px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAccounts.length > 0 ? (
                   filteredAccounts.map((account) => (
-                    <TableRow key={account.customerName}>
-                      <TableCell className="font-medium">
-                        {account.customerName}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-destructive">
-                        {formatBRL(account.balance)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex justify-center gap-2">
-                            <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setViewingAccount(account)}
-                            >
-                            <Eye className="mr-2 h-4 w-4" />
-                            Extrato
-                            </Button>
-                            <Button
-                            size="sm"
-                            onClick={() => setPayingAccount(account)}
-                            disabled={!cashRegisterState.isOpen}
-                            >
-                            <DollarSign className="mr-2 h-4 w-4" />
-                            Receber
-                            </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                    <Fragment key={account.customerName}>
+                        <TableRow>
+                            <TableCell>
+                                <Button variant="ghost" size="sm" onClick={() => toggleRow(account.customerName)}>
+                                    {expandedRows.has(account.customerName) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                                </Button>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                                {account.customerName}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-destructive">
+                                {formatBRL(account.balance)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <Button
+                                size="sm"
+                                onClick={() => setPayingAccount(account)}
+                                disabled={!cashRegisterState.isOpen}
+                                >
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Receber
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                        {expandedRows.has(account.customerName) && (
+                             <TableRow>
+                                <TableCell colSpan={4} className="p-0">
+                                    <div className="p-4 bg-muted/50">
+                                        <h4 className="font-bold mb-2">Extrato de {account.customerName}</h4>
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead>Data</TableHead>
+                                                    <TableHead>Operação</TableHead>
+                                                    <TableHead>Descrição</TableHead>
+                                                    <TableHead className="text-right">Valor</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {account.transactions.map(tx => (
+                                                <TableRow key={tx.id}>
+                                                    <TableCell>{new Date(tx.date).toLocaleString('pt-BR')}</TableCell>
+                                                    <TableCell>
+                                                    <Badge variant={tx.type === 'sale' ? 'destructive' : 'default'}>
+                                                        {tx.type === 'sale' ? <><ArrowUpCircle className="mr-2 h-4 w-4"/> Compra</> : <><ArrowDownCircle className="mr-2 h-4 w-4"/> Pagamento</>}
+                                                    </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {tx.type === 'sale' ? `Venda #${tx.id.replace('SALE', '')}` : `Pagamento via ${tx.paymentMethod}`}
+                                                    </TableCell>
+                                                    <TableCell className={`text-right font-medium ${tx.type === 'sale' ? 'text-destructive' : 'text-green-600'}`}>
+                                                    {formatBRL(Math.abs(tx.amount))}
+                                                    </TableCell>
+                                                </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </Fragment>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
+                    <TableCell colSpan={4} className="h-24 text-center">
                       Nenhum cliente com saldo devedor encontrado.
                     </TableCell>
                   </TableRow>
@@ -173,14 +219,6 @@ export default function FiadoPage() {
         />
       )}
       
-      {viewingAccount && (
-        <AccountStatementDialog
-            isOpen={!!viewingAccount}
-            onClose={() => setViewingAccount(null)}
-            account={viewingAccount}
-        />
-      )}
-
       <div className="hidden print:block">
         {lastPayment && user && (
             <PaymentReceipt 

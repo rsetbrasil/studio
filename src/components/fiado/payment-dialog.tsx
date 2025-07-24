@@ -47,14 +47,7 @@ export function PaymentDialog({ isOpen, onClose, onConfirm, account }: PaymentDi
       });
       return;
     }
-     if (numericAmount > account.balance) {
-      toast({
-        title: "Valor Excedido",
-        description: `O valor do pagamento não pode ser maior que o saldo devedor de ${formatBRL(account.balance)}.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    
     onConfirm(account.customerName, numericAmount, paymentMethod);
   };
 
