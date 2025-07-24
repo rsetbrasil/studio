@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy } from 'firebase/firestore';
 
-type OrderItem = {
+export type OrderItem = {
   id: number;
   name: string;
   price: number;
@@ -37,6 +37,15 @@ type OrdersContextType = {
       getProductById: (id: string) => any 
     }
   ) => void;
+  updateOrder: (
+    orderId: string,
+    updatedData: { customer: string; items: OrderItem[]; total: number },
+    originalItems: OrderItem[],
+    stockActions: {
+      increaseStock: (items: any[]) => Promise<void>;
+      decreaseStock: (items: any[]) => Promise<void>;
+    }
+  ) => Promise<void>;
   getOrderById: (orderId: string) => Order | undefined;
   resetOrders: () => Promise<void>;
   ordersLastMonthPercentage: number;
@@ -151,6 +160,44 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         toast({ title: "Erro ao atualizar status do pedido", variant: "destructive"});
     }
   };
+  
+    const updateOrder = async (
+    orderId: string,
+    updatedData: { customer: string; items: OrderItem[]; total: number },
+    originalItems: OrderItem[],
+    stockActions: {
+      increaseStock: (items: any[]) => Promise<void>;
+      decreaseStock: (items: any[]) => Promise<void>;
+    }
+  ) => {
+    try {
+      // First, return original items to stock
+      await stockActions.increaseStock(
+        originalItems.map(item => ({ id: String(item.id), quantity: item.quantity }))
+      );
+
+      // Then, decrease stock for new items
+      await stockActions.decreaseStock(
+        updatedData.items.map(item => ({ id: String(item.id), quantity: item.quantity }))
+      );
+
+      // Finally, update the order in Firestore
+      const orderRef = doc(db, "orders", orderId);
+      await updateDoc(orderRef, updatedData);
+
+      // Update local state
+      setOrders(prevOrders =>
+        prevOrders.map(o =>
+          o.id === orderId ? { ...o, ...updatedData } : o
+        )
+      );
+    } catch (error) {
+      console.error("Error updating order:", error);
+      toast({ title: 'Erro ao atualizar o pedido', variant: 'destructive' });
+      // Here you might want to add logic to revert stock changes if the order update fails
+    }
+  };
+
 
   const getOrderById = (orderId: string): Order | undefined => {
     return orders.find(o => o.id === orderId);
@@ -185,7 +232,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   }, [orders]);
 
   return (
-    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
+    <OrdersContext.Provider value={{ orders, addOrder: addOrder as any, updateOrderStatus, updateOrder, getOrderById, resetOrders, ordersLastMonthPercentage, isMounted }}>
       {children}
     </OrdersContext.Provider>
   );
@@ -198,5 +245,3 @@ export const useOrders = () => {
   }
   return context;
 };
-
-    

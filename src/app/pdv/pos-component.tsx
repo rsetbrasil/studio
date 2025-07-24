@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useOrders } from "@/context/OrdersContext";
+import { useOrders, type OrderItem as OrderContextItem } from "@/context/OrdersContext";
 import { useSales, type Sale } from "@/context/SalesContext";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { useToast } from "@/hooks/use-toast";
@@ -53,12 +53,14 @@ export default function PosComponent() {
   const [productForQuantity, setProductForQuantity] = useState<Product | null>(null);
   const { toast } = useToast();
   const { addSale } = useSales();
-  const { addOrder, getOrderById, updateOrderStatus } = useOrders();
+  const { addOrder, getOrderById, updateOrder, updateOrderStatus } = useOrders();
   const { addFiadoSale } = useFiado();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
   const [lastSale, setLastSale] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
   const { user } = useAuth();
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -109,18 +111,20 @@ export default function PosComponent() {
         });
         setCart(cartItems);
         setCustomerName(order.customer === 'Cliente Balcão' ? '' : order.customer);
-        updateOrderStatus(order.id, 'Finalizado', stockActions);
+        setEditingOrderId(order.id);
+        // We don't change order status here, only when it's finalized/billed.
 
         toast({
-          title: "Pedido Carregado",
-          description: `Pedido ${order.id} de ${order.customer} carregado para faturamento.`,
+          title: "Pedido Carregado para Alteração",
+          description: `Modifique o pedido ${order.displayId} e salve as alterações.`,
         });
 
+        // Clean URL
         const newUrl = window.location.pathname;
         window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
       }
     }
-  }, [searchParams, getOrderById, updateOrderStatus, getProductById, toast, stockActions]);
+  }, [searchParams, getOrderById, getProductById, toast]);
 
   const handleCreateOrder = () => {
     if (cart.length === 0) {
@@ -177,6 +181,48 @@ export default function PosComponent() {
     setCustomerName("");
   };
   
+    const handleUpdateOrder = async () => {
+    if (!editingOrderId) return;
+    if (cart.length === 0) {
+      toast({ title: 'O pedido não pode ficar vazio', variant: 'destructive' });
+      return;
+    }
+
+    const originalOrder = getOrderById(editingOrderId);
+    if (!originalOrder) {
+      toast({ title: 'Pedido original não encontrado', variant: 'destructive' });
+      return;
+    }
+
+    const newOrderItems: OrderContextItem[] = cart.map(item => ({
+      id: Number(item.id),
+      name: item.name,
+      price: item.salePrice,
+      quantity: item.quantity,
+    }));
+
+    await updateOrder(
+      editingOrderId,
+      {
+        customer: finalCustomerName,
+        items: newOrderItems,
+        total: total,
+      },
+      originalOrder.items,
+      { increaseStock, decreaseStock }
+    );
+
+    toast({
+      title: 'Pedido Atualizado!',
+      description: 'As alterações no pedido foram salvas.',
+    });
+
+    setCart([]);
+    setCustomerName('');
+    setEditingOrderId(null);
+    router.push('/pedidos');
+  };
+
   const handleFiadoConfirm = () => {
     if (cart.length === 0) return;
     
@@ -228,7 +274,11 @@ export default function PosComponent() {
         }
       } else if (event.key === "F4") {
         event.preventDefault();
-        handleCreateOrder();
+        if(editingOrderId) {
+            handleUpdateOrder();
+        } else {
+            handleCreateOrder();
+        }
       } else if (event.key === "F9") {
         event.preventDefault();
         if (!canSaveFiado) return;
@@ -254,7 +304,7 @@ export default function PosComponent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale, canSaveFiado, finalCustomerName]);
+  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale, canSaveFiado, finalCustomerName, editingOrderId, handleUpdateOrder]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -367,7 +417,14 @@ export default function PosComponent() {
         id: String(id),
         quantity
     }));
-    decreaseStock(itemsToDecrease);
+
+    if (editingOrderId) {
+      // If we are editing an order and finalizing it, we just need to update its status to Finalizado.
+      // The stock was already handled when the order was created/updated.
+      updateOrderStatus(editingOrderId, 'Finalizado', stockActions);
+    } else {
+       decreaseStock(itemsToDecrease);
+    }
 
 
     const finalTotal = total + cardFee;
@@ -396,6 +453,7 @@ export default function PosComponent() {
     });
     
     setPaymentModalOpen(false);
+    setEditingOrderId(null);
     
     setLastSale({ ...newSale, change, totalPaid });
   };
@@ -422,18 +480,27 @@ export default function PosComponent() {
                 size="sm" 
                 onClick={() => setFiadoConfirmOpen(true)} 
                 variant="secondary" 
-                disabled={cart.length === 0 || finalCustomerName === 'Cliente Balcão' || !canSaveFiado}>
+                disabled={cart.length === 0 || finalCustomerName === 'Cliente Balcão' || !canSaveFiado || !!editingOrderId}>
                 <Save className="mr-2 h-4 w-4" /> Salvar Fiado
                 <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
                     F9
                 </kbd>
             </Button>
-            <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
-                <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
-                <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                    F4
-                </kbd>
-            </Button>
+            {editingOrderId ? (
+                 <Button size="sm" onClick={handleUpdateOrder} variant="secondary" disabled={cart.length === 0}>
+                    <Save className="mr-2 h-4 w-4" /> Salvar Alterações
+                    <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                        F4
+                    </kbd>
+                </Button>
+            ) : (
+                <Button size="sm" onClick={handleCreateOrder} variant="secondary" disabled={cart.length === 0}>
+                    <ListOrdered className="mr-2 h-4 w-4" /> Criar Pedido
+                    <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                        F4
+                    </kbd>
+                </Button>
+            )}
             <Button size="sm" onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0 || !canFinalizeSale}>
               <CheckCircle2 className="mr-2 h-4 w-4" /> Finalizar Venda
               <kbd className="pointer-events-none ml-2 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
@@ -543,7 +610,7 @@ export default function PosComponent() {
 
 
         <div className="hidden print:block">
-            {lastSale && <Receipt ref={receiptRef} sale={lastSale} user={user} />}
+            {lastSale && user && <Receipt ref={receiptRef} sale={lastSale} user={user} />}
         </div>
       </div>
   );
