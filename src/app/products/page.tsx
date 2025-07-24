@@ -23,11 +23,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { useProducts, type Product } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { PlusCircle, Pencil, Search, Upload } from "lucide-react";
+import { PlusCircle, Pencil, Search, Upload, File as FileIcon } from "lucide-react";
 import { ProductDialog } from "@/components/products/product-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-type CsvProduct = {
+type CsvProductImport = {
   id: number;
   nome: string;
   categoria: string;
@@ -86,7 +86,7 @@ export default function ProductsPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    Papa.parse<CsvProduct>(file, {
+    Papa.parse<CsvProductImport>(file, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
@@ -131,20 +131,59 @@ export default function ProductsPage() {
     event.target.value = '';
   };
 
+  const handleExport = () => {
+    if (filteredProducts.length === 0) {
+      toast({
+        title: "Nenhum produto para exportar",
+        description: "A tabela está vazia.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const dataToExport = filteredProducts.map(p => ({
+        id: p.id,
+        nome: p.name,
+        categoria: p.category,
+        unidade_medida: p.unitOfMeasure,
+        preco_compra_fardo: p.cost,
+        preco_venda_fardo: p.packPrice,
+        unidades_por_fardo: p.unitsPerPack,
+        estoque_fardo: p.stock
+    }));
+
+    const csv = Papa.unparse(dataToExport);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'produtos.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+        title: "Exportação Concluída!",
+        description: `${filteredProducts.length} produtos foram exportados para produtos.csv`
+    })
+  }
+
 
   return (
     <AppShell>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <CardTitle>Gestão de Produtos</CardTitle>
                 <CardDescription>
                   Visualize, adicione e edite seus produtos.
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <div className="relative w-full sm:max-w-xs">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -165,6 +204,10 @@ export default function ProductsPage() {
                   className="hidden"
                   accept=".csv"
                 />
+                <Button onClick={handleExport} variant="outline">
+                    <FileIcon className="mr-2 h-4 w-4" />
+                    Exportar
+                </Button>
                 <Button onClick={() => handleOpenDialog()}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Adicionar Produto
