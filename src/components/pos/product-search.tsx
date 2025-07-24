@@ -36,6 +36,12 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
       setSearchTerm(''); // Clear input after selection
     };
 
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
+            setSearchTerm('');
+        }
+    }
+
     return (
         <Command shouldFilter={false} className="relative flex-1 min-w-[300px] overflow-visible">
             <div className="relative">
@@ -46,6 +52,7 @@ export const ProductSearch = forwardRef<HTMLInputElement, ProductSearchProps>(
                     className="w-full text-base pl-10 h-10"
                     value={searchTerm}
                     onValueChange={setSearchTerm}
+                    onKeyDown={handleKeyDown}
                 />
             </div>
             
