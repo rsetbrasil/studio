@@ -147,7 +147,7 @@ export default function SalesPage() {
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
-                      <TableCell>{sale.sellerName}</TableCell>
+                      <TableCell>{sale.sellerName || 'N/A'}</TableCell>
                       <TableCell>{sale.paymentMethod}</TableCell>
                       <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell>
