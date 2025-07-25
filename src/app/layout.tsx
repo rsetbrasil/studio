@@ -32,9 +32,9 @@ export default function RootLayout({
         <UsersProvider>
           <AuthProvider>
             <CompanyProvider>
-              <SalesProvider>
-                <OrdersProvider>
-                  <ProductsProvider>
+              <ProductsProvider>
+                <SalesProvider>
+                  <OrdersProvider>
                     <FinancialProvider>
                       <FiadoProvider>
                         <CashRegisterProvider>
@@ -44,9 +44,9 @@ export default function RootLayout({
                         </CashRegisterProvider>
                       </FiadoProvider>
                     </FinancialProvider>
-                  </ProductsProvider>
-                </OrdersProvider>
-              </SalesProvider>
+                  </OrdersProvider>
+                </SalesProvider>
+              </ProductsProvider>
             </CompanyProvider>
           </AuthProvider>
         </UsersProvider>

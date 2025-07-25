@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy } from 'firebase/firestore';
-import { useSales } from './SalesContext';
+import { useUsers } from './UsersContext';
 
 export type OrderItem = {
   id: number;
@@ -31,7 +31,7 @@ type Order = {
 
 type OrdersContextType = {
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'displayId' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => void;
+  addOrder: (order: Omit<Order, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>, decreaseStock: (items: any[]) => void) => void;
   updateOrderStatus: (
     orderId: string, 
     newStatus: OrderStatus, 
@@ -63,13 +63,23 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const { users, getUserById } = useUsers();
   
   const fetchOrders = async () => {
+    if (users.length === 0) return; // Wait for users to be loaded
     try {
       const ordersCollection = collection(db, "orders");
       const q = query(ordersCollection, orderBy("date", "desc"));
       const ordersSnapshot = await getDocs(q);
-      const ordersList = ordersSnapshot.docs.map(d => ({ ...d.data(), id: d.id } as Order));
+      const ordersList = ordersSnapshot.docs.map(d => {
+        const data = d.data();
+        const seller = getUserById(data.sellerId);
+        return { 
+          ...data, 
+          id: d.id,
+          sellerName: seller?.name || data.sellerName || 'N/A', // Ensure sellerName is present
+        } as Order
+      });
       setOrders(ordersList);
     } catch (e) {
       console.error("Error fetching orders:", e);
@@ -79,24 +89,24 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
     fetchOrders();
-  }, []);
+  }, [users]);
   
   const getNextDisplayId = async () => {
-      // This counter should be stored in Firestore for consistency in a real multi-user environment
-      // For simplicity here, we'll base it on the current number of orders + 1
       const orderCount = orders.length; 
       return `pedido-${orderCount + 1}`;
   }
 
-  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
+  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status' | 'sellerName'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
       const newDisplayId = await getNextDisplayId();
       const newDate = new Date().toISOString(); 
+      const seller = getUserById(newOrderData.sellerId);
 
       const order: Omit<Order, 'id'> = {
           ...newOrderData,
           displayId: newDisplayId,
           date: newDate,
           status: "Pendente",
+          sellerName: seller?.name || 'Unknown',
       };
       
       try {
@@ -107,9 +117,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
       } catch (e) {
         console.error("Error adding order:", e);
         toast({ title: "Erro ao criar pedido", variant: "destructive"});
-        // Revert stock if order creation fails
-        // This is a simplified rollback. A more robust solution would use Firestore transactions.
-        // For now, we assume increaseStock exists and can revert the change.
         const { increaseStock } = require('./ProductsContext');
         const itemsToIncrease = order.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
         increaseStock(itemsToIncrease);
@@ -132,12 +139,10 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     if (oldStatus === newStatus) return;
 
     try {
-        // If an order is cancelled, return items to stock.
         if (oldStatus === "Pendente" && newStatus === "Cancelado") {
             await stockActions.increaseStock(orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
         }
       
-        // If a cancelled order is reactivated, check stock and decrease it.
         if (oldStatus === "Cancelado" && newStatus === "Pendente") {
             const hasEnoughStock = orderToUpdate.items.every(item => {
                 const product = stockActions.getProductById(String(item.id));
@@ -178,21 +183,17 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     }
   ) => {
     try {
-      // First, return original items to stock
       await stockActions.increaseStock(
         originalItems.map(item => ({ id: String(item.id), quantity: item.quantity }))
       );
 
-      // Then, decrease stock for new items
       await stockActions.decreaseStock(
         updatedData.items.map(item => ({ id: String(item.id), quantity: item.quantity }))
       );
 
-      // Finally, update the order in Firestore
       const orderRef = doc(db, "orders", orderId);
       await updateDoc(orderRef, updatedData);
 
-      // Update local state
       setOrders(prevOrders =>
         prevOrders.map(o =>
           o.id === orderId ? { ...o, ...updatedData } : o
@@ -201,7 +202,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Error updating order:", error);
       toast({ title: 'Erro ao atualizar o pedido', variant: 'destructive' });
-      // Here you might want to add logic to revert stock changes if the order update fails
     }
   };
 
@@ -215,7 +215,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         const batch = writeBatch(db);
         const ordersSnapshot = await getDocs(collection(db, "orders"));
         ordersSnapshot.forEach(doc => {
-            // Do not interact with stock when resetting data. Just delete the order.
             batch.delete(doc.ref)
         });
         await batch.commit();

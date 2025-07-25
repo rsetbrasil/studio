@@ -5,6 +5,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useUsers } from './UsersContext';
 
 export type SaleItem = {
   id: number;
@@ -38,7 +39,7 @@ type OrderForSale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale;
+  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>) => Sale;
   updateSale: (
     saleId: string, 
     updatedData: Partial<Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>>,
@@ -62,13 +63,24 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const { users, getUserById } = useUsers();
 
   const fetchSales = async () => {
+      if (users.length === 0) return;
       try {
           const salesCollection = collection(db, "sales");
           const q = query(salesCollection, orderBy("date", "desc"));
           const snapshot = await getDocs(q);
-          setSales(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as Sale)));
+          const salesList = snapshot.docs.map(d => {
+            const data = d.data();
+            const seller = getUserById(data.sellerId);
+            return {
+              ...data,
+              id: d.id,
+              sellerName: seller?.name || data.sellerName || 'N/A',
+            } as Sale
+          });
+          setSales(salesList);
       } catch (error) {
           console.error("Error fetching sales:", error);
       }
@@ -77,12 +89,13 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
     fetchSales();
-  }, []);
+  }, [users]);
 
-  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale => {
+  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>): Sale => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
       const newDisplayId = `venda-${sales.length + 1}`;
+      const seller = getUserById(newSaleData.sellerId);
 
       const sale: Sale = {
           ...newSaleData,
@@ -90,22 +103,21 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
           displayId: newDisplayId,
           date: newDate,
           status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
+          sellerName: seller?.name || 'Unknown',
       };
 
-      // Add to state immediately with a temporary ID
       setSales(prev => [sale, ...prev]);
 
-      // Then, save to Firestore and update the ID
       addDoc(collection(db, 'sales'), {
         ...newSaleData,
         displayId: newDisplayId,
         date: newDate,
         status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
+        sellerName: seller?.name || 'Unknown',
       }).then(docRef => {
         setSales(prev => prev.map(s => s.id === tempId ? { ...s, id: docRef.id } : s));
       }).catch(error => {
         console.error("Error adding sale:", error);
-        // Optionally remove the temp sale from state on error
         setSales(prev => prev.filter(s => s.id !== tempId));
       });
       
@@ -122,10 +134,8 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     }
   ) => {
       try {
-        // Revert stock for original items
         await stockActions.increaseStock(originalItems.map(item => ({ id: String(item.id), quantity: item.quantity })));
         
-        // Decrease stock for new/updated items
         if(updatedData.items) {
           await stockActions.decreaseStock(updatedData.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
         }
@@ -137,7 +147,6 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
       } catch (error) {
           console.error("Error updating sale: ", error);
-          // Optional: Add logic to revert stock changes on failure
       }
   }
   

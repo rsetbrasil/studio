@@ -34,18 +34,12 @@ export default function OrdersPage() {
   const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
-  const { users } = useUsers();
   const { toast } = useToast();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
 
   const canEditOrder = user?.role === 'Administrador' || user?.role === 'Gerente' || user?.role === 'Vendedor';
   const canManageStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
-  
-  const getSellerName = (sellerId: string) => {
-    const seller = users.find(u => u.id === sellerId);
-    return seller?.name || 'N/A';
-  }
 
   const filteredOrders = useMemo(() => {
     if (!searchTerm) {
@@ -56,9 +50,9 @@ export default function OrdersPage() {
       (order) =>
         order.customer.toLowerCase().includes(lowercasedTerm) ||
         order.displayId.toLowerCase().includes(lowercasedTerm) ||
-        getSellerName(order.sellerId).toLowerCase().includes(lowercasedTerm)
+        (order.sellerName && order.sellerName.toLowerCase().includes(lowercasedTerm))
     );
-  }, [orders, searchTerm, users]);
+  }, [orders, searchTerm]);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -135,7 +129,7 @@ export default function OrdersPage() {
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
-                      <TableCell>{order.sellerName || getSellerName(order.sellerId)}</TableCell>
+                      <TableCell>{order.sellerName || 'N/A'}</TableCell>
                        <TableCell className="text-center">
                         {order.status === 'Pendente' && (
                             <div className="flex gap-2 justify-center">
