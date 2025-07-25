@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   X,
   CheckCircle2,
@@ -168,7 +168,7 @@ export default function PosComponent() {
 
   }, [searchParams, getOrderById, getProductById, getSaleByIdFromContext, toast, editingOrderId, editingSaleId]);
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = useCallback(() => {
     if (cart.length === 0) {
       toast({
         title: "Carrinho Vazio",
@@ -223,9 +223,9 @@ export default function PosComponent() {
 
     setCart([]);
     setCustomerName("");
-  };
+  }, [cart, finalCustomerName, total, user, addOrder, decreaseStock, getProductById, toast]);
   
-    const handleUpdateOrder = async () => {
+  const handleUpdateOrder = useCallback(async () => {
     if (!editingOrderId) return;
     if (cart.length === 0) {
       toast({ title: 'O pedido não pode ficar vazio', variant: 'destructive' });
@@ -265,9 +265,9 @@ export default function PosComponent() {
     setCustomerName('');
     setEditingOrderId(null);
     router.push('/pedidos');
-  };
+  }, [editingOrderId, cart, finalCustomerName, total, getOrderById, updateOrder, increaseStock, decreaseStock, toast, router]);
 
-  const handleFiadoConfirm = () => {
+  const handleFiadoConfirm = useCallback(() => {
     if (cart.length === 0) return;
     
     const saleItems = cart.map(item => ({
@@ -301,7 +301,7 @@ export default function PosComponent() {
     setCart([]);
     setCustomerName("");
     setFiadoConfirmOpen(false);
-  };
+  }, [cart, finalCustomerName, total, user, addFiadoSale, decreaseStock, toast]);
   
 
   useEffect(() => {
@@ -350,7 +350,7 @@ export default function PosComponent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [cart, customerName, total, handleCreateOrder, canFinalizeSale, canSaveFiado, finalCustomerName, editingOrderId, handleUpdateOrder]);
+  }, [cart.length, canFinalizeSale, canSaveFiado, finalCustomerName, editingOrderId, toast, handleUpdateOrder, handleCreateOrder, handleFiadoConfirm]);
 
 
   const handleProductSelect = (product: Product) => {
@@ -705,3 +705,4 @@ export default function PosComponent() {
       </div>
   );
 }
+
