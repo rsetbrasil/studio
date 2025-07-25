@@ -55,7 +55,7 @@ export const Receipt = React.forwardRef<HTMLDivElement, ReceiptProps>(
             </div>
             <div className="flex justify-between">
                 <span>CLIENTE: {sale.customer}</span>
-                <span className="font-bold">Nº {sale.displayId}</span>
+                <span className="font-bold">{sale.displayId}</span>
             </div>
         </div>
 
