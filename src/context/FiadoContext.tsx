@@ -25,7 +25,7 @@ export type FiadoAccount = {
 
 type FiadoContextType = {
   accounts: FiadoAccount[];
-  addFiadoSale: (sale: Omit<Sale, 'id' | 'date' | 'status' | 'displayId'>) => void;
+  addFiadoSale: (sale: Omit<Sale, 'id' | 'date' | 'status' | 'displayId'>) => Promise<void>;
   addPayment: (customerName: string, amount: number, paymentMethod: string) => FiadoTransaction | null;
   isMounted: boolean;
 };
@@ -34,28 +34,29 @@ const FiadoContext = createContext<FiadoContextType | undefined>(undefined);
 
 export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<FiadoAccount[]>([]);
-  const { addSale: addSaleToHistory, updateSaleStatus } = useSales();
+  const { addSale: addSaleToHistory, updateSaleStatus, isMounted: salesMounted } = useSales();
   const [isMounted, setIsMounted] = useState(false);
 
-  const fetchAccounts = async () => {
-      try {
-          const accountsCollection = collection(db, "fiadoAccounts");
-          const q = query(accountsCollection);
-          const snapshot = await getDocs(q);
-          const accountsList = snapshot.docs.map(d => ({
-              customerName: d.id,
-              ...d.data()
-          } as FiadoAccount));
-          setAccounts(accountsList);
-      } catch (error) {
-          console.error("Error fetching fiado accounts:", error);
-      }
-  };
-  
   useEffect(() => {
-    setIsMounted(true);
-    fetchAccounts();
-  }, []);
+    if (salesMounted) {
+      const fetchAccounts = async () => {
+          try {
+              const accountsCollection = collection(db, "fiadoAccounts");
+              const q = query(accountsCollection);
+              const snapshot = await getDocs(q);
+              const accountsList = snapshot.docs.map(d => ({
+                  customerName: d.id,
+                  ...d.data()
+              } as FiadoAccount));
+              setAccounts(accountsList);
+              setIsMounted(true);
+          } catch (error) {
+              console.error("Error fetching fiado accounts:", error);
+          }
+      };
+      fetchAccounts();
+    }
+  }, [salesMounted]);
   
   const addFiadoSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'displayId'>) => {
     try {

@@ -116,13 +116,13 @@ export const CashRegisterProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const getSalesForCurrentSession = useCallback(() => {
-    if (!isMounted || !state.currentSession) return [];
+    if (!state.currentSession) return [];
 
     const openingTime = new Date(state.currentSession.openingTime);
 
     return sales.filter(sale => sale.status !== 'Fiado' && new Date(sale.date) >= openingTime);
 
-  }, [isMounted, state.currentSession, sales]);
+  }, [state.currentSession, sales]);
 
   const closeRegister = async () => {
     if (!state.isOpen || !state.currentSession) return;

@@ -4,6 +4,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp, runTransaction } from 'firebase/firestore';
+import { useUsers } from './UsersContext';
 
 export type SaleItem = {
   id: number;
@@ -61,24 +62,33 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
+  const { users, isMounted: usersMounted } = useUsers();
 
   useEffect(() => {
-    setIsMounted(true);
-    
-    const fetchSales = async () => {
-        try {
-            const salesCollection = collection(db, "sales");
-            const q = query(salesCollection, orderBy("date", "desc"));
-            const snapshot = await getDocs(q);
-            const salesList = snapshot.docs.map(d => ({...d.data(), id: d.id } as Sale));
-            setSales(salesList);
-        } catch (error) {
-            console.error("Error fetching sales:", error);
-        }
+    if (usersMounted) {
+      const fetchSales = async () => {
+          try {
+              const salesCollection = collection(db, "sales");
+              const q = query(salesCollection, orderBy("date", "desc"));
+              const snapshot = await getDocs(q);
+              const salesList = snapshot.docs.map(d => {
+                  const saleData = d.data() as Sale;
+                  const seller = users.find(u => u.id === saleData.sellerId);
+                  return {
+                      ...saleData,
+                      id: d.id,
+                      sellerName: seller?.name || 'N/A'
+                  };
+              });
+              setSales(salesList);
+              setIsMounted(true);
+          } catch (error) {
+              console.error("Error fetching sales:", error);
+          }
+      }
+      fetchSales();
     }
-
-    fetchSales();
-  }, []);
+  }, [usersMounted, users]);
 
   const addSale = async (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Promise<Sale> => {
       const tempId = `TEMP_SALE_${Date.now()}`;

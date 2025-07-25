@@ -6,6 +6,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy, runTransaction } from 'firebase/firestore';
+import { useUsers } from './UsersContext';
 
 export type OrderItem = {
   id: number;
@@ -62,24 +63,33 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const { users, isMounted: usersMounted } = useUsers();
   
   useEffect(() => {
-    setIsMounted(true);
-    
-    const fetchOrders = async () => {
-      try {
-        const ordersCollection = collection(db, "orders");
-        const q = query(ordersCollection, orderBy("date", "desc"));
-        const ordersSnapshot = await getDocs(q);
-        const ordersList = ordersSnapshot.docs.map(d => ({ ...d.data(), id: d.id } as Order));
-        setOrders(ordersList);
-      } catch (e) {
-        console.error("Error fetching orders:", e);
+    if (usersMounted) {
+      const fetchOrders = async () => {
+        try {
+          const ordersCollection = collection(db, "orders");
+          const q = query(ordersCollection, orderBy("date", "desc"));
+          const ordersSnapshot = await getDocs(q);
+          const ordersList = ordersSnapshot.docs.map(d => {
+            const orderData = d.data() as Order;
+            const seller = users.find(u => u.id === orderData.sellerId);
+            return {
+              ...orderData,
+              id: d.id,
+              sellerName: seller?.name || 'N/A'
+            };
+          });
+          setOrders(ordersList);
+          setIsMounted(true);
+        } catch (e) {
+          console.error("Error fetching orders:", e);
+        }
       }
+      fetchOrders();
     }
-
-    fetchOrders();
-  }, []);
+  }, [usersMounted, users]);
   
   const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
       const newDate = new Date().toISOString(); 

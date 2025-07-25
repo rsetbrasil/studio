@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -22,6 +23,7 @@ type UsersContextType = {
   updateUser: (userId: string, userData: Omit<User, 'id'>) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   getUserById: (id: string) => User | undefined;
+  isMounted: boolean;
 };
 
 const initialUsers: Omit<User, 'id'>[] = [
@@ -33,6 +35,7 @@ const UsersContext = createContext<UsersContextType | undefined>(undefined);
 
 export const UsersProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -50,6 +53,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
           } else {
               setUsers(snapshot.docs.map(d => ({ ...d.data(), id: d.id } as User)));
           }
+          setIsMounted(true);
       } catch (error) {
           console.error("Error fetching users:", error);
       }
@@ -112,7 +116,7 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UsersContext.Provider value={{ users, addUser, updateUser, deleteUser, getUserById: getUserById as any }}>
+    <UsersContext.Provider value={{ users, addUser, updateUser, deleteUser, getUserById: getUserById as any, isMounted }}>
       {children}
     </UsersContext.Provider>
   );
