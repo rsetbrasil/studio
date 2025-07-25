@@ -71,7 +71,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             calculatedCardFee += amounts['Débito'] * DEBIT_FEE_RATE;
         }
 
-        const calculatedTotal = subtotal + tax; // Taxa de cartão não entra no total a pagar, mas sim no valor recebido.
+        const calculatedTotal = subtotal + tax;
         const calculatedTotalPaid = Object.values(amounts).reduce((acc, amount) => acc + (amount || 0), 0);
         const calculatedBalance = calculatedTotal - calculatedTotalPaid;
         const calculatedChange = calculatedBalance < -0.001 ? Math.abs(calculatedBalance) : 0;
@@ -80,7 +80,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             total: calculatedTotal,
             cardFee: calculatedCardFee,
             totalPaid: calculatedTotalPaid,
-            balance: calculatedBalance > 0.001 ? calculatedBalance : 0,
+            balance: calculatedBalance,
             change: calculatedChange,
             numericAmounts: amounts
         };
@@ -202,9 +202,9 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             </div>
              <div className="flex justify-between">
                 <span className="text-muted-foreground">Restante:</span>
-                <span className="font-medium">{formatBRL(balance)}</span>
+                <span className="font-medium">{formatBRL(balance > 0.001 ? balance : 0)}</span>
             </div>
-            {change > 0 && (
+            {change > 0.001 && (
                  <div className="flex justify-between text-base">
                     <span className="text-muted-foreground">Troco:</span>
                     <span className="font-bold text-primary">{formatBRL(change)}</span>
@@ -217,7 +217,7 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
             size="lg" 
             className="w-full h-12 text-lg font-semibold"
             onClick={handleFinish}
-            disabled={balance <= -0.001}
+            disabled={balance > 0.001}
           >
             Concluir (F2)
           </Button>
@@ -226,5 +226,3 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     </Dialog>
   );
 }
-
-    
