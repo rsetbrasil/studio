@@ -47,7 +47,7 @@ export default function OrdersPage() {
       (order) =>
         order.customer.toLowerCase().includes(lowercasedTerm) ||
         order.displayId.toLowerCase().includes(lowercasedTerm) ||
-        order.sellerName.toLowerCase().includes(lowercasedTerm)
+        (order.sellerName && order.sellerName.toLowerCase().includes(lowercasedTerm))
     );
   }, [orders, searchTerm]);
 
@@ -126,7 +126,7 @@ export default function OrdersPage() {
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
-                      <TableCell>{order.sellerName}</TableCell>
+                      <TableCell>{order.sellerName || 'N/A'}</TableCell>
                        <TableCell className="text-center">
                         {order.status === 'Pendente' && (
                             <div className="flex gap-2 justify-center">

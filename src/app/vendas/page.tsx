@@ -51,7 +51,7 @@ export default function SalesPage() {
       (sale) =>
         sale.customer.toLowerCase().includes(lowercasedTerm) ||
         sale.displayId.toLowerCase().includes(lowercasedTerm) ||
-        sale.sellerName.toLowerCase().includes(lowercasedTerm)
+        (sale.sellerName && sale.sellerName.toLowerCase().includes(lowercasedTerm))
     );
   }, [sales, searchTerm, isMounted]);
 
@@ -154,7 +154,7 @@ export default function SalesPage() {
                       <TableCell className="text-right">
                         {formatBRL(sale.amount)}
                       </TableCell>
-                      <TableCell>{sale.sellerName}</TableCell>
+                      <TableCell>{sale.sellerName || 'N/A'}</TableCell>
                       <TableCell className="text-center flex gap-2 justify-center">
                          <Button
                           variant="outline"

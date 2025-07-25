@@ -65,31 +65,32 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [isMounted, setIsMounted] = useState(false);
   const { users } = useUsers();
 
-  const fetchSales = async () => {
-      if (users.length === 0) return; // Wait until users are loaded
-      try {
-          const salesCollection = collection(db, "sales");
-          const q = query(salesCollection, orderBy("date", "desc"));
-          const snapshot = await getDocs(q);
-          const salesList = snapshot.docs.map(d => {
-            const data = d.data();
-            const seller = users.find(u => u.id === data.sellerId);
-            return {
-              ...data,
-              id: d.id,
-              sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
-            } as Sale
-          });
-          setSales(salesList);
-      } catch (error) {
-          console.error("Error fetching sales:", error);
-      }
-  }
-
   useEffect(() => {
     setIsMounted(true);
+    
+    const fetchSales = async () => {
+        if (users.length === 0) return; // Wait until users are loaded
+        try {
+            const salesCollection = collection(db, "sales");
+            const q = query(salesCollection, orderBy("date", "desc"));
+            const snapshot = await getDocs(q);
+            const salesList = snapshot.docs.map(d => {
+              const data = d.data();
+              const seller = users.find(u => u.id === data.sellerId);
+              return {
+                ...data,
+                id: d.id,
+                sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
+              } as Sale
+            });
+            setSales(salesList);
+        } catch (error) {
+            console.error("Error fetching sales:", error);
+        }
+    }
+
     fetchSales();
-  }, [users]); // Re-fetch when users are loaded/changed
+  }, [users]);
 
   const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>): Sale => {
       const tempId = `TEMP_SALE_${Date.now()}`;

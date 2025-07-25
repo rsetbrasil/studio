@@ -65,31 +65,32 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const { users } = useUsers();
   
-  const fetchOrders = async () => {
-    if (users.length === 0) return; // Wait until users are loaded
-    try {
-      const ordersCollection = collection(db, "orders");
-      const q = query(ordersCollection, orderBy("date", "desc"));
-      const ordersSnapshot = await getDocs(q);
-      const ordersList = ordersSnapshot.docs.map(d => {
-        const data = d.data();
-        const seller = users.find(u => u.id === data.sellerId);
-        return { 
-          ...data, 
-          id: d.id,
-          sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
-        } as Order
-      });
-      setOrders(ordersList);
-    } catch (e) {
-      console.error("Error fetching orders:", e);
-    }
-  }
-
   useEffect(() => {
     setIsMounted(true);
+    
+    const fetchOrders = async () => {
+      if (users.length === 0) return; // Wait until users are loaded
+      try {
+        const ordersCollection = collection(db, "orders");
+        const q = query(ordersCollection, orderBy("date", "desc"));
+        const ordersSnapshot = await getDocs(q);
+        const ordersList = ordersSnapshot.docs.map(d => {
+          const data = d.data();
+          const seller = users.find(u => u.id === data.sellerId);
+          return { 
+            ...data, 
+            id: d.id,
+            sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
+          } as Order
+        });
+        setOrders(ordersList);
+      } catch (e) {
+        console.error("Error fetching orders:", e);
+      }
+    }
+
     fetchOrders();
-  }, [users]); // Re-fetch when users are loaded/changed
+  }, [users]);
   
   const getNextDisplayId = async () => {
       const orderCount = orders.length; 
