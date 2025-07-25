@@ -5,7 +5,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy, runTransaction } from 'firebase/firestore';
 
 export type OrderItem = {
   id: number;
@@ -81,32 +81,57 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     fetchOrders();
   }, []);
   
-  const getNextDisplayId = async () => {
-      const orderCount = orders.length; 
-      return `${orderCount + 1}`;
-  }
-
   const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
-      const newDisplayId = await getNextDisplayId();
       const newDate = new Date().toISOString(); 
 
-      const order: Omit<Order, 'id'> = {
+      try {
+        const itemsToDecrease = newOrderData.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
+        await decreaseStock(itemsToDecrease);
+
+        const newId = await runTransaction(db, async (transaction) => {
+          const counterRef = doc(db, 'counters', 'ordersCounter');
+          const counterDoc = await transaction.get(counterRef);
+
+          let nextId = 1;
+          if (counterDoc.exists()) {
+            nextId = counterDoc.data().count + 1;
+          }
+          
+          const order: Omit<Order, 'id'> = {
+              ...newOrderData,
+              displayId: String(nextId),
+              date: newDate,
+              status: "Pendente",
+          };
+
+          const newOrderRef = doc(collection(db, 'orders'));
+          transaction.set(newOrderRef, order);
+
+          if (counterDoc.exists()) {
+            transaction.update(counterRef, { count: nextId });
+          } else {
+            transaction.set(counterRef, { count: nextId });
+          }
+
+          return { firestoreId: newOrderRef.id, displayId: String(nextId) };
+        });
+
+        const newOrderForState: Order = {
           ...newOrderData,
-          displayId: newDisplayId,
+          id: newId.firestoreId,
+          displayId: newId.displayId,
           date: newDate,
           status: "Pendente",
-      };
-      
-      try {
-        const itemsToDecrease = order.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
-        await decreaseStock(itemsToDecrease);
-        const docRef = await addDoc(collection(db, 'orders'), order);
-        setOrders(prevOrders => [{ ...order, id: docRef.id }, ...prevOrders]);
+        };
+        
+        setOrders(prevOrders => [newOrderForState, ...prevOrders]);
+
       } catch (e) {
         console.error("Error adding order:", e);
         toast({ title: "Erro ao criar pedido", variant: "destructive"});
+        // Rollback stock decrease
         const { increaseStock } = require('./ProductsContext');
-        const itemsToIncrease = order.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
+        const itemsToIncrease = newOrderData.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
         increaseStock(itemsToIncrease);
       }
   };
@@ -205,6 +230,8 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         ordersSnapshot.forEach(doc => {
             batch.delete(doc.ref)
         });
+        // Also reset the counter
+        batch.delete(doc(db, "counters", "ordersCounter"));
         await batch.commit();
         setOrders([]);
     } catch (e) {

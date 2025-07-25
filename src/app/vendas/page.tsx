@@ -63,7 +63,7 @@ export default function SalesPage() {
       cancelSale(saleToCancel.id, increaseStock);
       toast({
         title: "Venda Cancelada!",
-        description: `A venda ${saleToCancel.displayId} foi cancelada e os itens retornaram ao estoque.`,
+        description: `A venda #${saleToCancel.displayId} foi cancelada e os itens retornaram ao estoque.`,
       });
       setSaleToCancel(null);
     }
@@ -129,7 +129,7 @@ export default function SalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID da Venda</TableHead>
+                  <TableHead>Venda</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Forma de Pgto.</TableHead>
                   <TableHead>Data</TableHead>
@@ -142,7 +142,7 @@ export default function SalesPage() {
                 {isMounted && filteredSales.length > 0 ? (
                   filteredSales.map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell className="font-medium">{sale.displayId}</TableCell>
+                      <TableCell className="font-medium">#{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
                       <TableCell>{sale.paymentMethod}</TableCell>
                       <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>

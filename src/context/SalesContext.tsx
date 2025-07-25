@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp, runTransaction } from 'firebase/firestore';
 
 export type SaleItem = {
   id: number;
@@ -84,7 +83,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
-      const newDisplayId = `${sales.length + 1}`;
+      const newDisplayId = '...'; // Placeholder
       
       const sale: Sale = {
           ...newSaleData,
@@ -96,17 +95,45 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
       setSales(prev => [sale, ...prev]);
 
-      addDoc(collection(db, 'sales'), {
-        ...newSaleData,
-        displayId: newDisplayId,
-        date: newDate,
-        status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
-      }).then(docRef => {
-        setSales(prev => prev.map(s => s.id === tempId ? { ...s, id: docRef.id } : s));
-      }).catch(error => {
-        console.error("Error adding sale:", error);
-        setSales(prev => prev.filter(s => s.id !== tempId));
-      });
+      const createSaleInDb = async () => {
+        try {
+          const newId = await runTransaction(db, async (transaction) => {
+            const counterRef = doc(db, 'counters', 'salesCounter');
+            const counterDoc = await transaction.get(counterRef);
+            
+            let nextId = 1;
+            if (counterDoc.exists()) {
+              nextId = counterDoc.data().count + 1;
+            }
+            
+            const finalSaleData = {
+              ...newSaleData,
+              displayId: String(nextId),
+              date: newDate,
+              status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
+            };
+            
+            const newSaleRef = doc(collection(db, 'sales'));
+            transaction.set(newSaleRef, finalSaleData);
+            
+            if (counterDoc.exists()) {
+              transaction.update(counterRef, { count: nextId });
+            } else {
+              transaction.set(counterRef, { count: nextId });
+            }
+            
+            return { firestoreId: newSaleRef.id, displayId: String(nextId) };
+          });
+          
+          setSales(prev => prev.map(s => s.id === tempId ? { ...s, id: newId.firestoreId, displayId: newId.displayId } : s));
+
+        } catch (error) {
+           console.error("Error adding sale transactionally:", error);
+           setSales(prev => prev.filter(s => s.id !== tempId));
+        }
+      }
+      
+      createSaleInDb();
       
       return sale;
   };
@@ -178,6 +205,8 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
         const batch = writeBatch(db);
         const snapshot = await getDocs(collection(db, "sales"));
         snapshot.forEach(doc => batch.delete(doc.ref));
+        // Also reset the counter
+        batch.delete(doc(db, "counters", "salesCounter"));
         await batch.commit();
         setSales([]);
     } catch (error) {

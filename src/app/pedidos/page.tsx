@@ -112,7 +112,7 @@ export default function OrdersPage() {
                 {filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.displayId}</TableCell>
+                      <TableCell className="font-medium">#{order.displayId}</TableCell>
                       <TableCell>{order.customer}</TableCell>
                       <TableCell>{order.items.length} item(s)</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
