@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy, runTransaction } from 'firebase/firestore';
@@ -75,7 +75,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
           return {
             ...orderData,
             id: d.id,
-            sellerName: '' // Will be populated on render
           };
         });
         setOrders(ordersList);
@@ -159,7 +158,8 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
 
     try {
         if (oldStatus === "Pendente" && newStatus === "Cancelado") {
-            await stockActions.increaseStock(orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
+            const itemsToIncrease = orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
+            await stockActions.increaseStock(itemsToIncrease);
         }
       
         if (oldStatus === "Cancelado" && newStatus === "Pendente") {
@@ -169,7 +169,8 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
             });
 
             if (hasEnoughStock) {
-                await stockActions.decreaseStock(orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity })));
+                const itemsToDecrease = orderToUpdate.items.map(item => ({ id: String(item.id), quantity: item.quantity }));
+                await stockActions.decreaseStock(itemsToDecrease);
             } else {
                 toast({
                     title: "Estoque insuficiente",

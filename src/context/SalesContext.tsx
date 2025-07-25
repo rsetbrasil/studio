@@ -2,9 +2,10 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp, runTransaction } from 'firebase/firestore';
+import { useUsers } from './UsersContext';
 
 export type SaleItem = {
   id: number;
@@ -48,7 +49,6 @@ type SalesContextType = {
       decreaseStock: (items: any[]) => Promise<void>;
     }
     ) => Promise<void>;
-  updateSaleStatus: (saleId: string, status: SaleStatus) => void;
   getSaleById: (saleId: string) => Sale | undefined;
   cancelSale: (saleId: string, increaseStock: (items: any[]) => void) => void;
   resetSales: () => Promise<void>;
@@ -62,7 +62,7 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-
+  
   useEffect(() => {
     const fetchSales = async () => {
         try {
@@ -74,7 +74,6 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
                 return {
                     ...saleData,
                     id: d.id,
-                    sellerName: '' // will be populated on render
                 };
             });
             setSales(salesList);
@@ -173,20 +172,6 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
       }
   }
   
-  const updateSaleStatus = async (saleId: string, status: SaleStatus) => {
-     try {
-        const saleRef = doc(db, "sales", saleId);
-        await updateDoc(saleRef, { status });
-        setSales(currentSales =>
-          currentSales.map(s =>
-            s.id === saleId ? { ...s, status } : s
-          )
-        );
-     } catch(e) {
-         console.error("Error updating sale status:", e);
-     }
-  };
-  
   const getSaleById = (saleId: string): Sale | undefined => {
     return sales.find(s => s.id === saleId);
   }
@@ -198,7 +183,13 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     try {
         const saleRef = doc(db, 'sales', saleId);
         await updateDoc(saleRef, { status: 'Cancelada' });
-        increaseStock(saleToCancel.items);
+        
+        const itemsToIncrease = saleToCancel.items.map(item => ({
+            id: String(item.id),
+            quantity: item.quantity
+        }));
+        await increaseStock(itemsToIncrease);
+
         setSales(currentSales => 
             currentSales.map(s => 
                 s.id === saleId ? { ...s, status: 'Cancelada' } : s
@@ -255,7 +246,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <SalesContext.Provider value={{ sales, addSale: addSale as any, updateSale, cancelSale, resetSales, totalSalesToday, salesYesterdayPercentage, isMounted, updateSaleStatus, getSaleById }}>
+    <SalesContext.Provider value={{ sales, addSale: addSale as any, updateSale, cancelSale, resetSales, totalSalesToday, salesYesterdayPercentage, isMounted, getSaleById }}>
       {children}
     </SalesContext.Provider>
   );

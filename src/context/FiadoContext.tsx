@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useSales, Sale, SaleItem } from './SalesContext';
 import { db } from '@/lib/firebase';
 import { collection, doc, getDocs, writeBatch, query, getDoc, runTransaction, updateDoc } from 'firebase/firestore';
@@ -37,7 +37,7 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   const { addSale: addSaleToHistory } = useSales();
   const [isMounted, setIsMounted] = useState(false);
   
-  const fetchAccounts = async () => {
+  const fetchAccounts = useCallback(async () => {
       try {
           const accountsCollection = collection(db, "fiadoAccounts");
           const q = query(accountsCollection);
@@ -50,12 +50,12 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
           console.error("Error fetching fiado accounts:", error);
       }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAccounts();
     setIsMounted(true);
-  }, []);
+  }, [fetchAccounts]);
   
   const addFiadoSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'displayId'>) => {
     try {
