@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, addDoc, doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
@@ -111,12 +111,12 @@ export const UsersProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const getUserById = (id: string) => {
+  const getUserById = useCallback((id: string) => {
     return users.find(u => u.id === id);
-  };
+  }, [users]);
 
   return (
-    <UsersContext.Provider value={{ users, addUser, updateUser, deleteUser, getUserById: getUserById as any, isMounted }}>
+    <UsersContext.Provider value={{ users, addUser, updateUser, deleteUser, getUserById, isMounted }}>
       {children}
     </UsersContext.Provider>
   );

@@ -63,7 +63,7 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  const { getUserById: getUserFromUsersContext } = useUsers();
+  const { getUserById, isMounted: usersMounted } = useUsers();
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -73,7 +73,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
             const snapshot = await getDocs(q);
             const salesList = snapshot.docs.map(d => {
                 const saleData = d.data() as Sale;
-                const seller = getUserFromUsersContext(saleData.sellerId);
+                const seller = getUserById(saleData.sellerId);
                 return {
                     ...saleData,
                     id: d.id,
@@ -86,8 +86,10 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
             console.error("Error fetching sales:", error);
         }
     }
-    fetchSales();
-  }, [getUserFromUsersContext]);
+    if(usersMounted) {
+      fetchSales();
+    }
+  }, [usersMounted, getUserById]);
 
   const addSale = async (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Promise<Sale> => {
       const tempId = `TEMP_SALE_${Date.now()}`;
