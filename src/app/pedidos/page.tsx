@@ -49,6 +49,7 @@ export default function OrdersPage() {
 
   const filteredOrders = useMemo(() => {
     const lowercasedTerm = searchTerm.toLowerCase();
+    if (!lowercasedTerm) return orders;
     return orders.filter(
       (order) =>
         order.customer.toLowerCase().includes(lowercasedTerm) ||

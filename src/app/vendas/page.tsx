@@ -53,6 +53,7 @@ export default function SalesPage() {
   const filteredSales = useMemo(() => {
     if (!isMounted) return [];
     const lowercasedTerm = searchTerm.toLowerCase();
+    if (!lowercasedTerm) return sales;
     return sales.filter(
       (sale) =>
         sale.customer.toLowerCase().includes(lowercasedTerm) ||
