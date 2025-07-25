@@ -212,11 +212,19 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     try {
         const batch = writeBatch(db);
         const ordersSnapshot = await getDocs(collection(db, "orders"));
-        ordersSnapshot.forEach(doc => batch.delete(doc.ref));
+        ordersSnapshot.forEach(doc => {
+            // Do not interact with stock when resetting data. Just delete the order.
+            batch.delete(doc.ref)
+        });
         await batch.commit();
         setOrders([]);
     } catch (e) {
         console.error("Error resetting orders:", e);
+        toast({
+            title: "Erro ao Zerar Pedidos",
+            description: "Não foi possível apagar os pedidos do banco de dados.",
+            variant: "destructive"
+        });
     }
   };
 
