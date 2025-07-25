@@ -63,7 +63,6 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-  const { getUserById, isMounted: usersMounted } = useUsers();
   
   useEffect(() => {
     const fetchOrders = async () => {
@@ -73,23 +72,20 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         const ordersSnapshot = await getDocs(q);
         const ordersList = ordersSnapshot.docs.map(d => {
           const orderData = d.data() as Order;
-          const seller = getUserById(orderData.sellerId);
           return {
             ...orderData,
             id: d.id,
-            sellerName: seller?.name || 'N/A'
+            sellerName: '' // Will be populated on render
           };
         });
         setOrders(ordersList);
-        setIsMounted(true);
       } catch (e) {
         console.error("Error fetching orders:", e);
       }
     }
-    if (usersMounted) {
-      fetchOrders();
-    }
-  }, [usersMounted, getUserById]);
+    fetchOrders();
+    setIsMounted(true);
+  }, []);
   
   const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
       const newDate = new Date().toISOString(); 

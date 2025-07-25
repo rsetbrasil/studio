@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useOrders } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
+import { useUsers } from "@/context/UsersContext";
 import { formatBRL } from "@/lib/utils";
 import { Pencil, Trash, CheckCircle, Search } from "lucide-react";
 import Link from "next/link";
@@ -33,6 +34,7 @@ export default function OrdersPage() {
   const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
   const { increaseStock, decreaseStock, getProductById } = useProducts();
   const { user } = useAuth();
+  const { getUserById } = useUsers();
   const { toast } = useToast();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
@@ -104,6 +106,7 @@ export default function OrdersPage() {
                   <TableHead>Itens</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
+                   <TableHead>Vendedor</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
                   <TableHead className="w-[200px] text-center">Ações</TableHead>
                 </TableRow>
@@ -121,6 +124,7 @@ export default function OrdersPage() {
                           {order.status}
                         </Badge>
                       </TableCell>
+                       <TableCell>{getUserById(order.sellerId)?.name || 'N/A'}</TableCell>
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
@@ -154,7 +158,7 @@ export default function OrdersPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Nenhum pedido encontrado.
                     </TableCell>
                   </TableRow>

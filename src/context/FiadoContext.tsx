@@ -47,7 +47,6 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
               ...d.data()
           } as FiadoAccount));
           setAccounts(accountsList);
-          setIsMounted(true);
       } catch (error) {
           console.error("Error fetching fiado accounts:", error);
       }
@@ -55,6 +54,7 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchAccounts();
+    setIsMounted(true);
   }, []);
   
   const addFiadoSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'displayId'>) => {

@@ -28,11 +28,13 @@ import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Receipt } from "@/components/pos/receipt";
 import { useAuth } from "@/context/AuthContext";
+import { useUsers } from "@/context/UsersContext";
 import { useRouter } from "next/navigation";
 
 export default function SalesPage() {
   const { sales, cancelSale, isMounted, getSaleById } = useSales();
   const { increaseStock } = useProducts();
+  const { getUserById } = useUsers();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToPrint, setSaleToPrint] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -131,6 +133,7 @@ export default function SalesPage() {
                 <TableRow>
                   <TableHead>Venda</TableHead>
                   <TableHead>Cliente</TableHead>
+                   <TableHead>Vendedor</TableHead>
                   <TableHead>Forma de Pgto.</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
@@ -144,6 +147,7 @@ export default function SalesPage() {
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
+                       <TableCell>{getUserById(sale.sellerId)?.name || 'N/A'}</TableCell>
                       <TableCell>{sale.paymentMethod}</TableCell>
                       <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell>
@@ -186,7 +190,7 @@ export default function SalesPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Nenhuma venda encontrada.
                     </TableCell>
                   </TableRow>

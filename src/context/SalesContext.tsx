@@ -5,7 +5,6 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp, runTransaction } from 'firebase/firestore';
-import { useUsers } from './UsersContext';
 
 export type SaleItem = {
   id: number;
@@ -63,7 +62,6 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  const { getUserById, isMounted: usersMounted } = useUsers();
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -73,33 +71,29 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
             const snapshot = await getDocs(q);
             const salesList = snapshot.docs.map(d => {
                 const saleData = d.data() as Sale;
-                const seller = getUserById(saleData.sellerId);
                 return {
                     ...saleData,
                     id: d.id,
-                    sellerName: seller?.name || 'N/A'
+                    sellerName: '' // will be populated on render
                 };
             });
             setSales(salesList);
-            setIsMounted(true);
         } catch (error) {
             console.error("Error fetching sales:", error);
         }
     }
-    if(usersMounted) {
-      fetchSales();
-    }
-  }, [usersMounted, getUserById]);
+    fetchSales();
+    setIsMounted(true);
+  }, []);
 
   const addSale = async (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Promise<Sale> => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
-      const newDisplayId = '...'; // Placeholder
       
       const optimisticSale: Sale = {
           ...newSaleData,
           id: tempId,
-          displayId: newDisplayId,
+          displayId: '...', // Placeholder
           date: newDate,
           status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
       };
