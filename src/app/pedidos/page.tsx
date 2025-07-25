@@ -103,11 +103,11 @@ export default function OrdersPage() {
                 <TableRow>
                   <TableHead>Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Vendedor</TableHead>
                   <TableHead>Itens</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Vendedor</TableHead>
                   <TableHead className="w-[200px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -117,7 +117,6 @@ export default function OrdersPage() {
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.displayId}</TableCell>
                       <TableCell>{order.customer}</TableCell>
-                      <TableCell>{order.sellerName || 'N/A'}</TableCell>
                       <TableCell>{order.items.length} item(s)</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>
@@ -128,6 +127,7 @@ export default function OrdersPage() {
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
+                      <TableCell>{order.sellerName || 'N/A'}</TableCell>
                        <TableCell className="text-center">
                         {order.status === 'Pendente' && (
                             <div className="flex gap-2 justify-center">

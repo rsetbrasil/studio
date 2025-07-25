@@ -133,11 +133,11 @@ export default function SalesPage() {
                 <TableRow>
                   <TableHead>ID da Venda</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Vendedor</TableHead>
                   <TableHead>Forma de Pgto.</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
+                  <TableHead>Vendedor</TableHead>
                   <TableHead className="w-[220px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -147,7 +147,6 @@ export default function SalesPage() {
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
-                      <TableCell>{sale.sellerName || 'N/A'}</TableCell>
                       <TableCell>{sale.paymentMethod}</TableCell>
                       <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell>
@@ -156,6 +155,7 @@ export default function SalesPage() {
                       <TableCell className="text-right">
                         {formatBRL(sale.amount)}
                       </TableCell>
+                      <TableCell>{sale.sellerName || 'N/A'}</TableCell>
                       <TableCell className="text-center flex gap-2 justify-center">
                          <Button
                           variant="outline"
