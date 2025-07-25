@@ -115,11 +115,20 @@ export function PaymentDialog({ isOpen, onClose, subtotal, tax, onConfirmSale }:
     };
   
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'F2') {
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault();
-            handleFinish();
+            const currentIndex = paymentOptions.findIndex(p => p.value === selectedMethod);
+            let nextIndex;
+            if (e.key === 'ArrowDown') {
+                nextIndex = (currentIndex + 1) % paymentOptions.length;
+            } else { // ArrowUp
+                nextIndex = (currentIndex - 1 + paymentOptions.length) % paymentOptions.length;
+            }
+            const nextMethod = paymentOptions[nextIndex].value;
+            handleSelectPaymentMethod(nextMethod);
         }
-        if (e.key === 'Enter') {
+
+        if (e.key === 'F2' || e.key === 'Enter') {
             e.preventDefault();
             handleFinish();
         }
