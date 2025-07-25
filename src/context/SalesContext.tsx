@@ -63,7 +63,7 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  const { users, getUserById } = useUsers();
+  const { users } = useUsers();
 
   const fetchSales = async () => {
       if (users.length === 0) return;
@@ -73,7 +73,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
           const snapshot = await getDocs(q);
           const salesList = snapshot.docs.map(d => {
             const data = d.data();
-            const seller = getUserById(data.sellerId);
+            const seller = users.find(u => u.id === data.sellerId);
             return {
               ...data,
               id: d.id,
@@ -95,7 +95,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
       const newDisplayId = `venda-${sales.length + 1}`;
-      const seller = getUserById(newSaleData.sellerId);
+      const seller = users.find(u => u.id === newSaleData.sellerId);
 
       const sale: Sale = {
           ...newSaleData,

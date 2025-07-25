@@ -28,7 +28,6 @@ import { Pencil, Trash, CheckCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useUsers } from "@/context/UsersContext";
 
 export default function OrdersPage() {
   const { orders, updateOrderStatus: updateOrderStatusFromContext } = useOrders();
