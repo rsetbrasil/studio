@@ -135,7 +135,7 @@ export default function ReportsPage() {
                 {filteredSales.length > 0 ? (
                   filteredSales.map((sale) => (
                     <TableRow key={sale.id}>
-                      <TableCell className="font-medium">#{sale.displayId}</TableCell>
+                      <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
                       <TableCell>{sale.items.length}</TableCell>
                       <TableCell>
