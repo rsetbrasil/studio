@@ -34,7 +34,7 @@ const FiadoContext = createContext<FiadoContextType | undefined>(undefined);
 
 export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<FiadoAccount[]>([]);
-  const { addSale: addSaleToHistory, updateSaleStatus } = useSales();
+  const { addSale: addSaleToHistory } = useSales();
   const [isMounted, setIsMounted] = useState(false);
   
   const fetchAccounts = async () => {
@@ -128,15 +128,6 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
                 balance: newBalance,
                 transactions: updatedTransactions,
             });
-
-            if (newBalance <= 0) {
-                currentData.transactions.forEach(tx => {
-                    if (tx.type === 'sale') {
-                        const saleRef = doc(db, 'sales', tx.id);
-                        transaction.update(saleRef, { status: 'Finalizada' });
-                    }
-                });
-            }
         });
 
         await fetchAccounts(); // Refetch to update local state
