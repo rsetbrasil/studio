@@ -66,7 +66,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const { users } = useUsers();
   
   const fetchOrders = async () => {
-    if (users.length === 0) return; // Wait for users to be loaded
+    if (users.length === 0) return; // Wait until users are loaded
     try {
       const ordersCollection = collection(db, "orders");
       const q = query(ordersCollection, orderBy("date", "desc"));
@@ -77,7 +77,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
         return { 
           ...data, 
           id: d.id,
-          sellerName: seller?.name || data.sellerName || 'N/A', // Ensure sellerName is present
+          sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
         } as Order
       });
       setOrders(ordersList);
@@ -89,7 +89,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
     fetchOrders();
-  }, [users]);
+  }, [users]); // Re-fetch when users are loaded/changed
   
   const getNextDisplayId = async () => {
       const orderCount = orders.length; 

@@ -66,7 +66,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const { users } = useUsers();
 
   const fetchSales = async () => {
-      if (users.length === 0) return;
+      if (users.length === 0) return; // Wait until users are loaded
       try {
           const salesCollection = collection(db, "sales");
           const q = query(salesCollection, orderBy("date", "desc"));
@@ -77,7 +77,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
             return {
               ...data,
               id: d.id,
-              sellerName: seller?.name || data.sellerName || 'N/A',
+              sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
             } as Sale
           });
           setSales(salesList);
@@ -89,7 +89,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     setIsMounted(true);
     fetchSales();
-  }, [users]);
+  }, [users]); // Re-fetch when users are loaded/changed
 
   const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>): Sale => {
       const tempId = `TEMP_SALE_${Date.now()}`;

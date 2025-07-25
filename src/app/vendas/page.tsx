@@ -29,7 +29,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Receipt } from "@/components/pos/receipt";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { useUsers } from "@/context/UsersContext";
 
 export default function SalesPage() {
   const { sales, cancelSale, isMounted, getSaleById } = useSales();
@@ -40,15 +39,9 @@ export default function SalesPage() {
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
-  const { users } = useUsers();
   const router = useRouter();
   
   const canManageSale = user?.role === 'Administrador' || user?.role === 'Gerente';
-
-  const getSellerName = (sellerId: string) => {
-    const seller = users.find(u => u.id === sellerId);
-    return seller?.name || "N/A";
-  };
 
   const filteredSales = useMemo(() => {
     if (!isMounted) return [];
@@ -58,9 +51,9 @@ export default function SalesPage() {
       (sale) =>
         sale.customer.toLowerCase().includes(lowercasedTerm) ||
         sale.displayId.toLowerCase().includes(lowercasedTerm) ||
-        getSellerName(sale.sellerId).toLowerCase().includes(lowercasedTerm)
+        sale.sellerName.toLowerCase().includes(lowercasedTerm)
     );
-  }, [sales, searchTerm, isMounted, users]);
+  }, [sales, searchTerm, isMounted]);
 
   const handleCancelClick = (sale: Sale) => {
     setSaleToCancel(sale);
@@ -161,7 +154,7 @@ export default function SalesPage() {
                       <TableCell className="text-right">
                         {formatBRL(sale.amount)}
                       </TableCell>
-                      <TableCell>{getSellerName(sale.sellerId)}</TableCell>
+                      <TableCell>{sale.sellerName}</TableCell>
                       <TableCell className="text-center flex gap-2 justify-center">
                          <Button
                           variant="outline"
