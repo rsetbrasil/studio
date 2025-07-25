@@ -478,7 +478,7 @@ export default function PosComponent() {
     router.push('/vendas');
   };
   
-  const handleConfirmSale = ({ paymentAmounts, change, cardFee, totalPaid }: { paymentAmounts: Record<string, number>; change: number; cardFee: number, totalPaid: number }) => {
+  const handleConfirmSale = async ({ paymentAmounts, change, cardFee, totalPaid }: { paymentAmounts: Record<string, number>; change: number; cardFee: number, totalPaid: number }) => {
     if (editingSaleId) {
         handleUpdateSale({ paymentAmounts, change, cardFee, totalPaid });
         return;
@@ -535,7 +535,7 @@ export default function PosComponent() {
       sellerId: user?.id || 'unknown',
       sellerName: user?.name || 'Unknown',
     };
-    const newSale = addSale(newSaleData);
+    const newSale = await addSale(newSaleData);
     
     toast({
       title: "Venda Finalizada!",
