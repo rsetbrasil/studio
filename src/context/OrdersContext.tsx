@@ -25,6 +25,8 @@ type Order = {
   date: string;
   status: OrderStatus;
   total: number;
+  sellerId: string;
+  sellerName: string;
 };
 
 type OrdersContextType = {

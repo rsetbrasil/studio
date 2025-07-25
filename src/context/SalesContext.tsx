@@ -26,6 +26,8 @@ export type Sale = {
   date: string;
   status: SaleStatus;
   amount: number;
+  sellerId: string;
+  sellerName: string;
 };
 
 type OrderForSale = {

@@ -133,6 +133,7 @@ export default function SalesPage() {
                 <TableRow>
                   <TableHead>ID da Venda</TableHead>
                   <TableHead>Cliente</TableHead>
+                  <TableHead>Vendedor</TableHead>
                   <TableHead>Forma de Pgto.</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
@@ -146,6 +147,7 @@ export default function SalesPage() {
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
+                      <TableCell>{sale.sellerName}</TableCell>
                       <TableCell>{sale.paymentMethod}</TableCell>
                       <TableCell>{new Date(sale.date).toLocaleString('pt-BR', { timeZone: 'UTC' })}</TableCell>
                       <TableCell>
@@ -188,7 +190,7 @@ export default function SalesPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Nenhuma venda encontrada.
                     </TableCell>
                   </TableRow>

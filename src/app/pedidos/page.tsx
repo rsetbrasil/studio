@@ -103,6 +103,7 @@ export default function OrdersPage() {
                 <TableRow>
                   <TableHead>Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
+                  <TableHead>Vendedor</TableHead>
                   <TableHead>Itens</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
@@ -116,6 +117,7 @@ export default function OrdersPage() {
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.displayId}</TableCell>
                       <TableCell>{order.customer}</TableCell>
+                      <TableCell>{order.sellerName}</TableCell>
                       <TableCell>{order.items.length} item(s)</TableCell>
                       <TableCell>{new Date(order.date).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell>
@@ -156,7 +158,7 @@ export default function OrdersPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       Nenhum pedido encontrado.
                     </TableCell>
                   </TableRow>

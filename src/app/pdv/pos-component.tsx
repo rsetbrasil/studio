@@ -211,6 +211,8 @@ export default function PosComponent() {
       customer: finalCustomerName,
       items: orderItems,
       total: total,
+      sellerId: user?.id || 'unknown',
+      sellerName: user?.name || 'Unknown',
     };
     addOrder(newOrder, decreaseStock);
 
@@ -282,6 +284,8 @@ export default function PosComponent() {
         items: saleItems,
         amount: total,
         paymentMethod: "Fiado",
+        sellerId: user?.id || 'unknown',
+        sellerName: user?.name || 'Unknown',
     }
     
     addFiadoSale(newFiadoSale);
@@ -455,6 +459,8 @@ export default function PosComponent() {
         items: newSaleItems,
         amount: finalTotal,
         paymentMethod: paymentMethodsUsed,
+        sellerId: user?.id || 'unknown',
+        sellerName: user?.name || 'Unknown',
     };
 
     await updateSale(editingSaleId, updatedSaleData, originalSaleItems, { increaseStock, decreaseStock });
@@ -526,6 +532,8 @@ export default function PosComponent() {
       items: saleItems,
       amount: finalTotal,
       paymentMethod: paymentMethodsUsed,
+      sellerId: user?.id || 'unknown',
+      sellerName: user?.name || 'Unknown',
     };
     const newSale = addSale(newSaleData);
     
