@@ -6,7 +6,6 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, writeBatch, query, orderBy } from 'firebase/firestore';
-import { useUsers } from './UsersContext';
 
 export type OrderItem = {
   id: number;
@@ -31,7 +30,7 @@ type Order = {
 
 type OrdersContextType = {
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>, decreaseStock: (items: any[]) => void) => void;
+  addOrder: (order: Omit<Order, 'id' | 'displayId' | 'date' | 'status'>, decreaseStock: (items: any[]) => void) => void;
   updateOrderStatus: (
     orderId: string, 
     newStatus: OrderStatus, 
@@ -63,26 +62,16 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-  const { users } = useUsers();
   
   useEffect(() => {
     setIsMounted(true);
     
     const fetchOrders = async () => {
-      if (users.length === 0) return; // Wait until users are loaded
       try {
         const ordersCollection = collection(db, "orders");
         const q = query(ordersCollection, orderBy("date", "desc"));
         const ordersSnapshot = await getDocs(q);
-        const ordersList = ordersSnapshot.docs.map(d => {
-          const data = d.data();
-          const seller = users.find(u => u.id === data.sellerId);
-          return { 
-            ...data, 
-            id: d.id,
-            sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
-          } as Order
-        });
+        const ordersList = ordersSnapshot.docs.map(d => ({ ...d.data(), id: d.id } as Order));
         setOrders(ordersList);
       } catch (e) {
         console.error("Error fetching orders:", e);
@@ -90,24 +79,22 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
     }
 
     fetchOrders();
-  }, [users]);
+  }, []);
   
   const getNextDisplayId = async () => {
       const orderCount = orders.length; 
       return `pedido-${orderCount + 1}`;
   }
 
-  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status' | 'sellerName'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
+  const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {
       const newDisplayId = await getNextDisplayId();
       const newDate = new Date().toISOString(); 
-      const seller = users.find(u => u.id === newOrderData.sellerId);
 
       const order: Omit<Order, 'id'> = {
           ...newOrderData,
           displayId: newDisplayId,
           date: newDate,
           status: "Pendente",
-          sellerName: seller?.name || 'Unknown',
       };
       
       try {

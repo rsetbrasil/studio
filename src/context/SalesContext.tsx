@@ -5,7 +5,6 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, writeBatch, query, orderBy, doc, updateDoc, getDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
-import { useUsers } from './UsersContext';
 
 export type SaleItem = {
   id: number;
@@ -39,7 +38,7 @@ type OrderForSale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>) => Sale;
+  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale;
   updateSale: (
     saleId: string, 
     updatedData: Partial<Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>>,
@@ -63,26 +62,16 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  const { users } = useUsers();
 
   useEffect(() => {
     setIsMounted(true);
     
     const fetchSales = async () => {
-        if (users.length === 0) return; // Wait until users are loaded
         try {
             const salesCollection = collection(db, "sales");
             const q = query(salesCollection, orderBy("date", "desc"));
             const snapshot = await getDocs(q);
-            const salesList = snapshot.docs.map(d => {
-              const data = d.data();
-              const seller = users.find(u => u.id === data.sellerId);
-              return {
-                ...data,
-                id: d.id,
-                sellerName: seller?.name || data.sellerName || 'N/A', // Fallback
-              } as Sale
-            });
+            const salesList = snapshot.docs.map(d => ({...d.data(), id: d.id } as Sale));
             setSales(salesList);
         } catch (error) {
             console.error("Error fetching sales:", error);
@@ -90,21 +79,19 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     }
 
     fetchSales();
-  }, [users]);
+  }, []);
 
-  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status' | 'sellerName'>): Sale => {
+  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
       const newDisplayId = `venda-${sales.length + 1}`;
-      const seller = users.find(u => u.id === newSaleData.sellerId);
-
+      
       const sale: Sale = {
           ...newSaleData,
           id: tempId,
           displayId: newDisplayId,
           date: newDate,
           status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
-          sellerName: seller?.name || 'Unknown',
       };
 
       setSales(prev => [sale, ...prev]);
@@ -114,7 +101,6 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
         displayId: newDisplayId,
         date: newDate,
         status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
-        sellerName: seller?.name || 'Unknown',
       }).then(docRef => {
         setSales(prev => prev.map(s => s.id === tempId ? { ...s, id: docRef.id } : s));
       }).catch(error => {

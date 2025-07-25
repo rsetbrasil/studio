@@ -46,8 +46,7 @@ export default function OrdersPage() {
     return orders.filter(
       (order) =>
         order.customer.toLowerCase().includes(lowercasedTerm) ||
-        order.displayId.toLowerCase().includes(lowercasedTerm) ||
-        (order.sellerName && order.sellerName.toLowerCase().includes(lowercasedTerm))
+        order.displayId.toLowerCase().includes(lowercasedTerm)
     );
   }, [orders, searchTerm]);
 
@@ -106,7 +105,6 @@ export default function OrdersPage() {
                   <TableHead>Data</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Vendedor</TableHead>
                   <TableHead className="w-[200px] text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -126,7 +124,6 @@ export default function OrdersPage() {
                       <TableCell className="text-right">
                         {formatBRL(order.total)}
                       </TableCell>
-                      <TableCell>{order.sellerName || 'N/A'}</TableCell>
                        <TableCell className="text-center">
                         {order.status === 'Pendente' && (
                             <div className="flex gap-2 justify-center">
@@ -157,7 +154,7 @@ export default function OrdersPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       Nenhum pedido encontrado.
                     </TableCell>
                   </TableRow>
