@@ -57,7 +57,7 @@ const calculatePrice = (packPrice: number, unitsPerPack: number) => {
 const initialCategories: string[] = [
   "ÀGUAS", "BOMBONIERE", "CERVEJAS", "APERITIVO", "REFRIGERANTES", "DRINKS", 
   "CACHAÇA", "CARVÃO", "WHISCKS", "CHAMPANHE", "TABACARIA", "VODKAS", 
-  "ENÈRGETICOS", "MANTIMENTOS", "ACHOCOLATADOS", "SUCOS", "VINHOS", "TEQUILA"
+  "ENÈRGETICOS", "MANTIMENTOS", "ACHOCOLATADOS", "SUCOS", "VINHOS", "TEQUILA", "YORGUT"
 ];
 const initialUnits: string[] = ["UNIDADE", "FARDO", "CAIXA", "UNID", "MAÇO"];
 
@@ -381,3 +381,4 @@ export const useProducts = () => {
   }
   return context;
 };
+

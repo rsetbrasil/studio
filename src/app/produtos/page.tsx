@@ -172,7 +172,6 @@ const bulkProducts: Omit<Product, 'id' | 'price'>[] = [
     { code: 648, name: 'YPORAN 6X1,5ML', category: 'ÀGUAS', unitOfMeasure: 'FARDO', cost: 9, packPrice: 9.7, unitsPerPack: 6, stock: 33 },
     { code: 649, name: 'ZOIÃƒO DOIDÃƒO', category: 'PADRÃƒO', unitOfMeasure: 'CART', cost: 0, packPrice: 369, unitsPerPack: 1, stock: 0 }
 ];
-
 export default function ProductsPage() {
   const { products, addProduct, updateProduct, loadProducts, deleteProduct, isMounted } = useProducts();
   const { sales } = useSales();
@@ -442,3 +441,4 @@ export default function ProductsPage() {
     </>
   );
 }
+
