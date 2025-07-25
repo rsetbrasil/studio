@@ -1,7 +1,7 @@
 
-
 "use client";
 
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,11 +19,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
 import { useOrders } from "@/context/OrdersContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
-import { Pencil, Trash, CheckCircle } from "lucide-react";
+import { Pencil, Trash, CheckCircle, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -34,10 +35,23 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  
+  const [searchTerm, setSearchTerm] = useState("");
+
   const canEditOrder = user?.role === 'Administrador' || user?.role === 'Gerente' || user?.role === 'Vendedor';
   const canManageStatus = user?.role === 'Administrador' || user?.role === 'Gerente';
-  
+
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm) {
+      return orders;
+    }
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return orders.filter(
+      (order) =>
+        order.customer.toLowerCase().includes(lowercasedTerm) ||
+        order.displayId.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [orders, searchTerm]);
+
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "Faturado":
@@ -66,11 +80,22 @@ export default function OrdersPage() {
   return (
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Gestão de Pedidos</CardTitle>
-            <CardDescription>
-              Registro, consulta e gerenciamento de pedidos realizados.
-            </CardDescription>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <CardTitle>Gestão de Pedidos</CardTitle>
+              <CardDescription>
+                Registro, consulta e gerenciamento de pedidos realizados.
+              </CardDescription>
+            </div>
+             <div className="relative flex-1 sm:flex-initial">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por cliente ou pedido..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 sm:w-64"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -86,8 +111,8 @@ export default function OrdersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.length > 0 ? (
-                  orders.map((order) => (
+                {filteredOrders.length > 0 ? (
+                  filteredOrders.map((order) => (
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">{order.displayId}</TableCell>
                       <TableCell>{order.customer}</TableCell>
@@ -132,7 +157,7 @@ export default function OrdersPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhum pedido registrado.
+                      Nenhum pedido encontrado.
                     </TableCell>
                   </TableRow>
                 )}

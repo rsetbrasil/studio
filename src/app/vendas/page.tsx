@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -18,11 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { useSales, type Sale } from "@/context/SalesContext";
 import { useProducts } from "@/context/ProductsContext";
 import { formatBRL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { XCircle, Printer, Pencil } from "lucide-react";
+import { XCircle, Printer, Pencil, Search } from "lucide-react";
 import { CancelSaleDialog } from "@/components/sales/cancel-sale-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Receipt } from "@/components/pos/receipt";
@@ -34,12 +35,26 @@ export default function SalesPage() {
   const { increaseStock } = useProducts();
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null);
   const [saleToPrint, setSaleToPrint] = useState<(Sale & { change: number, totalPaid: number }) | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const receiptRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
   
   const canManageSale = user?.role === 'Administrador' || user?.role === 'Gerente';
+
+  const filteredSales = useMemo(() => {
+    if (!isMounted) return [];
+    if (!searchTerm) {
+      return sales;
+    }
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return sales.filter(
+      (sale) =>
+        sale.customer.toLowerCase().includes(lowercasedTerm) ||
+        sale.displayId.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [sales, searchTerm, isMounted]);
 
   const handleCancelClick = (sale: Sale) => {
     setSaleToCancel(sale);
@@ -95,11 +110,22 @@ export default function SalesPage() {
     <>
       <div className="p-4 sm:px-6 sm:py-4">
         <Card>
-          <CardHeader>
-            <CardTitle>Vendas Finalizadas</CardTitle>
-            <CardDescription>
-              Consulte e gerencie o histórico de todas as vendas.
-            </CardDescription>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex-1">
+              <CardTitle>Vendas Finalizadas</CardTitle>
+              <CardDescription>
+                Consulte e gerencie o histórico de todas as vendas.
+              </CardDescription>
+            </div>
+            <div className="relative flex-1 sm:flex-initial">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por cliente ou venda..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 sm:w-64"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -115,8 +141,8 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isMounted && sales.length > 0 ? (
-                  sales.map((sale) => (
+                {isMounted && filteredSales.length > 0 ? (
+                  filteredSales.map((sale) => (
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.displayId}</TableCell>
                       <TableCell>{sale.customer}</TableCell>
@@ -163,7 +189,7 @@ export default function SalesPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="h-24 text-center">
-                      Nenhuma venda registrada.
+                      Nenhuma venda encontrada.
                     </TableCell>
                   </TableRow>
                 )}
