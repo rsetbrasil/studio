@@ -57,7 +57,7 @@ const bulkProducts: Omit<Product, 'id' | 'price'>[] = [
     { code: 533, name: 'SUCO CITRUS 12X330ML', category: 'SUCOS', unitOfMeasure: 'FARDO', cost: 0, packPrice: 18.9, unitsPerPack: 12, stock: 0 },
     { code: 534, name: 'SUCO DEL VALLE FRUTAS CITRICAS 6X450ML', category: 'SUCOS', unitOfMeasure: 'FARDO', cost: 0, packPrice: 17.1, unitsPerPack: 6, stock: 0 },
     { code: 535, name: 'SUCO DEL VALLE UVA 6X450ML', category: 'SUCOS', unitOfMeasure: 'FARDO', cost: 0, packPrice: 17.3, unitsPerPack: 6, stock: 0 },
-    { code: 536, name: 'SUCO DEL VALLE UVA LATA 6X290ML', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 202, unitsPerPack: 6, stock: 0 },
+    { code: 536, name: 'SUCO DEL VALLE UVA LATA 6X290ML', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 20.2, unitsPerPack: 6, stock: 0 },
     { code: 537, name: 'SUCO TAMPICO 12X330ML', category: 'SUCOS', unitOfMeasure: 'FARDO', cost: 22.52, packPrice: 23.4, unitsPerPack: 12, stock: 158 },
     { code: 538, name: 'SUCO TAMPICO 6X2L', category: 'SUCOS', unitOfMeasure: 'FARDO', cost: 43.64, packPrice: 46.9, unitsPerPack: 6, stock: 34 },
     { code: 539, name: 'SUKITA LARANJA 12X1L', category: 'REFRIGERANTES', unitOfMeasure: 'FARDO', cost: 45, packPrice: 46.9, unitsPerPack: 12, stock: 7 },
@@ -127,14 +127,14 @@ const bulkProducts: Omit<Product, 'id' | 'price'>[] = [
     { code: 603, name: 'WHISCK BLACK WHITE UNIDADE', category: 'WHISCKS', unitOfMeasure: 'UNIDADE', cost: 51.8, packPrice: 54.5, unitsPerPack: 1, stock: 13 },
     { code: 604, name: 'WHISCK GOLD LABEL ED LIMITADA 12X750ML CAIXA', category: 'WHISCKS', unitOfMeasure: 'CAIXA', cost: 2430.12, packPrice: 2494.8, unitsPerPack: 12, stock: 60 },
     { code: 605, name: 'WHISCK GOLD LABEL ED LIMITADA 750ML', category: 'WHISCKS', unitOfMeasure: 'UNIDADE', cost: 205.51, packPrice: 208.9, unitsPerPack: 1, stock: 101 },
-    { code: 606, name: 'WHISK BLACK LABEL CAIXA', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 17508, unitsPerPack: 1, stock: 0 },
+    { code: 606, name: 'WHISK BLACK LABEL CAIXA', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 175.08, unitsPerPack: 1, stock: 0 },
     { code: 607, name: 'WHISKY BALLANTINES', category: 'WHISCKS', unitOfMeasure: 'UNIDADE', cost: 53.21, packPrice: 57.9, unitsPerPack: 1, stock: 0 },
     { code: 608, name: 'WHISKY BALLANTINES CX 12X1L', category: 'WHISCKS', unitOfMeasure: 'CAIXA', cost: 638.53, packPrice: 670.8, unitsPerPack: 12, stock: 10 },
-    { code: 609, name: 'WHISKY BLACK LABEL UNIDADE', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 1479, unitsPerPack: 1, stock: 0 },
+    { code: 609, name: 'WHISKY BLACK LABEL UNIDADE', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 147.90, unitsPerPack: 1, stock: 0 },
     { code: 610, name: 'WHISKY BLONDE LEMONADE LATA 6X269ML', category: 'WHISCKS', unitOfMeasure: 'FARDO', cost: 54.78, packPrice: 58.9, unitsPerPack: 6, stock: 1 },
     { code: 611, name: 'WHISKY BUCHANAN´S 12X1L CAIXA', category: 'WHISCKS', unitOfMeasure: 'CAIXA', cost: 1756.71, packPrice: 1780.8, unitsPerPack: 12, stock: 9 },
     { code: 612, name: 'WHISKY BUCHANAN´S 1L UNIDADE', category: 'WHISCKS', unitOfMeasure: 'UNIDADE', cost: 146.39, packPrice: 149.9, unitsPerPack: 1, stock: 27 },
-    { code: 613, name: 'WHISKY DOUBLE BLACK 1L', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 1699, unitsPerPack: 1, stock: 0 },
+    { code: 613, name: 'WHISKY DOUBLE BLACK 1L', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 169.90, unitsPerPack: 1, stock: 0 },
     { code: 614, name: 'WHISKY GOLD LABEL 750ML', category: 'WHISCKS', unitOfMeasure: 'UNIDADE', cost: 220, packPrice: 225.9, unitsPerPack: 1, stock: 173 },
     { code: 615, name: 'WHISKY GOLD LABEL CAIXA 6X750ML', category: 'WHISCKS', unitOfMeasure: 'CAIXA', cost: 1320, packPrice: 1349.4, unitsPerPack: 6, stock: 21 },
     { code: 616, name: 'WHISKY GREEN LABEL 750ML', category: 'WHISCKS', unitOfMeasure: 'MEIO FARDO', cost: 319, packPrice: 349, unitsPerPack: 1, stock: 14 },
@@ -152,7 +152,7 @@ const bulkProducts: Omit<Product, 'id' | 'price'>[] = [
     { code: 628, name: 'YPIOCA 150 700ML', category: 'CACHAÇA', unitOfMeasure: 'UNIDADE', cost: 49.95, packPrice: 51.9, unitsPerPack: 1, stock: 97 },
     { code: 629, name: 'YPIOCA 160 700ML', category: 'CACHAÇA', unitOfMeasure: 'UNIDADE', cost: 70.63, packPrice: 74.9, unitsPerPack: 1, stock: 10 },
     { code: 630, name: 'YPIOCA 5 CHAVES 700ML', category: 'CACHAÇA', unitOfMeasure: 'UNIDADE', cost: 76.66, packPrice: 79.9, unitsPerPack: 1, stock: 40 },
-    { code: 631, name: 'YPIOCA EMPALHADA OURO 965ML', category: 'PADRÃƒO', unitOfMeasure: 'UNID', cost: 34.33, packPrice: 36.9, unitsPerPack: 1, stock: 37 },
+    { code: 631, name: 'YPIOCA EMPALHADA OURO 965ML', category: 'PADRÃO', unitOfMeasure: 'UNID', cost: 34.33, packPrice: 36.9, unitsPerPack: 1, stock: 37 },
     { code: 632, name: 'YPIOCA EMPALHADA OURO CX', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 430.8, unitsPerPack: 1, stock: 1 },
     { code: 633, name: 'YPIOCA EMPALHADA PRATA 700ML', category: 'Padrão', unitOfMeasure: 'Fardo', cost: 0, packPrice: 32.9, unitsPerPack: 1, stock: 0 },
     { code: 634, name: 'YPIOCA GUARANA CX 12X1L', category: 'CACHAÇA', unitOfMeasure: 'CAIXA', cost: 214.08, packPrice: 218.9, unitsPerPack: 12, stock: 4 },
@@ -170,7 +170,7 @@ const bulkProducts: Omit<Product, 'id' | 'price'>[] = [
     { code: 646, name: 'YPIOCA PRATA UNIDADE', category: 'CACHAÇA', unitOfMeasure: 'Fardo', cost: 10.85, packPrice: 11.5, unitsPerPack: 1, stock: 2 },
     { code: 647, name: 'YPORAN 12X500ML', category: 'ÀGUAS', unitOfMeasure: 'FARDO', cost: 7.35, packPrice: 7.9, unitsPerPack: 12, stock: 59 },
     { code: 648, name: 'YPORAN 6X1,5ML', category: 'ÀGUAS', unitOfMeasure: 'FARDO', cost: 9, packPrice: 9.7, unitsPerPack: 6, stock: 33 },
-    { code: 649, name: 'ZOIÃƒO DOIDÃƒO', category: 'PADRÃƒO', unitOfMeasure: 'CART', cost: 0, packPrice: 369, unitsPerPack: 1, stock: 0 }
+    { code: 649, name: 'ZOIÃO DOIDÃO', category: 'PADRÃO', unitOfMeasure: 'CART', cost: 0, packPrice: 369, unitsPerPack: 1, stock: 0 }
 ];
 export default function ProductsPage() {
   const { products, addProduct, updateProduct, loadProducts, deleteProduct, isMounted } = useProducts();
@@ -442,3 +442,4 @@ export default function ProductsPage() {
   );
 }
 
+    
