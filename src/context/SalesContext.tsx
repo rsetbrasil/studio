@@ -37,7 +37,7 @@ type OrderForSale = {
 
 type SalesContextType = {
   sales: Sale[];
-  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Sale;
+  addSale: (sale: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>) => Promise<Sale>;
   updateSale: (
     saleId: string, 
     updatedData: Partial<Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>>,
@@ -80,12 +80,12 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
     fetchSales();
   }, []);
 
-  const addSale = (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Sale => {
+  const addSale = async (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Promise<Sale> => {
       const tempId = `TEMP_SALE_${Date.now()}`;
       const newDate = new Date().toISOString();
       const newDisplayId = '...'; // Placeholder
       
-      const sale: Sale = {
+      const optimisticSale: Sale = {
           ...newSaleData,
           id: tempId,
           displayId: newDisplayId,
@@ -93,49 +93,53 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
           status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
       };
 
-      setSales(prev => [sale, ...prev]);
+      setSales(prev => [optimisticSale, ...prev]);
 
-      const createSaleInDb = async () => {
-        try {
-          const newId = await runTransaction(db, async (transaction) => {
-            const counterRef = doc(db, 'counters', 'salesCounter');
-            const counterDoc = await transaction.get(counterRef);
-            
-            let nextId = 1;
-            if (counterDoc.exists()) {
-              nextId = counterDoc.data().count + 1;
-            }
-            
-            const finalSaleData = {
-              ...newSaleData,
-              displayId: String(nextId),
-              date: newDate,
-              status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
-            };
-            
-            const newSaleRef = doc(collection(db, 'sales'));
-            transaction.set(newSaleRef, finalSaleData);
-            
-            if (counterDoc.exists()) {
-              transaction.update(counterRef, { count: nextId });
-            } else {
-              transaction.set(counterRef, { count: nextId });
-            }
-            
-            return { firestoreId: newSaleRef.id, displayId: String(nextId) };
-          });
+      try {
+        const newId = await runTransaction(db, async (transaction) => {
+          const counterRef = doc(db, 'counters', 'salesCounter');
+          const counterDoc = await transaction.get(counterRef);
           
-          setSales(prev => prev.map(s => s.id === tempId ? { ...s, id: newId.firestoreId, displayId: newId.displayId } : s));
+          let nextId = 1;
+          if (counterDoc.exists()) {
+            nextId = counterDoc.data().count + 1;
+          }
+          
+          const finalSaleData = {
+            ...newSaleData,
+            displayId: String(nextId),
+            date: newDate,
+            status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
+          };
+          
+          const newSaleRef = doc(collection(db, 'sales'));
+          transaction.set(newSaleRef, finalSaleData);
+          
+          if (counterDoc.exists()) {
+            transaction.update(counterRef, { count: nextId });
+          } else {
+            transaction.set(counterRef, { count: nextId });
+          }
+          
+          return { firestoreId: newSaleRef.id, displayId: String(nextId) };
+        });
+        
+        const finalSale: Sale = {
+          ...newSaleData,
+          id: newId.firestoreId,
+          displayId: newId.displayId,
+          date: newDate,
+           status: newSaleData.paymentMethod === 'Fiado' ? 'Fiado' : "Finalizada",
+        };
+        
+        setSales(prev => prev.map(s => s.id === tempId ? finalSale : s));
+        return finalSale;
 
-        } catch (error) {
-           console.error("Error adding sale transactionally:", error);
-           setSales(prev => prev.filter(s => s.id !== tempId));
-        }
+      } catch (error) {
+         console.error("Error adding sale transactionally:", error);
+         setSales(prev => prev.filter(s => s.id !== tempId));
+         throw error; // Re-throw the error to be caught by the caller
       }
-      
-      createSaleInDb();
-      
-      return sale;
   };
 
   const updateSale = async (
