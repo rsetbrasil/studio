@@ -83,7 +83,7 @@ export const OrdersProvider = ({ children }: { children: ReactNode }) => {
   
   const getNextDisplayId = async () => {
       const orderCount = orders.length; 
-      return `pedido-${orderCount + 1}`;
+      return `${orderCount + 1}`;
   }
 
   const addOrder = async (newOrderData: Omit<Order, 'id' | 'displayId'| 'date' | 'status'>, decreaseStock: (items: { id: string, quantity: number }[]) => void) => {

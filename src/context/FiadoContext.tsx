@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { useSales, Sale, SaleItem } from './SalesContext';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, writeBatch, query } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, query, getDoc } from 'firebase/firestore';
 
 export type FiadoTransaction = {
   id: string; 
@@ -13,6 +14,7 @@ export type FiadoTransaction = {
   amount: number; 
   paymentMethod?: string;
   items?: SaleItem[];
+  saleDisplayId?: string;
 };
 
 export type FiadoAccount = {
@@ -71,6 +73,7 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
             type: 'sale',
             amount: sale.amount,
             items: sale.items,
+            saleDisplayId: sale.displayId,
         };
 
         if (accountDoc.exists()) {
