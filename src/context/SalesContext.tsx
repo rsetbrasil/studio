@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react';
@@ -62,33 +63,31 @@ const SalesContext = createContext<SalesContextType | undefined>(undefined);
 export const SalesProvider = ({ children }: { children: ReactNode }) => {
   const [sales, setSales] = useState<Sale[]>([]);
   const [isMounted, setIsMounted] = useState(false);
-  const { users, isMounted: usersMounted } = useUsers();
+  const { getUserById: getUserFromUsersContext } = useUsers();
 
   useEffect(() => {
-    if (usersMounted) {
-      const fetchSales = async () => {
-          try {
-              const salesCollection = collection(db, "sales");
-              const q = query(salesCollection, orderBy("date", "desc"));
-              const snapshot = await getDocs(q);
-              const salesList = snapshot.docs.map(d => {
-                  const saleData = d.data() as Sale;
-                  const seller = users.find(u => u.id === saleData.sellerId);
-                  return {
-                      ...saleData,
-                      id: d.id,
-                      sellerName: seller?.name || 'N/A'
-                  };
-              });
-              setSales(salesList);
-              setIsMounted(true);
-          } catch (error) {
-              console.error("Error fetching sales:", error);
-          }
-      }
-      fetchSales();
+    const fetchSales = async () => {
+        try {
+            const salesCollection = collection(db, "sales");
+            const q = query(salesCollection, orderBy("date", "desc"));
+            const snapshot = await getDocs(q);
+            const salesList = snapshot.docs.map(d => {
+                const saleData = d.data() as Sale;
+                const seller = getUserFromUsersContext(saleData.sellerId);
+                return {
+                    ...saleData,
+                    id: d.id,
+                    sellerName: seller?.name || 'N/A'
+                };
+            });
+            setSales(salesList);
+            setIsMounted(true);
+        } catch (error) {
+            console.error("Error fetching sales:", error);
+        }
     }
-  }, [usersMounted, users]);
+    fetchSales();
+  }, [getUserFromUsersContext]);
 
   const addSale = async (newSaleData: Omit<Sale, 'id' | 'displayId' | 'date' | 'status'>): Promise<Sale> => {
       const tempId = `TEMP_SALE_${Date.now()}`;
@@ -171,7 +170,7 @@ export const SalesProvider = ({ children }: { children: ReactNode }) => {
         const saleRef = doc(db, 'sales', saleId);
         await updateDoc(saleRef, updatedData);
 
-        setSales(prevSales => prevSales.map(s => s.id === saleId ? { ...s, ...updatedData } : s));
+        setSales(prevSales => prevSales.map(s => s.id === saleId ? { ...s, ...updatedData } as Sale : s));
 
       } catch (error) {
           console.error("Error updating sale: ", error);

@@ -34,7 +34,7 @@ const FiadoContext = createContext<FiadoContextType | undefined>(undefined);
 
 export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   const [accounts, setAccounts] = useState<FiadoAccount[]>([]);
-  const { addSale: addSaleToHistory, updateSaleStatus, isMounted: salesMounted } = useSales();
+  const { addSale: addSaleToHistory, updateSaleStatus } = useSales();
   const [isMounted, setIsMounted] = useState(false);
   
   const fetchAccounts = async () => {
@@ -54,10 +54,8 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    if (salesMounted) {
-      fetchAccounts();
-    }
-  }, [salesMounted]);
+    fetchAccounts();
+  }, []);
   
   const addFiadoSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'displayId'>) => {
     try {
@@ -65,34 +63,36 @@ export const FiadoProvider = ({ children }: { children: ReactNode }) => {
         if (!finalSale) return;
 
         const accountRef = doc(db, "fiadoAccounts", finalSale.customer);
-        const batch = writeBatch(db);
-        const accountDoc = await getDoc(accountRef);
+        
+        await runTransaction(db, async (transaction) => {
+            const accountDoc = await transaction.get(accountRef);
 
-        const newTransaction: FiadoTransaction = {
-            id: finalSale.id,
-            date: finalSale.date,
-            type: 'sale',
-            amount: finalSale.amount,
-            items: finalSale.items,
-            saleDisplayId: finalSale.displayId,
-        };
-
-        if (accountDoc.exists()) {
-            const currentData = accountDoc.data() as FiadoAccount;
-            const updatedTransactions = [newTransaction, ...currentData.transactions];
-            batch.update(accountRef, {
-                balance: currentData.balance + finalSale.amount,
-                transactions: updatedTransactions,
-            });
-        } else {
-            const newAccount: FiadoAccount = {
-                customerName: finalSale.customer,
-                balance: finalSale.amount,
-                transactions: [newTransaction],
+            const newTransaction: FiadoTransaction = {
+                id: finalSale.id,
+                date: finalSale.date,
+                type: 'sale',
+                amount: finalSale.amount,
+                items: finalSale.items,
+                saleDisplayId: finalSale.displayId,
             };
-            batch.set(accountRef, newAccount);
-        }
-        await batch.commit();
+
+            if (accountDoc.exists()) {
+                const currentData = accountDoc.data() as FiadoAccount;
+                const updatedTransactions = [newTransaction, ...currentData.transactions];
+                transaction.update(accountRef, {
+                    balance: currentData.balance + finalSale.amount,
+                    transactions: updatedTransactions,
+                });
+            } else {
+                const newAccount: FiadoAccount = {
+                    customerName: finalSale.customer,
+                    balance: finalSale.amount,
+                    transactions: [newTransaction],
+                };
+                transaction.set(accountRef, newAccount);
+            }
+        });
+        
         await fetchAccounts(); // Refetch to update local state
     } catch (error) {
         console.error("Error adding fiado sale:", error);
